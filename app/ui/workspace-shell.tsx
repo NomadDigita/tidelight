@@ -11,6 +11,7 @@ const navigation = [
   { href: "/research", label: "Research desk", icon: "⌕" },
   { href: "/markets", label: "Market map", icon: "⌁" },
   { href: "/strategies", label: "Strategy lab", icon: "⌗" },
+  { href: "/nightwatch", label: "Nightwatch agent", icon: "◉" },
   { href: "/watchlist", label: "Watchlist", icon: "⌖" },
   { href: "/briefs", label: "Saved briefs", icon: "▤" },
 ];

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./theme-polish.css";
+import "./nightwatch.css";
 import { createClient } from "@/lib/supabase/server";
 import WorkspaceShell from "./ui/workspace-shell";
 import { ThemeProvider } from "./ui/theme-provider";

@@ -1,5 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 import ResearchWorkspace from "./ui/research-workspace";
+import { createClient } from "@/lib/supabase/server";
+import { signOut } from "@/app/actions";
 
 const stories = [
   { mark: "↗", tone: "amber", title: "Policy shift puts chip supply chains back in focus", type: "Policy & regulation", age: "38 min ago", tag: "WATCH" },
@@ -14,7 +17,14 @@ const watchlist = [
   { symbol: "AMZN", name: "Amazon.com, Inc.", mark: "a", tone: "amazon", change: "−0.18%", direction: "down", points: "1,7 10,10 19,6 28,14 37,13 46,17 55,12 65,23 75,21" },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const today = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "America/New_York" }).format(new Date()).toUpperCase();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: savedRuns } = user
+    ? await supabase.from("research_runs").select("id, question, status, created_at").order("created_at", { ascending: false }).limit(5)
+    : { data: [] };
+
   return (
     <div className="app-shell">
       <aside className="sidebar" aria-label="Main navigation">
@@ -31,18 +41,18 @@ export default function Home() {
         </nav>
         <div className="sidebar-bottom">
           <div className="data-status"><span className="status-dot" /><div><b>Demo environment</b><small>Sample research only</small></div></div>
-          <div className="user-profile"><div className="avatar">A</div><div><b>Asiwaju</b><small>Personal workspace</small></div><span className="more">···</span></div>
+          <div className="user-profile"><div className="avatar">{user ? "✓" : "↗"}</div><div><b>{user ? "Your workspace" : "Guest workspace"}</b><small>{user ? "Private to your account" : "Sign in to save research"}</small></div>{user ? <form action={signOut}><button className="more" aria-label="Sign out" title="Sign out">↪</button></form> : <Link className="profile-link" href="/login">Sign in</Link>}</div>
         </div>
       </aside>
       <main className="main-area" id="home">
         <header className="topbar">
           <div className="mobile-brand"><Image src="/tidelight-mark.svg" alt="" width={28} height={28} /> Tidelight</div>
           <div className="breadcrumb">Workspace <span>/</span> Overview</div>
-          <div className="top-actions"><span className="market-clock"><i /> US MARKET <b>AFTER HOURS</b></span><button className="icon-button" aria-label="Notifications">♧<span className="notification-dot" /></button><div className="top-avatar">A</div></div>
+          <div className="top-actions"><span className="market-clock"><i /> US MARKET <b>DEMO MODE</b></span><Link className="top-signin" href={user ? "#briefs" : "/login"}>{user ? "MY BRIEFS" : "SIGN IN"}</Link></div>
         </header>
         <div className="content-wrap">
           <section className="welcome-row">
-            <div><div className="eyebrow"><span className="eyebrow-line" /> SUNDAY, OCTOBER 4, 2026 <span className="eyebrow-divider">/</span> YOUR MARKET BRIEF</div><h1>Good morning, Asiwaju<span className="mint-dot">.</span></h1><p className="welcome-copy">The bell may be quiet. The market isn’t.</p></div>
+            <div><div className="eyebrow"><span className="eyebrow-line" /> {today} <span className="eyebrow-divider">/</span> YOUR MARKET BRIEF</div><h1>{user ? "Welcome back" : "Welcome to Tidelight"}<span className="mint-dot">.</span></h1><p className="welcome-copy">The bell may be quiet. The market isn’t.</p></div>
             <button className="date-button">◷ <span>Last 24 hours</span>⌄</button>
           </section>
           <ResearchWorkspace />
@@ -54,8 +64,8 @@ export default function Home() {
           <section className="lower-grid">
             <article className="panel stories-panel" id="briefs">
               <div className="panel-heading"><div><div className="eyebrow small-eyebrow">SIGNAL, WITH THE NOISE REMOVED</div><h3>Stories to watch</h3></div><button className="text-button">All stories <span>↗</span></button></div>
-              <div className="story-list">{stories.map((story) => <a className="story-row" href="#research" key={story.title}><span className={"story-symbol " + story.tone}>{story.mark}</span><span className="story-main"><b>{story.title}</b><small>{story.type} <i>·</i> {story.age}</small></span><span className={"story-tag " + (story.tag === "WATCH" ? "tag-watch" : "tag-context")}>{story.tag}</span><span className="row-arrow">↗</span></a>)}</div>
-              <div className="illustrative-note"><span>i</span> Sample stories shown for interface preview. Live sources will be cited in each research brief.</div>
+              {user && savedRuns?.length ? <div className="story-list">{savedRuns.map((run) => <article className="story-row saved-run" key={run.id}><span className="story-symbol blue">⌕</span><span className="story-main"><b>{run.question}</b><small>{new Date(run.created_at).toLocaleString()} <i>·</i> Saved question</small></span><span className="story-tag tag-context">{run.status.toUpperCase()}</span></article>)}</div> : <div className="story-list">{stories.map((story) => <a className="story-row" href="#research" key={story.title}><span className={"story-symbol " + story.tone}>{story.mark}</span><span className="story-main"><b>{story.title}</b><small>{story.type} <i>·</i> {story.age}</small></span><span className={"story-tag " + (story.tag === "WATCH" ? "tag-watch" : "tag-context")}>{story.tag}</span><span className="row-arrow">↗</span></a>)}</div>}
+              <div className="illustrative-note"><span>i</span> {user && savedRuns?.length ? "Your latest saved research questions, private to your account." : "Sample stories shown for interface preview. Live sources will be cited in each research brief."}</div>
             </article>
             <article className="panel watchlist-panel" id="watchlist">
               <div className="panel-heading"><div><div className="eyebrow small-eyebrow">A LITTLE CONTEXT GOES A LONG WAY</div><h3>Your watchlist</h3></div><button className="add-button" aria-label="Add to watchlist">＋</button></div>

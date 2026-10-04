@@ -35,11 +35,11 @@ The judging story is a concrete before/after: a user asks what a new export rest
 | 1 · Positioning and brand | Name, visual identity, focused judging narrative | Done |
 | 2 · Database foundation | Free Supabase project, owner-scoped schema, RLS | Done |
 | 3 · Product shell | Responsive research dashboard, brand assets, preview experience | Done |
-| 4 · Identity and persistence | Email-link sign-in, session refresh, save question action | Implemented; hosted auth redirect still needs configuration |
-| 5 · Evidence workflow | source input/collection, normalization, claim provenance, Qwen synthesis | Next |
+| 4 · Identity and persistence | Email-link sign-in, session refresh, save question action | Done; production callback allowlist configured; signed-in dashboard reads own saved questions |
+| 5 · Evidence workflow | source input/collection, normalization, claim provenance, Qwen synthesis | In progress; provider keys and verifiable source pipeline are the next release gate |
 | 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Pending hosted network and symbol validation |
 | 7 · Quality and demo | citation checks, sample scenario, responsive review, demo recording/script | Pending |
-| 8 · Release and submission | GitHub repo, Vercel deployment, X build-in-public post, submission form | Pending |
+| 8 · Release and submission | Public GitHub repo, Vercel production deployment, X build-in-public post, submission form | Public repo and deployment live; X post and submission remain pending |
 
 ## Demo scorecard
 

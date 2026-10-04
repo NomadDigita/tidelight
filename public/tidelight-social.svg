@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="42" y1="36" x2="1104" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0D1A19"/><stop offset="1" stop-color="#071012"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="160" y1="180" x2="420" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B7F4D3"/><stop offset="1" stop-color="#66CBA0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="matrix(0 340 -460 0 946 294)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7ADBB1" stop-opacity=".16"/><stop offset="1" stop-color="#7ADBB1" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <path d="M42 0H0V42" stroke="#A7E7C4" stroke-opacity=".055"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" rx="30" fill="url(#bg)"/>
+  <rect width="1200" height="630" rx="30" fill="url(#glow)"/>
+  <rect width="1200" height="630" rx="30" fill="url(#grid)"/>
+  <rect x="76" y="74" width="62" height="62" rx="19" fill="#10231D" stroke="#39594A"/>
+  <path d="M88 112c8 0 8-13 16-13s8 13 16 13c4 0 6-3 8-6" stroke="url(#mint)" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M92 120h34" stroke="#8AD7B0" stroke-opacity=".48" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="128" cy="105" r="3" fill="#C8F6D8"/>
+  <text x="154" y="113" fill="#EDF6F2" font-family="Arial,sans-serif" font-size="32" font-weight="700" letter-spacing="-1.4">tidelight</text>
+  <text x="78" y="256" fill="#87CFA9" font-family="Arial,sans-serif" font-size="14" font-weight="600" letter-spacing="3.2">AFTER-HOURS MARKET RESEARCH</text>
+  <text x="72" y="347" fill="#EDF6F2" font-family="Arial,sans-serif" font-size="66" font-weight="700" letter-spacing="-3.5">See the signal</text>
+  <text x="72" y="425" fill="#A6F4D0" font-family="Arial,sans-serif" font-size="66" font-weight="700" letter-spacing="-3.5">between sessions.</text>
+  <text x="78" y="482" fill="#99AAA3" font-family="Arial,sans-serif" font-size="19">Clear, source-led research for markets that never sleep.</text>
+  <ellipse cx="955" cy="326" rx="185" ry="112" transform="rotate(-26 955 326)" stroke="#668A7A" stroke-opacity=".30"/>
+  <ellipse cx="955" cy="326" rx="124" ry="181" transform="rotate(47 955 326)" stroke="#668A7A" stroke-opacity=".24"/>
+  <circle cx="955" cy="326" r="53" fill="#153127" fill-opacity=".8" stroke="#70C59C" stroke-opacity=".6"/>
+  <path d="M913 337c14 0 14-22 28-22s14 22 28 22c7 0 11-5 14-10" stroke="url(#mint)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M918 349h61" stroke="#8AD7B0" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="983" cy="326" r="4" fill="#C8F6D8"/>
+  <text x="827" y="159" fill="#668077" font-family="monospace" font-size="11" letter-spacing="2">EVENT FLOW</text>
+  <text x="1043" y="460" fill="#668077" font-family="monospace" font-size="11" letter-spacing="2">RISK CONTEXT</text>
+  <rect x="75" y="550" width="234" height="35" rx="17.5" fill="#A6F4D0" fill-opacity=".08" stroke="#7FCBA2" stroke-opacity=".33"/>
+  <circle cx="96" cy="567.5" r="4" fill="#86D8AA"/>
+  <text x="111" y="572" fill="#B3DCC3" font-family="monospace" font-size="11" letter-spacing="1.8">TIDELIGHT RESEARCH DESK</text>
+</svg>

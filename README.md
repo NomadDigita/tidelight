@@ -6,7 +6,7 @@ An after-hours research desk for tokenized US equities. Tidelight turns an event
 
 ## Current status
 
-The public dashboard is live. Supabase Auth uses email magic links, and signed-in users can save and review their owner-scoped research. The evidence workflow accepts a source title, secure URL, and user-provided passage; a server-only Qwen adapter returns a structured brief, quote-checks every claim against the supplied passage, and saves the source and evidence under RLS. The Qwen key is not configured in the deployment yet, so generation stays unavailable until the key is added. Market prices and sample stories remain illustrative; no investment performance is claimed.
+The public dashboard is live. Supabase Auth uses email magic links, and signed-in users can save and review their owner-scoped research. The evidence workflow accepts a source title, secure URL, and user-provided passage; a server-only Bitget Qwen adapter returns a structured brief, quote-checks every claim against the supplied passage, and saves the source and evidence under RLS. Market prices and sample stories remain illustrative; no investment performance is claimed.
 
 ## Stack
 

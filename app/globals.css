@@ -1479,6 +1479,14 @@ a{transition:color .18s ease,border-color .18s ease,background .18s ease,transfo
 .company-card-price{display:flex;align-items:center;justify-content:space-between;margin-top:11px;color:var(--text);font:500 13px var(--display)}
 .company-card-price b{font:8px var(--mono);font-weight:500}
 .company-card-price .positive{color:#76cf9c}.company-card-price .negative{color:#ed8982}
+.radar-feed-status{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--faint);font:8px var(--mono);letter-spacing:.2px}
+.radar-feed-indicator{width:6px;height:6px;flex:none;border-radius:50%;background:#75cf99;box-shadow:0 0 8px #75cf9970}
+.radar-feed-status.stale,.radar-feed-status.reconnecting{color:var(--amber)}
+.radar-feed-status.stale .radar-feed-indicator,.radar-feed-status.reconnecting .radar-feed-indicator{background:var(--amber);box-shadow:none}
+.radar-feed-status.unavailable{color:var(--red)}
+.radar-feed-status.unavailable .radar-feed-indicator{background:var(--red);box-shadow:none}
+.company-card-foot .pulse-dot.reconnecting,.company-card-foot .pulse-dot.stale{background:var(--amber)}
+.company-card-foot .pulse-dot.unavailable{background:var(--red)}
 @media(max-width:780px){
   .sidebar{display:none}
   .app-shell{display:block;padding-bottom:calc(68px + env(safe-area-inset-bottom))}

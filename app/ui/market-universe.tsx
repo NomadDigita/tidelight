@@ -27,7 +27,9 @@ function AssetLogo({ asset }: { asset: MarketAsset }) {
 
 function price(value: number | null, maximumDecimals = 6) {
   if (value === null) return "—";
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: maximumDecimals, minimumFractionDigits: value > 0 && value < 0.01 ? 4 : 2 }).format(value);
+  const digits = Math.max(0, Math.min(20, maximumDecimals));
+  const minimumDigits = Math.min(digits, value > 0 && value < 0.01 ? 4 : 2);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: digits, minimumFractionDigits: minimumDigits }).format(value);
 }
 
 function freshness(timestamp: number | null, staleAfterMs: number) {

@@ -74,24 +74,24 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return { error: "Sign in to create a private evidence brief." };
-  const apiKey = process.env.QWEN_API_KEY;
+  const apiKey = process.env.BITGET_QWEN_API_KEY;
   if (!apiKey) return { error: "Qwen is not configured yet. The brief is not generated; add the Qwen API key on the server to enable it." };
 
   const { data: run, error: runError } = await supabase.from("research_runs").insert({
     user_id: user.id,
     question,
     status: "analyzing",
-    model_name: "qwen-plus",
+    model_name: "qwen3.8-max",
   }).select("id").single();
   if (runError || !run) return { error: "Could not start this research run. Please try again." };
 
   try {
-    const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
+    const response = await fetch("https://hackathon.bitgetops.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       signal: AbortSignal.timeout(25000),
       body: JSON.stringify({
-        model: "qwen-plus",
+        model: "qwen3.8-max",
         temperature: 0.2,
         response_format: { type: "json_object" },
         messages: [

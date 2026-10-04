@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://tidelight-two.vercel.app"),
   title: "Tidelight — See the signal between sessions",
   description: "An after-hours research desk for tokenized US equities. Follow market events with clear context, scenarios, and sources.",
   icons: { icon: "/tidelight-mark.svg" },

@@ -28,7 +28,7 @@ The app must label each mode clearly and maintain separate metrics and artifacts
 - `GET /api/v3/reality/market/states`: US equity session schedule and DST context.
 - Spot candles and public WebSocket ticker/candlestick channels for strategy history and later streaming. Respect rToken-specific intervals and volume caveats.
 
-The market UI is read-only. It will use provider timestamps, show stale or unavailable state, and never fill a feed outage with invented values. Instrument flags are the source of truth for identifying an rToken; symbol prefixes alone are not proof. Logo URLs are presentation metadata and never treated as issuer, listing, or backing evidence. Each logo must have a deterministic fallback mark.
+The market UI is read-only. It uses provider timestamps, shows stale or unavailable state, and never fills a feed outage with invented values. Instrument flags are the source of truth for identifying an rToken; symbol prefixes alone are not proof. Logo URLs are presentation metadata and never treated as issuer, listing, or backing evidence. A verified issuer-domain map supplies company favicons where known; unsupported rTokens use a ticker mark rather than a guessed crypto logo. Full long-tail profile/logo coverage is a separately cached metadata integration.
 
 Bitget’s current Reality guide says tickers, instruments, candlesticks, and stock-reference data are public; Reality order book and platform fills have separate whitelist requirements. We should request the Reality data whitelist only if those surfaces materially improve the demo. The initial product does not need account credentials to display market data.
 
@@ -61,15 +61,15 @@ Bitget’s current Reality guide says tickers, instruments, candlesticks, and st
 
 | Phase | Build and evidence | Exit gate |
 |---|---|---|
-| 0 · Data trust (now) | Live Bitget instrument/ticker adapter; actual Reality/RWA flags; company/session reference; quote logos, exact source/time labels; load/error/empty/stale states | At least one real Bitget rToken verified end-to-end; no sample price rendered; no secrets required for read-only markets |
-| 1 · Asset workbench | Asset detail, 1m/5m/15m/1H/4H/1D charts, search/class filters, richer company/market state/calendar, user watchlist selection | All prices trace to Bitget responses; mobile/accessibility review; RLS-safe saved lists |
+| 0 · Data trust (completed) | Live Bitget USDT spot universe and ticker adapter; 3,321 instruments currently observed, including 2,809 marked `isReality`; Reality/RWA flags; provider timestamps; honest feed states; verified mapped logos and ticker fallbacks | Verified deployed rToken snapshot; no sample prices; no market-data key required |
+| 1 · Asset workbench (in progress) | Per-pair detail route; Bitget OHLCV chart (1H/4H/1D); validated API routes; issuer/session facts; market-map links; saved market-pair support | Test rToken, RWA and crypto routes; verify chart intervals; resolve/label unavailable session-state endpoint; mobile/accessibility and RLS review |
 | 2 · Research Desk | News/filing/event ingestion, user-provided sources, claim graph, counter-evidence, Qwen citation-constrained brief, source replay | Complete question-to-actionable-insight run with inspectable evidence and honest limitations |
 | 3 · Strategy Lab | Fetch/backfill rToken candles; versioned strategy API; fee/slippage/session-aware simulator; train/OOS reporting and export | Reproduce ≥60 total days and ≥30 OOS; leakage tests; show raw executions and negative as well as positive outcomes |
 | 4 · Nightwatch paper agent | Event/price triggers, deterministic constraints, paper fills, durable event log, pause/override UI, scheduled runs | One-click demo; rejection tests; sustained run; at least two weeks of timestamped logs if schedule permits |
 | 5 · Product finish | Three separate track journeys, responsive screens, docs, privacy/security review, demo fixture sourced from real data, product analytics opt-in | Fresh browser/guest run plus signed-in owner-boundary check; Vercel preview/prod smoke; no critical errors |
 | 6 · Submission kit | Code, demo, strategy report, paper log, Qwen disclosure, project description, materials index, required X post and quote, form | All fields and artifacts accessible; organizer-confirmed deadline captured; submission done by account owner |
 
-Work is ordered by dependencies: real data before strategy claims; persistent run logs before agent claims; only then choose the strongest theme and write the project description. The organizer-provided deadline extension is the operative assumption for scheduling; record the official confirmation in the release checklist before form submission.
+Work is ordered by dependencies: real data before strategy claims; persistent run logs before agent claims; only then choose the strongest theme and write the project description. The organizer-provided deadline extension is the operative assumption for scheduling; record the official confirmation in the release checklist before form submission. Bitget's `/reality/market/states` currently reports unavailable from this deployment; until it is verified, the app exposes that clearly and uses each asset's returned session eligibility without inferring whether the US market is open.
 
 ## API keys and access needed
 

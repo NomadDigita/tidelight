@@ -12,7 +12,7 @@ const companies = [
   { symbol: "AMD", company_name: "Advanced Micro Devices, Inc.", field: "Semiconductors", color: "red", mark: "A" },
 ];
 
-export default async function WatchlistPage({ searchParams }: { searchParams: Promise<{ error?: string; added?: string; removed?: string }> }) {
+export default async function WatchlistPage({ searchParams }: { searchParams: Promise<{ error?: string; added?: string; removed?: string; symbol?: string }> }) {
   const params = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -24,8 +24,8 @@ export default async function WatchlistPage({ searchParams }: { searchParams: Pr
   return <div className="content-wrap inner-page watchlist-page">
     <section className="page-heading compact-heading"><div><div className="eyebrow"><span className="eyebrow-line" /> YOUR COMPANY RADAR</div><h1>Keep a closer <span>watch.</span></h1><p>Build a personal map of the companies behind the stories you follow.</p></div></section>
     {params.added ? <p className="action-notice">Added to your watchlist.</p> : null}{params.removed ? <p className="action-notice">Removed from your watchlist.</p> : null}
-    {params.error ? <p className="action-error">That update didn’t go through. Please try again.</p> : null}
-    <WatchlistBoard items={watchlist} signedIn={Boolean(user)} />
-    <div className="route-footnote"><span>i</span> No live prices are shown here. Quotes and tokenized-equity instrument coverage have not been verified for this workspace.</div>
+    {params.error === "market" ? <p className="action-error">We couldn’t verify that pair on Bitget Spot. Check the exact symbol on the Market map and try again.</p> : params.error ? <p className="action-error">That update didn’t go through. Please try again.</p> : null}
+    <WatchlistBoard items={watchlist} signedIn={Boolean(user)} suggestedSymbol={params.symbol?.toUpperCase().match(/^[A-Z0-9]{2,32}$/) ? params.symbol.toUpperCase() : ""} />
+    <div className="route-footnote"><span>i</span> Market coverage and current Bitget public spot quotes are available in the Market map. Saved company radar items remain private to your signed-in workspace.</div>
   </div>;
 }

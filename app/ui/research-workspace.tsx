@@ -20,8 +20,8 @@ const suggestions = [
   "Compare Tesla and Nvidia exposure to this week’s macro events.",
 ];
 
-export default function ResearchWorkspace({ qwenAvailable }: { qwenAvailable: boolean }) {
-  const [question, setQuestion] = useState("");
+export default function ResearchWorkspace({ qwenAvailable, initialQuestion = "" }: { qwenAvailable: boolean; initialQuestion?: string }) {
+  const [question, setQuestion] = useState(initialQuestion);
   const [briefQuestion, setBriefQuestion] = useState("");
   const [error, setError] = useState("");
   const [sourceTitle, setSourceTitle] = useState("");

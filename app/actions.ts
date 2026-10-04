@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { getBitgetAsset } from "@/lib/bitget-market";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -28,26 +29,16 @@ export async function saveResearchQuestion(question: string) {
   return { id: data.id };
 }
 
-const watchlistCatalog: Record<string, string> = {
-  NVDA: "NVIDIA Corporation",
-  TSLA: "Tesla, Inc.",
-  MSFT: "Microsoft Corporation",
-  AMZN: "Amazon.com, Inc.",
-  AAPL: "Apple Inc.",
-  GOOGL: "Alphabet Inc.",
-  META: "Meta Platforms, Inc.",
-  AMD: "Advanced Micro Devices, Inc.",
-};
-
 export async function addWatchlistItem(formData: FormData) {
   const symbol = String(formData.get("symbol") ?? "").trim().toUpperCase();
-  const companyName = watchlistCatalog[symbol];
-  if (!companyName) redirect("/watchlist?error=symbol");
+  if (!/^[A-Z0-9]{2,32}$/.test(symbol)) redirect("/watchlist?error=symbol");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  const asset = await getBitgetAsset(symbol).catch(() => null);
+  if (!asset) redirect("/watchlist?error=market");
   const { error } = await supabase.from("watchlist_items").upsert(
-    { user_id: user.id, symbol, company_name: companyName },
+    { user_id: user.id, symbol, company_name: asset.name },
     { onConflict: "user_id,symbol", ignoreDuplicates: true },
   );
   if (error) redirect("/watchlist?error=save");

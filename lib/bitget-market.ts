@@ -56,6 +56,17 @@ export type MarketAsset = {
   logoUrl: string | null;
 };
 
+export type CandleInterval = "1H" | "4H" | "1D";
+export type MarketCandle = {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number | null;
+  turnover: number | null;
+};
+
 const API = "https://api.bitget.com/api/v3";
 const companyDomains: Record<string, string> = {
   AAPL: "apple.com", MSFT: "microsoft.com", NVDA: "nvidia.com", AMZN: "amazon.com", GOOGL: "google.com",
@@ -80,11 +91,11 @@ const companyDomains: Record<string, string> = {
   PANW: "paloaltonetworks.com", SHOP: "shopify.com", SPOT: "spotify.com",
 };
 
-async function fetchBitget<T>(path: string, revalidate: number): Promise<BitgetEnvelope<T>> {
+async function fetchBitget<T>(path: string, revalidate: number, timeoutMs = 9000): Promise<BitgetEnvelope<T>> {
   const response = await fetch(`${API}${path}`, {
     headers: { Accept: "application/json" },
     next: { revalidate },
-    signal: AbortSignal.timeout(9000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) throw new Error(`Bitget returned HTTP ${response.status}`);
   const body = (await response.json()) as BitgetEnvelope<T>;
@@ -113,8 +124,8 @@ export async function getBitgetMarketUniverse() {
   const [instrumentsResult, tickersResult, stockInfoResult, sessionsResult] = await Promise.allSettled([
     fetchBitget<BitgetInstrument[]>("/market/instruments?category=SPOT", 1800),
     fetchBitget<BitgetTicker[]>("/market/tickers?category=SPOT", 12),
-    fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600),
-    fetchBitget<Array<{ market: string; daylightType?: string; stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> }>>("/reality/market/states", 30),
+    fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500),
+    fetchBitget<Array<{ market: string; daylightType?: string; stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> }>>("/reality/market/states", 30, 2000),
   ]);
   if (instrumentsResult.status === "rejected") throw instrumentsResult.reason;
   if (tickersResult.status === "rejected") throw tickersResult.reason;
@@ -170,4 +181,54 @@ export async function getBitgetMarketUniverse() {
     staleAfterMs: 120_000,
     metadataStatus: stockInfoResult.status === "fulfilled" ? "available" : "partial",
   };
+}
+
+export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null> {
+  const encoded = encodeURIComponent(symbol);
+  const [instruments, tickers] = await Promise.all([
+    fetchBitget<BitgetInstrument[]>(`/market/instruments?category=SPOT&symbol=${encoded}`, 1800),
+    fetchBitget<BitgetTicker[]>(`/market/tickers?category=SPOT&symbol=${encoded}`, 12),
+  ]);
+  const instrument = instruments.data.find((item) => item.symbol.toUpperCase() === symbol);
+  const ticker = tickers.data.find((item) => item.symbol.toUpperCase() === symbol);
+  if (!instrument || !ticker) return null;
+  const reality = instrument.isReality?.toLowerCase() === "yes";
+  const rwa = instrument.isRwa?.toLowerCase() === "yes";
+  const stockInfo = reality ? await fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500) : null;
+  const stock = stockInfo?.data.find((item) => item.symbol.toUpperCase() === symbol);
+  const underlyingTicker = stock?.code?.toUpperCase() ?? null;
+  const lastPrice = numberOrNull(ticker.lastPrice);
+  if (lastPrice === null) return null;
+  const sessions = Array.isArray(stock?.tradingPeriod) ? stock.tradingPeriod : stock?.tradingPeriod ? [stock.tradingPeriod] : [];
+  return {
+    symbol: instrument.symbol,
+    baseCoin: instrument.baseCoin,
+    quoteCoin: instrument.quoteCoin,
+    name: stock?.name ?? instrument.baseCoin,
+    underlyingTicker,
+    kind: reality ? "rtoken" : rwa ? "rwa" : "crypto",
+    isReality: reality,
+    isRwa: rwa,
+    weekendTradable: stock ? stock.weekendTradable?.toLowerCase() === "yes" : null,
+    tradingSessions: sessions,
+    lastPrice,
+    change24h: numberOrNull(ticker.price24hPcnt),
+    high24h: numberOrNull(ticker.highPrice24h),
+    low24h: numberOrNull(ticker.lowPrice24h),
+    volume24h: numberOrNull(ticker.volume24h),
+    turnover24h: numberOrNull(ticker.turnover24h),
+    providerTimestamp: numberOrNull(ticker.ts),
+    logoUrl: getLogo(instrument.baseCoin, underlyingTicker, reality),
+  };
+}
+
+export async function getBitgetCandles(symbol: string, interval: CandleInterval): Promise<MarketCandle[]> {
+  const query = new URLSearchParams({ category: "SPOT", symbol, interval, type: "market", limit: "240" });
+  const response = await fetchBitget<string[][]>(`/market/candles?${query.toString()}`, interval === "1H" ? 30 : 120);
+  return response.data.flatMap((row): MarketCandle[] => {
+    if (row.length < 5) return [];
+    const [timestamp, open, high, low, close, volume, turnover] = row.map((value) => numberOrNull(value));
+    if (timestamp === null || open === null || high === null || low === null || close === null) return [];
+    return [{ timestamp, open, high, low, close, volume, turnover }];
+  }).sort((left, right) => left.timestamp - right.timestamp);
 }

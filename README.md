@@ -6,7 +6,7 @@ An after-hours research desk for tokenized US equities. Tidelight turns an event
 
 ## Current status
 
-The public dashboard is live. Supabase Auth uses email magic links, and signed-in users can save and review their owner-scoped research. The evidence workflow accepts a source title, secure URL, and user-provided passage; a server-only Bitget Qwen adapter returns a structured brief, quote-checks every claim against the supplied passage, and saves the source and evidence under RLS. Market prices and sample stories remain illustrative; no investment performance is claimed.
+The public product has a live, read-only Bitget USDT spot map with explicit Reality/rToken flags, quote timestamps, and asset details. Per-pair detail routes add public Bitget OHLCV history and session eligibility. Supabase Auth uses email magic links; signed-in users can save owner-scoped research and Bitget markets. The evidence workflow accepts a source title, secure URL, and user-provided passage; a server-only Bitget Qwen adapter returns a structured brief, quote-checks every claim against the supplied passage, and saves the source and evidence under RLS. No investment performance is claimed.
 
 ## Stack
 
@@ -14,7 +14,7 @@ The public dashboard is live. Supabase Auth uses email magic links, and signed-i
 - Supabase Postgres and Auth (database schema and RLS policies are provisioned)
 - Live site: [tidelight-two.vercel.app](https://tidelight-two.vercel.app/)
 - Qwen synthesis uses Bitget's hackathon gateway (`https://hackathon.bitgetops.com/v1`) with `qwen3.8-max`; `BITGET_QWEN_API_KEY` is server-only
-- Bitget Agent Hub SDK is present, but its UTA market catalog does not expose verified tokenized-equity instruments; the app does not pass off unrelated crypto tickers as equity data
+- Bitget public market APIs provide spot instruments, tickers, Reality metadata, and candles; account credentials are not required for these read-only routes
 
 ## Run locally
 
@@ -29,7 +29,7 @@ The initial migrations were applied to Supabase project `plmdnzbmvgigkzfmfwov`. 
 
 ## Product plan
 
-See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the hackathon thesis, user journey, build milestones, and demo scorecard.
+See [PROJECT_PLAN.md](./PROJECT_PLAN.md) and [docs/HACKATHON_PRODUCT_PLAN.md](./docs/HACKATHON_PRODUCT_PLAN.md) for the hackathon thesis, all-track architecture, credential inventory, build sequence, safety model, and demo scorecard.
 
 ## Validation targets
 

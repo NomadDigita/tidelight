@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { MarketAsset } from "@/lib/bitget-market";
 
 type MarketPayload = {
@@ -99,13 +100,13 @@ export default function MarketUniverse() {
       {error ? <div className="universe-stale" role="status">Last verified Bitget response is shown with its original timestamp. {error}</div> : null}
       <div className="universe-grid">{filteredAssets.slice(0, visibleCount).map((asset) => {
         const age = freshness(asset.providerTimestamp, payload.staleAfterMs);
-        return <article className="universe-card" key={asset.symbol}>
+        return <Link className="universe-card-link" href={`/markets/${encodeURIComponent(asset.symbol)}`} aria-label={`Open ${asset.name} market details`} key={asset.symbol}><article className="universe-card">
           <div className="universe-card-head"><AssetLogo asset={asset} /><div className="universe-identity"><b>{asset.name}</b><span>{asset.underlyingTicker ? `${asset.underlyingTicker} · ${asset.symbol}` : asset.symbol}</span></div><span className={`asset-class ${asset.kind}`}>{asset.kind === "rtoken" ? "rTOKEN" : asset.kind === "rwa" ? "RWA" : "SPOT"}</span></div>
           <div className="universe-price">${price(asset.lastPrice)} <span className={asset.change24h !== null && asset.change24h < 0 ? "negative" : "positive"}>{asset.change24h === null ? "—" : `${asset.change24h >= 0 ? "+" : ""}${(asset.change24h * 100).toFixed(2)}%`}</span></div>
           <div className="universe-range"><span><small>24H LOW</small><b>${price(asset.low24h)}</b></span><span className="range-line"><i style={{ left: `${asset.high24h && asset.low24h && asset.high24h > asset.low24h ? Math.max(0, Math.min(100, ((asset.lastPrice - asset.low24h) / (asset.high24h - asset.low24h)) * 100)) : 50}%` }} /></span><span><small>24H HIGH</small><b>${price(asset.high24h)}</b></span></div>
           <div className="universe-card-foot"><span className={age.fresh ? "quote-fresh" : "quote-stale"}><i /> {age.label}</span><span>VOL ${price(asset.turnover24h, 0)}</span></div>
           {asset.kind === "rtoken" ? <div className="universe-token-details"><span>{asset.weekendTradable ? "Weekend tradable" : "Equity-backed token"}</span><span>{asset.tradingSessions.length ? asset.tradingSessions.map((value) => value.replaceAll("_", " ")).join(" · ") : "Session details pending"}</span></div> : null}
-        </article>;
+        </article></Link>;
       })}</div>
       {!filteredAssets.length ? <div className="universe-message">No Bitget spot assets match that search. Try another symbol or asset class.</div> : null}
       {filteredAssets.length > visibleCount ? <button className="universe-more" type="button" onClick={() => setVisibleCount((count) => count + 18)}>Show more assets <span>{visibleCount} of {filteredAssets.length}</span></button> : null}

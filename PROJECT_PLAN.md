@@ -28,7 +28,7 @@ The judging story is a concrete before/after: a user asks what a new export rest
 
 - **Web:** Next.js App Router, TypeScript, Vercel.
 - **Identity and storage:** Supabase Auth + Postgres. RLS scopes each saved run, source, evidence item, watchlist item, and exposure snapshot to the signed-in owner.
-- **Research:** server-only provider adapters. Qwen keys stay on the server. The official Bitget Agent Hub SDK is restricted to the read-only market module. No account keys, trading tools, or order execution.
+- **Research:** server-only provider adapters. Qwen keys stay on the server. Direct Bitget public market APIs power the verified instrument and candle views; Agent Hub integrations will be selected and bounded by use case. No account keys, trading tools, or order execution in the current product.
 - **Evidence:** normalized sources and claim-to-source relationships in Postgres; every output distinguishes sourced fact from model inference.
 - **Fallback:** if a provider is unavailable, show a clear unavailable state. Never present mock content or stale quotes as live data.
 
@@ -40,9 +40,9 @@ The judging story is a concrete before/after: a user asks what a new export rest
 | 2 · Database foundation | Free Supabase project, owner-scoped schema, RLS | Done |
 | 3 · Product shell | Responsive research dashboard, brand assets, preview experience | Done |
 | 4 · Identity and persistence | Email-link sign-in, session refresh, save question action | Done; production callback allowlist configured; signed-in dashboard reads own saved questions |
-| 5 · Evidence workflow | source input/collection, normalization, claim provenance, Qwen synthesis | Source passage input, server-side Qwen adapter, quote validation, and RLS persistence implemented; needs a server key and a complete hosted run |
-| 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Bitget public market adapter and live universe underway; verify a real rToken response on deployment |
-| 7 · Quality and demo | citation checks, sample scenario, responsive review, demo recording/script | Pending |
+| 5 · Evidence workflow | source input/collection, normalization, claim provenance, Qwen synthesis | Source passage input, server-side Qwen adapter, quote validation, and RLS persistence implemented; hosted end-to-end judging scenario remains to be verified |
+| 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Live Bitget universe verified in deployment; 3,321 spot pairs, including Reality flags; asset-detail OHLCV routes and broad watchlist support are in progress |
+| 7 · Quality and demo | citation checks, representative scenarios, responsive/accessibility review, demo recording/script | Pending; verify asset API routes and session-state fallback before strategy work |
 | 8 · Release and submission | Public GitHub repo, Vercel production deployment, compliant X post and form submission | Public repo and deployment live; required substantive X post must include `#BitgetHackathon`, `@Bitget_AI`, and the organizer's quoted post; form submission remains pending |
 
 ## Demo scorecard

@@ -28,7 +28,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme === "daylight" ? "light" : "dark";
-    window.localStorage.setItem("tidelight-theme", theme);
   }, [theme]);
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 }

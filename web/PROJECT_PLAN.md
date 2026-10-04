@@ -40,8 +40,8 @@ The judging story is a concrete before/after: a user asks what a new export rest
 | 2 · Database foundation | Free Supabase project, owner-scoped schema, RLS | Done |
 | 3 · Product shell | Responsive research dashboard, brand assets, preview experience | Done |
 | 4 · Identity and persistence | Email-link sign-in, session refresh, save question action | Done; production callback allowlist configured; signed-in dashboard reads own saved questions |
-| 5 · Evidence workflow | source input/collection, normalization, claim provenance, Qwen synthesis | In progress; provider key and verifiable source pipeline are the next release gate |
-| 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Pending hosted network and symbol validation; do not imply sample quotes are live |
+| 5 · Evidence workflow | source input/collection, normalization, claim provenance, Qwen synthesis | Source passage input, server-side Qwen adapter, quote validation, and RLS persistence implemented; needs a server key and a complete hosted run |
+| 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Pending a verified instrument/data source; never substitute crypto tickers or illustrative prices |
 | 7 · Quality and demo | citation checks, sample scenario, responsive review, demo recording/script | Pending |
 | 8 · Release and submission | Public GitHub repo, Vercel production deployment, compliant X post and form submission | Public repo and deployment live; required substantive X post must include `#BitgetHackathon`, `@Bitget_AI`, and the organizer's quoted post; form submission remains pending |
 

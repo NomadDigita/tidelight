@@ -1,6 +1,6 @@
 # Tidelight · Hackathon build plan
 
-**Track and sub-theme:** AI Trading Desk → Information Extraction & Signal Generation.
+**Track coverage:** AI Trading Desk + Alpha Factory + Agentic Trading. Lead submission: Agentic Trading after the paper-agent proof is complete. Detailed scope: [docs/HACKATHON_PRODUCT_PLAN.md](docs/HACKATHON_PRODUCT_PLAN.md).
 
 **Target user:** active retail traders who hold or follow tokenized US equities and want to review weekend or after-hours events before deciding whether to act. The human trader makes the decision; Tidelight supplies traceable evidence and scenarios.
 
@@ -41,7 +41,7 @@ The judging story is a concrete before/after: a user asks what a new export rest
 | 3 · Product shell | Responsive research dashboard, brand assets, preview experience | Done |
 | 4 · Identity and persistence | Email-link sign-in, session refresh, save question action | Done; production callback allowlist configured; signed-in dashboard reads own saved questions |
 | 5 · Evidence workflow | source input/collection, normalization, claim provenance, Qwen synthesis | Source passage input, server-side Qwen adapter, quote validation, and RLS persistence implemented; needs a server key and a complete hosted run |
-| 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Pending a verified instrument/data source; never substitute crypto tickers or illustrative prices |
+| 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Bitget public market adapter and live universe underway; verify a real rToken response on deployment |
 | 7 · Quality and demo | citation checks, sample scenario, responsive review, demo recording/script | Pending |
 | 8 · Release and submission | Public GitHub repo, Vercel production deployment, compliant X post and form submission | Public repo and deployment live; required substantive X post must include `#BitgetHackathon`, `@Bitget_AI`, and the organizer's quoted post; form submission remains pending |
 

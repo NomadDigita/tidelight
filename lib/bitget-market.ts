@@ -91,6 +91,37 @@ const companyDomains: Record<string, string> = {
   PANW: "paloaltonetworks.com", SHOP: "shopify.com", SPOT: "spotify.com",
 };
 
+const issuerNames: Record<string, string> = {
+  AAPL: "Apple Inc.", MSFT: "Microsoft Corporation", NVDA: "NVIDIA Corporation", AMZN: "Amazon.com, Inc.",
+  GOOGL: "Alphabet Inc.", GOOG: "Alphabet Inc.", META: "Meta Platforms, Inc.", TSLA: "Tesla, Inc.",
+  AMD: "Advanced Micro Devices, Inc.", NFLX: "Netflix, Inc.", AVGO: "Broadcom Inc.", ORCL: "Oracle Corporation",
+  INTC: "Intel Corporation", JPM: "JPMorgan Chase & Co.", WMT: "Walmart Inc.", DIS: "The Walt Disney Company",
+  COIN: "Coinbase Global, Inc.", PLTR: "Palantir Technologies Inc.", MSTR: "Strategy Inc.", XOM: "Exxon Mobil Corporation",
+  COST: "Costco Wholesale Corporation", CRM: "Salesforce, Inc.", QCOM: "QUALCOMM Incorporated", BA: "The Boeing Company",
+  UBER: "Uber Technologies, Inc.", ABBV: "AbbVie Inc.", ABT: "Abbott Laboratories", ACN: "Accenture plc",
+  ADBE: "Adobe Inc.", ADI: "Analog Devices, Inc.", ADP: "Automatic Data Processing, Inc.", AMAT: "Applied Materials, Inc.",
+  AMGN: "Amgen Inc.", AMT: "American Tower Corporation", ARM: "Arm Holdings plc", ASML: "ASML Holding N.V.",
+  BAC: "Bank of America Corporation", BABA: "Alibaba Group Holding Limited", BKNG: "Booking Holdings Inc.", BMY: "Bristol Myers Squibb Company",
+  C: "Citigroup Inc.", CAT: "Caterpillar Inc.", CL: "Colgate-Palmolive Company", CMCSA: "Comcast Corporation",
+  COP: "ConocoPhillips", CVS: "CVS Health Corporation", CVX: "Chevron Corporation", DE: "Deere & Company",
+  DELL: "Dell Technologies Inc.", GE: "GE Aerospace", GILD: "Gilead Sciences, Inc.", GS: "The Goldman Sachs Group, Inc.",
+  HD: "The Home Depot, Inc.", HON: "Honeywell International Inc.", IBM: "International Business Machines Corporation",
+  JNJ: "Johnson & Johnson", KO: "The Coca-Cola Company", LIN: "Linde plc", LLY: "Eli Lilly and Company",
+  LMT: "Lockheed Martin Corporation", LOW: "Lowe's Companies, Inc.", MA: "Mastercard Incorporated", MCD: "McDonald's Corporation",
+  MDT: "Medtronic plc", MRK: "Merck & Co., Inc.", MS: "Morgan Stanley", MU: "Micron Technology, Inc.",
+  NKE: "NIKE, Inc.", NOW: "ServiceNow, Inc.", PEP: "PepsiCo, Inc.", PFE: "Pfizer Inc.", PG: "The Procter & Gamble Company",
+  PM: "Philip Morris International Inc.", RTX: "RTX Corporation", SBUX: "Starbucks Corporation", SCHW: "The Charles Schwab Corporation",
+  SO: "The Southern Company", T: "AT&T Inc.", TMO: "Thermo Fisher Scientific Inc.", TMUS: "T-Mobile US, Inc.",
+  TSM: "Taiwan Semiconductor Manufacturing Company", V: "Visa Inc.", VZ: "Verizon Communications Inc.", UPS: "United Parcel Service, Inc.",
+  UNH: "UnitedHealth Group Incorporated", WFC: "Wells Fargo & Company", WBD: "Warner Bros. Discovery, Inc.",
+  AXP: "American Express Company", BX: "Blackstone Inc.", CEG: "Constellation Energy Corporation", CRWD: "CrowdStrike Holdings, Inc.",
+  PANW: "Palo Alto Networks, Inc.", SHOP: "Shopify Inc.", SPOT: "Spotify Technology S.A.",
+  HYG: "iShares iBoxx $ High Yield Corporate Bond ETF", LQD: "iShares iBoxx $ Investment Grade Corporate Bond ETF",
+  IVV: "iShares Core S&P 500 ETF", MUB: "iShares National Muni Bond ETF", IDEV: "iShares Core MSCI International Developed Markets ETF",
+  VTEB: "Vanguard Tax-Exempt Bond ETF", IEFA: "iShares Core MSCI EAFE ETF", EWZ: "iShares MSCI Brazil ETF",
+  SOXL: "Direxion Daily Semiconductor Bull 3X Shares",
+};
+
 async function fetchBitget<T>(path: string, revalidate: number, timeoutMs = 9000): Promise<BitgetEnvelope<T>> {
   const response = await fetch(`${API}${path}`, {
     headers: { Accept: "application/json" },
@@ -118,6 +149,11 @@ function getLogo(baseCoin: string, underlyingTicker: string | null, isReality: b
   const coin = baseCoin.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (coin && coin.length <= 16) return `https://assets.coincap.io/assets/icons/${coin}@2x.png`;
   return null;
+}
+
+function getAssetName(stock: RealityStockInfo | undefined, underlyingTicker: string | null, baseCoin: string): string {
+  if (underlyingTicker && issuerNames[underlyingTicker]) return issuerNames[underlyingTicker];
+  return stock?.name || baseCoin;
 }
 
 export async function getBitgetMarketUniverse() {
@@ -151,7 +187,7 @@ export async function getBitgetMarketUniverse() {
         symbol: instrument.symbol,
         baseCoin: instrument.baseCoin,
         quoteCoin: instrument.quoteCoin,
-        name: stock?.name ?? instrument.baseCoin,
+        name: getAssetName(stock, underlyingTicker, instrument.baseCoin),
         underlyingTicker,
         kind: reality ? "rtoken" : rwa ? "rwa" : "crypto",
         isReality: reality,
@@ -206,7 +242,7 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
     symbol: instrument.symbol,
     baseCoin: instrument.baseCoin,
     quoteCoin: instrument.quoteCoin,
-    name: stock?.name ?? instrument.baseCoin,
+    name: getAssetName(stock, underlyingTicker, instrument.baseCoin),
     underlyingTicker,
     kind: reality ? "rtoken" : rwa ? "rwa" : "crypto",
     isReality: reality,

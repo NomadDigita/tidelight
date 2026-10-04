@@ -20,7 +20,7 @@ const subscribe = (callback: () => void) => {
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const theme = useSyncExternalStore(subscribe, getTheme, () => "night");
+  const theme = useSyncExternalStore(subscribe, getTheme, (): Theme => "night");
   const setTheme = (next: Theme) => {
     window.localStorage.setItem("tidelight-theme", next);
     window.dispatchEvent(new Event("tidelight-theme-change"));

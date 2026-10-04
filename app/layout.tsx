@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import WorkspaceShell from "./ui/workspace-shell";
+import { ThemeProvider } from "./ui/theme-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://tidelight-two.vercel.app"),
@@ -19,5 +20,5 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  return <html lang="en"><body><WorkspaceShell email={user?.email ?? null}>{children}</WorkspaceShell></body></html>;
+  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><WorkspaceShell email={user?.email ?? null}>{children}</WorkspaceShell></ThemeProvider></body></html>;
 }

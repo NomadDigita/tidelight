@@ -55,7 +55,7 @@ export default async function Home() {
             <div><div className="eyebrow"><span className="eyebrow-line" /> {today} <span className="eyebrow-divider">/</span> YOUR MARKET BRIEF</div><h1>{user ? "Welcome back" : "Welcome to Tidelight"}<span className="mint-dot">.</span></h1><p className="welcome-copy">The bell may be quiet. The market isn’t.</p></div>
             <button className="date-button">◷ <span>Last 24 hours</span>⌄</button>
           </section>
-          <ResearchWorkspace />
+          <ResearchWorkspace qwenAvailable={Boolean(process.env.QWEN_API_KEY)} />
           <section className="metric-grid" aria-label="Market overview">
             <article className="metric-card"><div className="metric-top"><span>MARKET PULSE</span><span className="metric-icon">◉</span></div><div className="metric-value">Risk aware <b className="metric-neutral">●</b></div><div className="metric-note">Across 4 tracked names <span>↗</span></div><div className="pulse-bars" aria-hidden="true">{Array.from({length: 24}, (_, i) => <i key={i} />)}</div></article>
             <article className="metric-card"><div className="metric-top"><span>OPEN STORIES</span><span className="metric-icon">⌁</span></div><div className="metric-value">03 <small>worth a closer look</small></div><div className="metric-note">1 new since your last visit <span className="note-warm">+1</span></div><div className="metric-sparkline"><svg viewBox="0 0 280 32" preserveAspectRatio="none" aria-hidden="true"><path d="M0 26 C22 28 30 22 49 24 S77 12 94 17 S122 22 143 13 S164 19 183 8 S213 14 228 9 S255 3 280 5" /></svg></div></article>

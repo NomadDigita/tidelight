@@ -20,7 +20,7 @@ const suggestions = [
   "Compare Tesla and Nvidia exposure to this week’s macro events.",
 ];
 
-export default function ResearchWorkspace() {
+export default function ResearchWorkspace({ qwenAvailable }: { qwenAvailable: boolean }) {
   const [question, setQuestion] = useState("");
   const [briefQuestion, setBriefQuestion] = useState("");
   const [error, setError] = useState("");
@@ -111,7 +111,8 @@ export default function ResearchWorkspace() {
             <div className="brief-section"><div className="brief-section-title"><span>03</span> CLAIMS WITH SOURCE QUOTES</div>{brief.claims.map((item, index) => <blockquote className="evidence-claim" key={index}><b>{item.claim}</b><q>{item.quote}</q><small>{item.stance.toUpperCase()} · {Math.round(item.confidence * 100)}% model confidence</small></blockquote>)}</div>
             <a className="source-citation" href={brief.source.url} target="_blank" rel="noreferrer">↗ {brief.source.title}</a>
           </div> : null}
-          <div className="brief-bottom"><span>◉ {brief ? "Saved to your private research" : "Evidence-based · Qwen synthesis"}</span><button className="save-brief-button" onClick={analyzeSource} disabled={isAnalyzing}>{isAnalyzing ? "Checking evidence…" : brief ? "Regenerate brief" : "Build cited brief"}</button><button onClick={() => setBriefQuestion("")}>Back to workspace <span>↗</span></button></div>
+          {!qwenAvailable ? <p className="provider-warning" role="status">Qwen is not configured on this deployment yet. The button stays disabled, and no research is presented as AI-generated.</p> : null}
+          <div className="brief-bottom"><span>◉ {brief ? "Saved to your private research" : qwenAvailable ? "Evidence-based · Qwen synthesis" : "Generation unavailable · setup needed"}</span><button className="save-brief-button" onClick={analyzeSource} disabled={isAnalyzing || !qwenAvailable}>{isAnalyzing ? "Checking evidence…" : brief ? "Regenerate brief" : qwenAvailable ? "Build cited brief" : "Qwen setup needed"}</button><button onClick={() => setBriefQuestion("")}>Back to workspace <span>↗</span></button></div>
           {error ? <p className="form-error" role="alert">{error}</p> : null}
         </section>
       </div> : null}

@@ -985,6 +985,7 @@ line-height:1.7
 .evidence-claim q { color:#92b2a2;font-size:9px;line-height:1.6 }
 .evidence-claim small { color:#708b7c;font:8px var(--mono);letter-spacing:.5px }
 .source-citation { display:inline-block;margin-top:13px;color:#a8e0bc;font-size:10px }
+.provider-warning { margin:16px 0 0;padding:10px 12px;border-left:2px solid #d4a66f;background:#211c14;color:#d6c3a6;font-size:10px;line-height:1.6 }
 .brief-section {
   margin-top:19px
 }

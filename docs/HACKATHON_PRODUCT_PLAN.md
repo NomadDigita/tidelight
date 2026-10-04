@@ -82,7 +82,7 @@ Work is ordered by dependencies: real data before strategy claims; persistent ru
 | Key | Purpose | Need now? | Destination when approved |
 |---|---|---:|---|
 | `POLYGON_API_KEY` (or a currently supported Massive equivalent) | Native US-equity reference candles for rToken-vs-underlying comparisons and another market-data fallback | No; Bitget rToken candles cover initial strategy work | Vercel encrypted server environment only |
-| `FINNHUB_API_KEY` | News/company-event enrichment if official RSS, SEC and Bitget sources prove insufficient | No; start with free official sources | Vercel encrypted server environment only |
+| `FINNHUB_API_KEY` | Broader news/company-event enrichment and issuer profile/logo metadata for the long tail of 2,800+ Reality listings | Optional for initial release; Bitget already supplies price, Reality classification, stock ticker/name, sessions and weekend flag | Vercel encrypted server environment only; cached, server-side requests |
 | `BITGET_API_KEY`, `BITGET_API_SECRET`, `BITGET_API_PASSPHRASE` | Authenticated account data or real exchange orders; not public prices or paper trading | **Do not provide yet** | Dedicated server-side secret storage only; separate restricted key, IP allowlist, no withdrawal permission, explicit live-trading authorization first |
 | Supabase service/secret key | Trusted scheduled sync or backend service operations that bypass user RLS | Not required for public feed route; current Supabase auth connection is already configured | Server/Edge Function secret only; never `NEXT_PUBLIC_*` |
 

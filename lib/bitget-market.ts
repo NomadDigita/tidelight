@@ -63,6 +63,21 @@ const companyDomains: Record<string, string> = {
   AVGO: "broadcom.com", ORCL: "oracle.com", INTC: "intel.com", JPM: "jpmorganchase.com", WMT: "walmart.com",
   DIS: "thewaltdisneycompany.com", COIN: "coinbase.com", PLTR: "palantir.com", MSTR: "strategy.com", XOM: "exxonmobil.com",
   COST: "costco.com", CRM: "salesforce.com", QCOM: "qualcomm.com", BA: "boeing.com", UBER: "uber.com",
+  ABBV: "abbvie.com", ABT: "abbott.com", ACN: "accenture.com", ADBE: "adobe.com", ADI: "analog.com",
+  ADP: "adp.com", AMAT: "appliedmaterials.com", AMGN: "amgen.com", AMT: "americantower.com", ARM: "arm.com",
+  ASML: "asml.com", BAC: "bankofamerica.com", BABA: "alibabagroup.com", BKNG: "bookingholdings.com", BMY: "bms.com",
+  C: "citigroup.com", CAT: "caterpillar.com", CHTR: "charter.com", CL: "colgatepalmolive.com", CMCSA: "comcast.com",
+  COP: "conocophillips.com", CVS: "cvshealth.com", CVX: "chevron.com", DE: "deere.com", DELL: "dell.com",
+  GE: "ge.com", GILD: "gilead.com", GS: "goldmansachs.com", HD: "homedepot.com", HON: "honeywell.com",
+  IBM: "ibm.com", JNJ: "jnj.com", KO: "coca-cola.com", LIN: "linde.com", LLY: "lilly.com",
+  LMT: "lockheedmartin.com", LOW: "lowes.com", MA: "mastercard.com", MCD: "mcdonalds.com", MDT: "medtronic.com",
+  MRK: "merck.com", MS: "morganstanley.com", MU: "micron.com", NKE: "nike.com", NOW: "servicenow.com",
+  PEP: "pepsico.com", PFE: "pfizer.com", PG: "pg.com", PM: "pmi.com", RTX: "rtx.com",
+  SBUX: "starbucks.com", SCHW: "schwab.com", SIEGY: "siemens.com", SO: "southerncompany.com", T: "att.com",
+  TMO: "thermofisher.com", TMUS: "t-mobile.com", TSM: "tsmc.com", V: "visa.com", VZ: "verizon.com",
+  UPS: "ups.com", UNH: "unitedhealthgroup.com", WFC: "wellsfargo.com", WBD: "wbd.com",
+  AXP: "americanexpress.com", BX: "blackstone.com", CEG: "constellationenergy.com", CRWD: "crowdstrike.com",
+  PANW: "paloaltonetworks.com", SHOP: "shopify.com", SPOT: "spotify.com",
 };
 
 async function fetchBitget<T>(path: string, revalidate: number): Promise<BitgetEnvelope<T>> {
@@ -83,10 +98,12 @@ function numberOrNull(value: string | undefined): number | null {
   return Number.isFinite(number) ? number : null;
 }
 
-function getLogo(baseCoin: string, underlyingTicker: string | null): string | null {
+function getLogo(baseCoin: string, underlyingTicker: string | null, isReality: boolean): string | null {
   if (underlyingTicker && companyDomains[underlyingTicker]) {
     return `https://www.google.com/s2/favicons?domain=${companyDomains[underlyingTicker]}&sz=128`;
   }
+  // Never guess an rToken's issuer logo using a crypto-symbol icon service.
+  if (isReality) return null;
   const coin = baseCoin.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (coin && coin.length <= 16) return `https://assets.coincap.io/assets/icons/${coin}@2x.png`;
   return null;
@@ -137,7 +154,7 @@ export async function getBitgetMarketUniverse() {
         volume24h: numberOrNull(ticker.volume24h),
         turnover24h: numberOrNull(ticker.turnover24h),
         providerTimestamp: numberOrNull(ticker.ts),
-        logoUrl: getLogo(instrument.baseCoin, underlyingTicker),
+        logoUrl: getLogo(instrument.baseCoin, underlyingTicker, reality),
       }];
     })
     .sort((left, right) => Number(right.isReality) - Number(left.isReality) || (right.turnover24h ?? 0) - (left.turnover24h ?? 0));
@@ -148,6 +165,7 @@ export async function getBitgetMarketUniverse() {
     generatedAt: Date.now(),
     assets,
     session: session ? { market: session.market, daylightType: session.daylightType ?? null, schedule: session.stateList ?? [] } : null,
+    marketSessionStatus: sessionsResult.status === "rejected" ? "unavailable" : session ? "available" : "empty",
     coverage: { total: assets.length, rTokens: assets.filter((asset) => asset.isReality).length, rwa: assets.filter((asset) => asset.isRwa).length, crypto: assets.filter((asset) => asset.kind === "crypto").length },
     staleAfterMs: 120_000,
     metadataStatus: stockInfoResult.status === "fulfilled" ? "available" : "partial",

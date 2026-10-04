@@ -11,6 +11,7 @@ type MarketPayload = {
   session: { market: string; daylightType: string | null; schedule: Array<{ state: string; startTime: string; endTime: string }> } | null;
   coverage: { total: number; rTokens: number; rwa: number; crypto: number };
   staleAfterMs: number;
+  marketSessionStatus?: "available" | "empty" | "unavailable";
 };
 
 type Filter = "all" | "rtoken" | "rwa" | "crypto";
@@ -75,7 +76,7 @@ export default function MarketUniverse() {
 
   const sessionLabel = payload?.session?.schedule.length
     ? `US sessions · ${payload.session.daylightType === "dst" ? "Daylight saving" : "Standard time"}`
-    : "US session calendar warming up";
+    : payload?.marketSessionStatus === "unavailable" ? "Session feed unavailable" : payload?.marketSessionStatus === "empty" ? "No session data returned" : "US session calendar warming up";
 
   return <section className="universe-section" aria-labelledby="universe-title">
     <div className="universe-heading">
@@ -86,7 +87,7 @@ export default function MarketUniverse() {
       <div><span>REALITY rTOKENS</span><b>{payload?.coverage.rTokens ?? "—"}</b><small>Bitget classified</small></div>
       <div><span>RWA SPOT PAIRS</span><b>{payload?.coverage.rwa ?? "—"}</b><small>Flagged by instrument metadata</small></div>
       <div><span>CRYPTO SPOT PAIRS</span><b>{payload?.coverage.crypto ?? "—"}</b><small>USDT quoted</small></div>
-      <div><span>SESSION REFERENCE</span><b className="session-value">{sessionLabel}</b><small>Bitget Reality stock info</small></div>
+      <div><span>SESSION REFERENCE</span><b className="session-value">{sessionLabel}</b><small>Bitget Reality market states</small></div>
     </div>
     <div className="universe-controls">
       <label className="universe-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setVisibleCount(18); }} placeholder="Search ticker, token, or company" aria-label="Search market assets" /></label>

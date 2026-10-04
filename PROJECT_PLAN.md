@@ -1,6 +1,6 @@
 # Tidelight · Hackathon build plan
 
-**Track coverage:** AI Trading Desk + Alpha Factory + Agentic Trading. Lead submission: Agentic Trading after the paper-agent proof is complete. Detailed scope: [docs/HACKATHON_PRODUCT_PLAN.md](docs/HACKATHON_PRODUCT_PLAN.md).
+**Track coverage:** AI Trading Desk + Alpha Factory + Agentic Trading. Current emphasis: grow the evidence-backed desk and validate the Strategy Lab on long-window histories; Agentic Trading stays a paper-only next phase until its risk gates and dated audit trail are built. Detailed scope: [docs/HACKATHON_PRODUCT_PLAN.md](docs/HACKATHON_PRODUCT_PLAN.md).
 
 **Target user:** active retail traders who hold or follow tokenized US equities and want to review weekend or after-hours events before deciding whether to act. The human trader makes the decision; Tidelight supplies traceable evidence and scenarios.
 
@@ -41,9 +41,11 @@ The judging story is a concrete before/after: a user asks what a new export rest
 | 3 · Product shell | Responsive research dashboard, brand assets, preview experience | Done |
 | 4 · Identity and persistence | Email-link sign-in, session refresh, save question action | Done; production callback allowlist configured; signed-in dashboard reads own saved questions |
 | 5 · Evidence workflow | source input/collection, normalization, claim provenance, Qwen synthesis | Source passage input, server-side Qwen adapter, quote validation, and RLS persistence implemented; hosted end-to-end judging scenario remains to be verified |
-| 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Live Bitget universe verified in deployment; 3,321 spot pairs, including Reality flags; asset-detail OHLCV routes and broad watchlist support are in progress |
-| 7 · Quality and demo | citation checks, representative scenarios, responsive/accessibility review, demo recording/script | Pending; verify asset API routes and session-state fallback before strategy work |
-| 8 · Release and submission | Public GitHub repo, Vercel production deployment, compliant X post and form submission | Public repo and deployment live; required substantive X post must include `#BitgetHackathon`, `@Bitget_AI`, and the organizer's quoted post; form submission remains pending |
+| 6 · Market integration | Verify actual Bitget tokenized-equity instruments and expose read-only data | Live Bitget universe and asset details deployed; public ticker/OHLCV feeds, Reality flags, company metadata, session eligibility and watchlist validation are wired. Market-state calendar remains honestly unavailable. |
+| 7 · Alpha Factory baseline | Build deterministic strategy replay with costs, chronological holdout, trade log and exact data archive | Strategy Lab and private Supabase run storage implemented. Only 1,000-candle histories with ≥60 days overall and ≥30 days out of sample qualify; rToken histories and live runs still need evaluation before submission claims. |
+| 8 · Nightwatch paper agent | Event/price triggers, deterministic constraints, paper fills, durable event log, pause/override UI | Not started. No exchange account keys or live orders are involved. |
+| 9 · Quality and demo | citation checks, representative scenarios, responsive/accessibility review, demo recording/script | Next gate: verify long-window Bitget runs for representative rTokens and crypto; test signed-in data isolation; polish and rehearse end-to-end demos. |
+| 10 · Release and submission | Public GitHub repo, Vercel production deployment, compliant X post and form submission | Public repo and deployment live; required substantive X post must include `#BitgetHackathon`, `@Bitget_AI`, and the organizer's quoted post; form submission remains pending |
 
 ## Demo scorecard
 

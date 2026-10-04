@@ -260,8 +260,9 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
   };
 }
 
-export async function getBitgetCandles(symbol: string, interval: CandleInterval): Promise<MarketCandle[]> {
-  const query = new URLSearchParams({ category: "SPOT", symbol, interval, type: "market", limit: "240" });
+export async function getBitgetCandles(symbol: string, interval: CandleInterval, limit = 240): Promise<MarketCandle[]> {
+  const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit)));
+  const query = new URLSearchParams({ category: "SPOT", symbol, interval, type: "market", limit: String(safeLimit) });
   const response = await fetchBitget<string[][]>(`/market/candles?${query.toString()}`, interval === "1H" ? 30 : 120);
   return response.data.flatMap((row): MarketCandle[] => {
     if (row.length < 5) return [];

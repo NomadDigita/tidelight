@@ -31,7 +31,7 @@ export default async function Home() {
         <div className="company-card-top"><span className={`ticker-mark ${company.color}`}>{company.mark}</span><span className="company-symbol">{company.symbol}</span><span className="company-index">0{index + 1}</span></div>
         <b>{company.name}</b><small>{company.field}</small><div className="company-card-foot"><span className="pulse-dot" /> Research coverage <span>↗</span></div>
       </Link>)}</div>
-      <p className="data-disclaimer"><span>i</span> Coverage cards are a starting universe, not live prices or investment signals. Market data connections are still in progress.</p>
+      <p className="data-disclaimer"><span>i</span> Coverage cards are a starting research universe, not live quotes or investment signals. Open the Bitget market map for current prices and verified instrument details.</p>
     </section>
 
     <section className="overview-grid">

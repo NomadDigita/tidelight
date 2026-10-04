@@ -10,6 +10,7 @@ const navigation = [
   { href: "/", label: "Overview", icon: "◫" },
   { href: "/research", label: "Research desk", icon: "⌕" },
   { href: "/markets", label: "Market map", icon: "⌁" },
+  { href: "/strategies", label: "Strategy lab", icon: "⌗" },
   { href: "/watchlist", label: "Watchlist", icon: "⌖" },
   { href: "/briefs", label: "Saved briefs", icon: "▤" },
 ];

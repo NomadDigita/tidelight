@@ -184,17 +184,19 @@ export async function getBitgetMarketUniverse() {
 }
 
 export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null> {
-  const encoded = encodeURIComponent(symbol);
-  const [instruments, tickers] = await Promise.all([
-    fetchBitget<BitgetInstrument[]>(`/market/instruments?category=SPOT&symbol=${encoded}`, 1800),
-    fetchBitget<BitgetTicker[]>(`/market/tickers?category=SPOT&symbol=${encoded}`, 12),
-  ]);
+  const instruments = await fetchBitget<BitgetInstrument[]>("/market/instruments?category=SPOT", 1800);
   const instrument = instruments.data.find((item) => item.symbol.toUpperCase() === symbol);
+  if (!instrument) return null;
+  const [tickers, stockInfo] = await Promise.all([
+    fetchBitget<BitgetTicker[]>("/market/tickers?category=SPOT", 12),
+    instrument.isReality?.toLowerCase() === "yes"
+      ? fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500)
+      : Promise.resolve(null),
+  ]);
   const ticker = tickers.data.find((item) => item.symbol.toUpperCase() === symbol);
-  if (!instrument || !ticker) return null;
+  if (!ticker) return null;
   const reality = instrument.isReality?.toLowerCase() === "yes";
   const rwa = instrument.isRwa?.toLowerCase() === "yes";
-  const stockInfo = reality ? await fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500) : null;
   const stock = stockInfo?.data.find((item) => item.symbol.toUpperCase() === symbol);
   const underlyingTicker = stock?.code?.toUpperCase() ?? null;
   const lastPrice = numberOrNull(ticker.lastPrice);

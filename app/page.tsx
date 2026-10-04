@@ -1,18 +1,25 @@
 import Link from "next/link";
 import ResearchWorkspace from "./ui/research-workspace";
+import IssuerLogo from "./ui/issuer-logo";
+import { getBitgetMarketUniverse } from "@/lib/bitget-market";
 import { createClient } from "@/lib/supabase/server";
 
 const companies = [
-  { symbol: "NVDA", name: "NVIDIA", field: "Semiconductors", color: "green", mark: "N" },
-  { symbol: "TSLA", name: "Tesla", field: "Mobility", color: "red", mark: "T" },
-  { symbol: "MSFT", name: "Microsoft", field: "Cloud & AI", color: "blue", mark: "M" },
-  { symbol: "AMZN", name: "Amazon", field: "Commerce", color: "amber", mark: "a" },
+  { symbol: "NVDA", name: "NVIDIA", field: "Semiconductors", color: "green" },
+  { symbol: "TSLA", name: "Tesla", field: "Mobility", color: "red" },
+  { symbol: "MSFT", name: "Microsoft", field: "Cloud & AI", color: "blue" },
+  { symbol: "AMZN", name: "Amazon", field: "Commerce", color: "amber" },
 ];
+
+function price(value: number) {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: value < 0.01 ? 6 : 2, minimumFractionDigits: 2 }).format(value);
+}
 
 export default async function Home() {
   const today = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "America/New_York" }).format(new Date());
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const market = await getBitgetMarketUniverse().catch(() => null);
   const { data: savedRuns } = user
     ? await supabase.from("research_runs").select("id, question, status, created_at").order("created_at", { ascending: false }).limit(4)
     : { data: [] };
@@ -27,11 +34,17 @@ export default async function Home() {
 
     <section className="dashboard-section" aria-labelledby="coverage-title">
       <div className="section-heading"><div><div className="eyebrow small-eyebrow">YOUR RADAR, AT A GLANCE</div><h2 id="coverage-title">Companies in view</h2></div><Link className="text-button" href="/watchlist">Open watchlist <span>↗</span></Link></div>
-      <div className="company-grid">{companies.map((company, index) => <Link className="company-card" href={`/markets#${company.symbol.toLowerCase()}`} key={company.symbol}>
-        <div className="company-card-top"><span className={`ticker-mark ${company.color}`}>{company.mark}</span><span className="company-symbol">{company.symbol}</span><span className="company-index">0{index + 1}</span></div>
-        <b>{company.name}</b><small>{company.field}</small><div className="company-card-foot"><span className="pulse-dot" /> Research coverage <span>↗</span></div>
-      </Link>)}</div>
-      <p className="data-disclaimer"><span>i</span> Coverage cards are a starting research universe, not live quotes or investment signals. Open the Bitget market map for current prices and verified instrument details.</p>
+      <div className="company-grid">{companies.map((company, index) => {
+        const asset = market?.assets.find((item) => item.isReality && item.underlyingTicker === company.symbol);
+        const logoUrl = asset?.logoUrl ?? `https://www.google.com/s2/favicons?domain=${({ NVDA: "nvidia.com", TSLA: "tesla.com", MSFT: "microsoft.com", AMZN: "amazon.com" } as Record<string, string>)[company.symbol]}&sz=128`;
+        return <Link className="company-card" href={asset ? `/markets/${encodeURIComponent(asset.symbol)}` : "/markets"} key={company.symbol}>
+          <div className="company-card-top"><IssuerLogo ticker={company.symbol} logoUrl={logoUrl} /><span className="company-symbol">{asset?.symbol ?? company.symbol}</span><span className="company-index">0{index + 1}</span></div>
+          <b>{company.name}</b><small>{asset ? `${company.field} · Bitget Reality` : company.field}</small>
+          {asset ? <div className="company-card-price"><span>${price(asset.lastPrice)}</span><b className={asset.change24h !== null && asset.change24h < 0 ? "negative" : "positive"}>{asset.change24h === null ? "—" : `${asset.change24h >= 0 ? "+" : ""}${(asset.change24h * 100).toFixed(2)}%`}</b></div> : null}
+          <div className="company-card-foot"><span className="pulse-dot" /> {asset ? "Live Bitget rToken" : market ? "Issuer reference" : "Market feed unavailable"} <span>↗</span></div>
+        </Link>;
+      })}</div>
+      <p className="data-disclaimer"><span>i</span> {market ? "Prices and token classification come from Bitget’s public spot feed; issuer names and logos identify the underlying company. Market data is informational, not an investment signal." : "Bitget’s public market feed is temporarily unavailable. No sample prices are shown; open the market map to retry."}</p>
     </section>
 
     <section className="overview-grid">

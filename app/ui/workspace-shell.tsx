@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions";
 
 const navigation = [
@@ -15,9 +15,12 @@ const navigation = [
   { href: "/watchlist", label: "Watchlist", icon: "⌖" },
   { href: "/briefs", label: "Saved briefs", icon: "▤" },
 ];
+const mobilePrimary = [navigation[0], navigation[1], navigation[2], navigation[4]];
 
 export default function WorkspaceShell({ children, email }: { children: ReactNode; email: string | null }) {
   const pathname = usePathname();
+  const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
+  const mobileMenuOpen = mobileMenuPath === pathname;
   const active = navigation.find((item) => item.href === pathname) ?? navigation[0];
 
   if (pathname.startsWith("/login") || pathname.startsWith("/auth/")) return children;
@@ -64,6 +67,26 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
         <div className="route-content">{children}</div>
         <footer className="page-footer"><span>© 2026 Tidelight Research</span><span><b>Clarity when the bell is quiet.</b> <i>Built for markets that never sleep.</i></span><Link href="/settings">PRIVACY & SETTINGS <span className="footer-dot">●</span></Link></footer>
       </main>
+      <nav className="mobile-nav" aria-label="Mobile navigation">
+        {mobilePrimary.map((item) => {
+          const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          return <Link className={`mobile-nav-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}>
+            <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span><span>{item.label === "Research desk" ? "Research" : item.label === "Market map" ? "Markets" : item.label === "Nightwatch agent" ? "Nightwatch" : "Home"}</span>
+          </Link>;
+        })}
+        <button className={`mobile-nav-link${mobileMenuOpen || navigation.slice(3).some((item) => pathname.startsWith(item.href)) ? " active" : ""}`} type="button" aria-expanded={mobileMenuOpen} aria-controls="mobile-more-menu" onClick={() => setMobileMenuPath(mobileMenuOpen ? null : pathname)}>
+          <span className="mobile-nav-icon" aria-hidden="true">{mobileMenuOpen ? "×" : "···"}</span><span>More</span>
+        </button>
+        {mobileMenuOpen ? <div className="mobile-more-menu" id="mobile-more-menu">
+          <div className="mobile-more-heading">YOUR WORKSPACE <button type="button" aria-label="Close navigation menu" onClick={() => setMobileMenuPath(null)}>×</button></div>
+          {navigation.filter((item) => !mobilePrimary.some((primary) => primary.href === item.href)).map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return <Link className={`mobile-more-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}><span aria-hidden="true">{item.icon}</span>{item.label}<span className="mobile-more-arrow">↗</span></Link>;
+          })}
+          <Link className="mobile-more-link" href="/settings"><span aria-hidden="true">⚙</span>Settings<span className="mobile-more-arrow">↗</span></Link>
+          <Link className="mobile-more-account" href={email ? "/settings" : "/login"}>{email ? email : "Sign in to save your research"}<span>↗</span></Link>
+        </div> : null}
+      </nav>
     </div>
   );
 }

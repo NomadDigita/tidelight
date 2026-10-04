@@ -971,6 +971,20 @@ border-top:1px solid #203231
 font-size:11px;
 line-height:1.7
 }
+.source-fields { display:grid;gap:12px;margin-top:16px }
+.source-fields label { display:grid;gap:6px;color:#a9beb4;font:8px var(--mono);letter-spacing:.7px;text-transform:uppercase }
+.source-fields input,.source-fields textarea { width:100%;border:1px solid #29403c;border-radius:6px;background:#081113;color:#e1eee8;padding:10px 11px;font:11px var(--font);outline:none;text-transform:none;letter-spacing:0 }
+.source-fields input:focus,.source-fields textarea:focus { border-color:#70d4a6;box-shadow:0 0 0 2px #70d4a619 }
+.source-fields textarea { resize:vertical;min-height:105px;line-height:1.6 }
+.source-count { justify-self:end;color:#718780;font:8px var(--mono);letter-spacing:0;text-transform:none }
+.generated-brief { margin-top:20px;padding-top:2px;border-top:1px solid #20312f }
+.generated-brief .brief-section p { font-size:11px }
+.generated-brief .brief-section ul { margin:8px 0 0;padding-left:18px;color:#b7c9c0;font-size:10px;line-height:1.8 }
+.evidence-claim { display:grid;gap:7px;margin:10px 0;padding:11px 12px;border-left:2px solid #7ccda2;background:#101d1b;color:#c4d3cc }
+.evidence-claim b { font-size:10px;line-height:1.6 }
+.evidence-claim q { color:#92b2a2;font-size:9px;line-height:1.6 }
+.evidence-claim small { color:#708b7c;font:8px var(--mono);letter-spacing:.5px }
+.source-citation { display:inline-block;margin-top:13px;color:#a8e0bc;font-size:10px }
 .brief-section {
   margin-top:19px
 }

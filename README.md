@@ -6,15 +6,15 @@ An after-hours research desk for tokenized US equities. Tidelight turns an event
 
 ## Current status
 
-The dashboard and branded research workspace are implemented. Supabase Auth uses email magic links; verified sessions refresh through Next.js proxy, and a server action saves research questions as owner-scoped queued runs. The research preview still has illustrative content: live evidence gathering, Qwen synthesis, and live market data are not yet connected. No investment performance is claimed.
+The public dashboard is live. Supabase Auth uses email magic links, and signed-in users can save and review their owner-scoped research. The evidence workflow accepts a source title, secure URL, and user-provided passage; a server-only Qwen adapter returns a structured brief, quote-checks every claim against the supplied passage, and saves the source and evidence under RLS. The Qwen key is not configured in the deployment yet, so generation stays unavailable until the key is added. Market prices and sample stories remain illustrative; no investment performance is claimed.
 
 ## Stack
 
 - Next.js App Router + TypeScript
 - Supabase Postgres and Auth (database schema and RLS policies are provisioned)
 - Live site: [tidelight-two.vercel.app](https://tidelight-two.vercel.app/)
-- Qwen event extraction and synthesis planned (server-side API key required)
-- Bitget Agent Hub SDK installed in read-only mode; public API reachability and tokenized-equity symbols need validation in the hosted runtime
+- Qwen synthesis uses Alibaba Model Studio's OpenAI-compatible endpoint; `QWEN_API_KEY` is server-only
+- Bitget Agent Hub SDK is present, but its UTA market catalog does not expose verified tokenized-equity instruments; the app does not pass off unrelated crypto tickers as equity data
 
 ## Run locally
 

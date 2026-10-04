@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -25,6 +26,55 @@ export async function saveResearchQuestion(question: string) {
 
   if (error) return { error: "Could not save this question. Please try again." };
   return { id: data.id };
+}
+
+const watchlistCatalog: Record<string, string> = {
+  NVDA: "NVIDIA Corporation",
+  TSLA: "Tesla, Inc.",
+  MSFT: "Microsoft Corporation",
+  AMZN: "Amazon.com, Inc.",
+  AAPL: "Apple Inc.",
+  GOOGL: "Alphabet Inc.",
+  META: "Meta Platforms, Inc.",
+  AMD: "Advanced Micro Devices, Inc.",
+};
+
+export async function addWatchlistItem(formData: FormData) {
+  const symbol = String(formData.get("symbol") ?? "").trim().toUpperCase();
+  const companyName = watchlistCatalog[symbol];
+  if (!companyName) redirect("/watchlist?error=symbol");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { error } = await supabase.from("watchlist_items").upsert(
+    { user_id: user.id, symbol, company_name: companyName },
+    { onConflict: "user_id,symbol", ignoreDuplicates: true },
+  );
+  if (error) redirect("/watchlist?error=save");
+  revalidatePath("/watchlist");
+  redirect("/watchlist?added=1");
+}
+
+export async function removeWatchlistItem(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { error } = await supabase.from("watchlist_items").delete().eq("id", id);
+  if (error) redirect("/watchlist?error=remove");
+  revalidatePath("/watchlist");
+  redirect("/watchlist?removed=1");
+}
+
+export async function updateRiskProfile(formData: FormData) {
+  const riskProfile = String(formData.get("risk_profile") ?? "");
+  if (!(riskProfile === "conservative" || riskProfile === "balanced" || riskProfile === "growth")) redirect("/settings?error=profile");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { error } = await supabase.from("user_preferences").upsert({ user_id: user.id, risk_profile: riskProfile });
+  if (error) redirect("/settings?error=save");
+  revalidatePath("/settings");
+  redirect("/settings?updated=1");
 }
 
 type EvidenceClaim = { claim: string; quote: string; stance: "supports" | "contradicts" | "context"; confidence: number };

@@ -1,0 +1,12 @@
+:root[data-theme="daylight"] .sidebar-promo a,
+:root[data-theme="daylight"] .privacy-links a { color: #286a4d; }
+:root[data-theme="daylight"] .sidebar-promo a { font-weight: 600; }
+:root[data-theme="daylight"] .data-status b,
+:root[data-theme="daylight"] .account-identity > div:nth-child(2) b { color: #2d4437; }
+:root[data-theme="daylight"] .data-status small,
+:root[data-theme="daylight"] .user-profile small,
+:root[data-theme="daylight"] .account-identity > div:nth-child(2) small,
+:root[data-theme="daylight"] .settings-footnote,
+:root[data-theme="daylight"] .connection-meta span { color: #637168; }
+:root[data-theme="daylight"] .connected-pill,
+:root[data-theme="daylight"] .connection-row > b { color: #286a4d; }

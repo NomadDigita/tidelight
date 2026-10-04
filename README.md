@@ -13,7 +13,7 @@ The public dashboard is live. Supabase Auth uses email magic links, and signed-i
 - Next.js App Router + TypeScript
 - Supabase Postgres and Auth (database schema and RLS policies are provisioned)
 - Live site: [tidelight-two.vercel.app](https://tidelight-two.vercel.app/)
-- Qwen synthesis uses Alibaba Model Studio's OpenAI-compatible endpoint; `QWEN_API_KEY` is server-only
+- Qwen synthesis uses Bitget's hackathon gateway (`https://hackathon.bitgetops.com/v1`) with `qwen3.8-max`; `BITGET_QWEN_API_KEY` is server-only
 - Bitget Agent Hub SDK is present, but its UTA market catalog does not expose verified tokenized-equity instruments; the app does not pass off unrelated crypto tickers as equity data
 
 ## Run locally

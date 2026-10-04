@@ -12,7 +12,7 @@ The dashboard and branded research workspace are implemented. Supabase Auth uses
 
 - Next.js App Router + TypeScript
 - Supabase Postgres and Auth (database schema and RLS policies are provisioned)
-- Vercel deployment planned
+- Public Vercel preview: [tidelight-two.vercel.app](https://tidelight-two.vercel.app/)
 - Qwen event extraction and synthesis planned (server-side API key required)
 - Bitget Agent Hub SDK installed in read-only mode; public API reachability and tokenized-equity symbols need validation in the hosted runtime
 

@@ -23,6 +23,15 @@ export default async function Home() {
 
     <ResearchWorkspace qwenAvailable={Boolean(process.env.BITGET_QWEN_API_KEY)} />
 
+    <section className="proof-strip" aria-labelledby="proof-title">
+      <div className="proof-heading"><div className="eyebrow small-eyebrow">WHY TIDELIGHT EXISTS</div><h2 id="proof-title">A market moves first.<br /><span>Understanding catches up.</span></h2></div>
+      <div className="proof-cards">
+        <article><span className="proof-index">01</span><b>See the token behind the ticker</b><p>Reality instruments keep their issuer, session, and source attached to every quote.</p></article>
+        <article><span className="proof-index">02</span><b>Ask with the evidence in view</b><p>Turn an event into a sourced brief that can be saved, revisited, and challenged.</p></article>
+        <article><span className="proof-index">03</span><b>Practice before you commit</b><p>Test a market idea in the paper lab while the reasoning is still easy to inspect.</p></article>
+      </div>
+    </section>
+
     <section className="dashboard-section" aria-labelledby="coverage-title">
       <div className="section-heading"><div><div className="eyebrow small-eyebrow">YOUR RADAR, AT A GLANCE</div><h2 id="coverage-title">Companies in view</h2></div><Link className="text-button" href="/watchlist">Open watchlist <span>↗</span></Link></div>
       <MarketRadar initialAssets={initialRadarAssets} initialGeneratedAt={market?.generatedAt ?? null} initialNow={market?.generatedAt ?? 0} />

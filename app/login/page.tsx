@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [method, setMethod] = useState<"link" | "password">("link");
@@ -13,6 +15,20 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const passkeysEnabled = process.env.NEXT_PUBLIC_SUPABASE_PASSKEYS_ENABLED === "true";
+
+  async function signInWithPasskey() {
+    if (!("credentials" in navigator)) { setError("This browser does not support passkeys. Try email or password instead."); return; }
+    setPasskeyBusy(true); setError("");
+    try {
+      const { error: passkeyError } = await createClient().auth.signInWithPasskey();
+      if (passkeyError) setError("Passkey sign-in could not be completed. Check the passkey provider setup or choose another sign-in method.");
+      else { const client = createClient(); const { data: { user } } = await client.auth.getUser(); if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "passkey_signin", metadata: {} }); router.replace("/"); router.refresh(); }
+    } catch {
+      setError("Passkey sign-in is unavailable on this device or provider setup. Choose another sign-in method.");
+    } finally { setPasskeyBusy(false); }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,7 +52,7 @@ export default function LoginPage() {
 
   return <main className="auth-page"><section className="auth-card">
     <Link className="auth-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={42} height={42} /><span>tidelight<small>MARKET RESEARCH DESK</small></span></Link>
-    {sent ? <><div className="auth-eyebrow">CHECK YOUR INBOX</div><h1>{isSignUp ? "Confirm your account." : "Your link is on its way."}</h1><p>We sent the next secure step to <b>{email}</b>. Open it on this device to continue.</p><button className="auth-secondary" onClick={() => setSent(false)}>Use a different method</button></> : <><div className="auth-eyebrow">YOUR PRIVATE RESEARCH DESK</div><h1>{isSignUp ? "Create your workspace." : "Welcome back."}</h1><p>Sign in to keep your watchlist, briefs, and paper ledger together.</p><button type="button" className="auth-google" onClick={async () => { const supabase = createClient(); const { error: authError } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback` } }); if (authError) setError("Google sign-in is not available on this deployment yet."); }}>Continue with Google <span>↗</span></button><div className="auth-divider"><span>or</span></div><div className="auth-methods"><button type="button" className={method === "link" ? "selected" : ""} onClick={() => setMethod("link")}>Email link</button><button type="button" className={method === "password" ? "selected" : ""} onClick={() => setMethod("password")}>Password</button></div><form onSubmit={submit} className="auth-form"><label htmlFor="email">Email address</label><input id="email" type="email" required autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" />{method === "password" ? <label htmlFor="password">Password<input id="password" type="password" required minLength={8} autoComplete={isSignUp ? "new-password" : "current-password"} value={password} onChange={event => setPassword(event.target.value)} placeholder="At least 8 characters" /></label> : null}<button type="submit" disabled={busy}>{busy ? "Working…" : method === "link" ? "Continue with email" : isSignUp ? "Create account" : "Sign in with password"}<span>↗</span></button>{method === "password" ? <button type="button" className="auth-secondary auth-toggle" onClick={() => setIsSignUp(!isSignUp)}>{isSignUp ? "Already have an account? Sign in" : "New here? Create an account"}</button> : null}{error ? <div className="form-error" role="alert">{error}</div> : null}</form></>}
+    {sent ? <><div className="auth-eyebrow">CHECK YOUR INBOX</div><h1>{isSignUp ? "Confirm your account." : "Your link is on its way."}</h1><p>We sent the next secure step to <b>{email}</b>. Open it on this device to continue.</p><button className="auth-secondary" onClick={() => setSent(false)}>Use a different method</button></> : <><div className="auth-eyebrow">YOUR PRIVATE RESEARCH DESK</div><h1>{isSignUp ? "Create your workspace." : "Welcome back."}</h1><p>Sign in to keep your watchlist, briefs, and paper ledger together.</p><button type="button" className="auth-google" onClick={async () => { const supabase = createClient(); const { error: authError } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback` } }); if (authError) setError("Google sign-in is not available on this deployment yet."); }}>Continue with Google <span>↗</span></button>{passkeysEnabled ? <button type="button" className="auth-google auth-passkey" disabled={passkeyBusy} onClick={() => void signInWithPasskey()}>{passkeyBusy ? "Waiting for your passkey…" : "Continue with a passkey"}<span>⌁</span></button> : <p className="auth-passkey-note">Passkey sign-in is ready for this app and will appear here after Supabase Auth is configured.</p>}<div className="auth-divider"><span>or</span></div><div className="auth-methods"><button type="button" className={method === "link" ? "selected" : ""} onClick={() => setMethod("link")}>Email link</button><button type="button" className={method === "password" ? "selected" : ""} onClick={() => setMethod("password")}>Password</button></div><form onSubmit={submit} className="auth-form"><label htmlFor="email">Email address</label><input id="email" type="email" required autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" />{method === "password" ? <label htmlFor="password">Password<input id="password" type="password" required minLength={8} autoComplete={isSignUp ? "new-password" : "current-password"} value={password} onChange={event => setPassword(event.target.value)} placeholder="At least 8 characters" /></label> : null}<button type="submit" disabled={busy}>{busy ? "Working…" : method === "link" ? "Continue with email" : isSignUp ? "Create account" : "Sign in with password"}<span>↗</span></button>{method === "password" ? <button type="button" className="auth-secondary auth-toggle" onClick={() => setIsSignUp(!isSignUp)}>{isSignUp ? "Already have an account? Sign in" : "New here? Create an account"}</button> : null}{error ? <div className="form-error" role="alert">{error}</div> : null}</form></>}
     <Link className="auth-back" href="/">← Back to Tidelight</Link>
   </section></main>;
 }

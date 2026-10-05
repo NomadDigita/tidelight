@@ -9,8 +9,9 @@ type ResearchBrief = {
   upside: string;
   downside: string;
   catalysts: string[];
-  claims: { claim: string; quote: string; stance: string; confidence: number }[];
-  source: { title: string; url: string };
+  claims: { claim: string; quote: string; stance: string; confidence: number; sourceUrl?: string }[];
+  sources: { title: string; url: string }[];
+  citation_coverage?: number;
   evidence_basis: string;
 };
 
@@ -24,9 +25,7 @@ export default function ResearchWorkspace({ qwenAvailable, initialQuestion = "" 
   const [question, setQuestion] = useState(initialQuestion);
   const [briefQuestion, setBriefQuestion] = useState("");
   const [error, setError] = useState("");
-  const [sourceTitle, setSourceTitle] = useState("");
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [excerpt, setExcerpt] = useState("");
+  const [sources, setSources] = useState([{ title: "", url: "", excerpt: "" }]);
   const [brief, setBrief] = useState<ResearchBrief | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const router = useRouter();
@@ -51,9 +50,7 @@ export default function ResearchWorkspace({ qwenAvailable, initialQuestion = "" 
     }
     setError("");
     setBrief(null);
-    setSourceTitle("");
-    setSourceUrl("");
-    setExcerpt("");
+    setSources([{ title: "", url: "", excerpt: "" }]);
     startTransition(() => setBriefQuestion(cleaned));
   }
 
@@ -61,7 +58,7 @@ export default function ResearchWorkspace({ qwenAvailable, initialQuestion = "" 
     if (!briefQuestion) return;
     setIsAnalyzing(true);
     setError("");
-    const result = await createEvidenceBrief({ question: briefQuestion, sourceTitle, sourceUrl, excerpt });
+    const result = await createEvidenceBrief({ question: briefQuestion, sources });
     setIsAnalyzing(false);
     if (result.error) {
       if (result.error.includes("Sign in")) router.push("/login");
@@ -99,17 +96,13 @@ export default function ResearchWorkspace({ qwenAvailable, initialQuestion = "" 
           <div className="brief-meta"><span>AFTER-HOURS EVENT RESEARCH</span><span>·</span><span>{brief ? "QWEN SYNTHESIS" : "USER-PROVIDED SOURCE"}</span></div>
           <div className="brief-rule" />
           <p className="brief-intro">Add one source passage to ground the analysis. Tidelight will store the excerpt, quote-check each cited claim against it, and link back to the original. No live market prices are used.</p>
-          <div className="source-fields">
-            <label>Source title<input value={sourceTitle} maxLength={200} onChange={(event) => setSourceTitle(event.target.value)} placeholder="Official filing, release, or article title" /></label>
-            <label>Source link<input value={sourceUrl} onChange={(event) => setSourceUrl(event.target.value)} placeholder="https://…" type="url" inputMode="url" /></label>
-            <label>Passage to analyze<textarea value={excerpt} maxLength={6000} onChange={(event) => setExcerpt(event.target.value)} placeholder="Paste an excerpt from the source (80–6,000 characters). Tidelight analyzes only the text you provide." rows={5} /><span className="source-count">{excerpt.length.toLocaleString()} / 6,000</span></label>
-          </div>
+          <div className="source-fields">{sources.map((source, index) => <div className="source-entry" key={index}><div className="source-entry-head"><b>Source {String(index + 1).padStart(2, "0")}</b>{sources.length > 1 ? <button type="button" onClick={() => setSources((current) => current.filter((_, item) => item !== index))}>Remove</button> : null}</div><label>Source title<input value={source.title} maxLength={200} onChange={(event) => setSources((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item))} placeholder="Official filing, release, or article title" /></label><label>Source link<input value={source.url} onChange={(event) => setSources((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, url: event.target.value } : item))} placeholder="https://…" type="url" inputMode="url" /></label><label>Passage to analyze<textarea value={source.excerpt} maxLength={6000} onChange={(event) => setSources((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, excerpt: event.target.value } : item))} placeholder="Paste an excerpt from the source (80–6,000 characters)." rows={5} /><span className="source-count">{source.excerpt.length.toLocaleString()} / 6,000</span></label></div>)}<button type="button" className="add-source-button" onClick={() => setSources((current) => current.length < 5 ? [...current, { title: "", url: "", excerpt: "" }] : current)} disabled={sources.length >= 5}>＋ Add another source <span>{sources.length} / 5</span></button></div>
           {brief ? <div className="generated-brief">
             <div className="brief-section"><div className="brief-section-title"><span>01</span> WHAT THE SOURCE SAYS</div><p>{brief.summary}</p></div>
             <div className="scenario-grid"><div><small>UPSIDE CASE</small><b>{brief.upside}</b></div><div><small>WHAT COULD BREAK THE THESIS</small><b>{brief.downside}</b></div></div>
             {brief.catalysts.length ? <div className="brief-section"><div className="brief-section-title"><span>02</span> WHAT TO WATCH NEXT</div><ul>{brief.catalysts.map((item, index) => <li key={index}>{item}</li>)}</ul></div> : null}
-            <div className="brief-section"><div className="brief-section-title"><span>03</span> CLAIMS WITH SOURCE QUOTES</div>{brief.claims.map((item, index) => <blockquote className="evidence-claim" key={index}><b>{item.claim}</b><q>{item.quote}</q><small>{item.stance.toUpperCase()} · {Math.round(item.confidence * 100)}% model confidence</small></blockquote>)}</div>
-            <a className="source-citation" href={brief.source.url} target="_blank" rel="noreferrer">↗ {brief.source.title}</a>
+            <div className="brief-section"><div className="brief-section-title"><span>03</span> CLAIMS WITH SOURCE QUOTES <em>{brief.citation_coverage ?? 100}% CITED</em></div>{brief.claims.map((item, index) => <blockquote className={`evidence-claim ${item.stance}`} key={index}><b>{item.claim}</b><q>{item.quote}</q><small>{item.stance.toUpperCase()} · {Math.round(item.confidence * 100)}% model confidence · {item.sourceUrl ?? "source matched"}</small></blockquote>)}</div>
+            <div className="source-citation-list">{brief.sources.map((source) => <a className="source-citation" href={source.url} target="_blank" rel="noreferrer" key={source.url}>↗ {source.title}</a>)}</div>
           </div> : null}
           {!qwenAvailable ? <p className="provider-warning" role="status">Qwen is not configured on this deployment yet. The button stays disabled, and no research is presented as AI-generated.</p> : null}
           <div className="brief-bottom"><span>◉ {brief ? "Saved to your private research" : qwenAvailable ? "Evidence-based · Qwen synthesis" : "Generation unavailable · setup needed"}</span><button className="save-brief-button" onClick={analyzeSource} disabled={isAnalyzing || !qwenAvailable}>{isAnalyzing ? "Checking evidence…" : brief ? "Regenerate brief" : qwenAvailable ? "Build cited brief" : "Qwen setup needed"}</button><button onClick={() => setBriefQuestion("")}>Back to workspace <span>↗</span></button></div>

@@ -4,7 +4,10 @@ export const BACKTEST_STRATEGY = "sma_trend_v1" as const;
 export const BACKTEST_PARAMETERS = {
   fastWindow: 20,
   slowWindow: 50,
-  trainFraction: 0.7,
+  // Bitget currently serves about 90 days of 4H candles. A 66/34 split
+  // leaves enough room for a 30-day OOS window while preserving 30+ days
+  // of evaluated training data after the 50-candle warm-up.
+  trainFraction: 0.66,
   feeBpsPerSide: 10,
   slippageBpsPerSide: 5,
   initialEquity: 10_000,
@@ -56,6 +59,22 @@ function validateCandles(input: MarketCandle[]) {
     }
   }
   return candles;
+}
+
+function candleDuration(interval: CandleInterval) {
+  return interval === "1H" ? 60 * 60 * 1000 : interval === "4H" ? 4 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+}
+
+/** Return the exact validated data set eligible for a historical replay. */
+export function prepareBacktestCandles(input: MarketCandle[], interval: CandleInterval, asOf = Date.now()) {
+  const duration = candleDuration(interval);
+  for (const candle of input) {
+    if (!Number.isSafeInteger(candle.timestamp) || candle.timestamp <= 0) {
+      throw new Error("Bitget candle history contains an invalid timestamp or price.");
+    }
+  }
+  const completed = input.filter((candle) => candle.timestamp + duration <= asOf);
+  return validateCandles(completed);
 }
 
 function movingAverages(candles: MarketCandle[], window: number) {
@@ -156,8 +175,8 @@ function measure(candles: MarketCandle[], fast: (number | null)[], slow: (number
   };
 }
 
-export function runBacktest(symbol: string, interval: CandleInterval, input: MarketCandle[]): BacktestResult {
-  const candles = validateCandles(input);
+export function runBacktest(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now()): BacktestResult {
+  const candles = prepareBacktestCandles(input, interval, asOf);
   if (candles.length < 80) throw new Error("At least 80 Bitget candles are required to evaluate a 50-period strategy with an out-of-sample window.");
   const splitIndex = Math.floor(candles.length * BACKTEST_PARAMETERS.trainFraction);
   if (splitIndex < BACKTEST_PARAMETERS.slowWindow + 5 || candles.length - splitIndex < 20) throw new Error("This candle history is too short for a meaningful chronological holdout.");
@@ -167,6 +186,7 @@ export function runBacktest(symbol: string, interval: CandleInterval, input: Mar
   if (candles.at(-1)!.timestamp - candles[0].timestamp < 60 * day) throw new Error("Bitget returned less than 60 days of candles. Choose a longer interval; this run cannot meet the Alpha Factory window requirement.");
   if (candles.at(-1)!.timestamp - candles[splitIndex].timestamp < 30 * day) throw new Error("The chronological holdout is shorter than 30 days. This market history is insufficient for the Alpha Factory window requirement.");
   const warmup = BACKTEST_PARAMETERS.slowWindow;
+  if (candles[splitIndex - 1].timestamp - candles[warmup].timestamp < 30 * day) throw new Error("The evaluated training window is shorter than 30 days after the 50-candle warm-up. Choose a history with more data.");
   const train = measure(candles, fast, slow, warmup, splitIndex, interval);
   const test = measure(candles, fast, slow, splitIndex, candles.length, interval);
   return {

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { getBitgetAsset, getBitgetCandles, type CandleInterval } from "@/lib/bitget-market";
-import { runBacktest } from "@/lib/backtest";
+import { prepareBacktestCandles, runBacktest } from "@/lib/backtest";
 import { createClient } from "@/lib/supabase/server";
 
 const intervals = new Set<CandleInterval>(["1H", "4H", "1D"]);
@@ -21,8 +21,10 @@ export async function POST(request: Request) {
   try {
     const asset = await getBitgetAsset(symbol);
     if (!asset) return Response.json({ error: "That symbol is not an active Bitget spot market." }, { status: 404 });
-    const candles = await getBitgetCandles(symbol, interval, 1000);
-    const result = runBacktest(symbol, interval, candles);
+    const fetchedCandles = await getBitgetCandles(symbol, interval, 1000);
+    const evaluatedAt = Date.now();
+    const candles = prepareBacktestCandles(fetchedCandles, interval, evaluatedAt);
+    const result = runBacktest(symbol, interval, candles, evaluatedAt);
     const candleHash = createHash("sha256").update(JSON.stringify(candles)).digest("hex");
     const { data, error } = await supabase.from("strategy_backtest_runs").insert({
       user_id: user.id,

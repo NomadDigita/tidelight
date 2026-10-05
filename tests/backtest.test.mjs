@@ -3,16 +3,17 @@ import assert from "node:assert/strict";
 import { runBacktest } from "../lib/backtest.ts";
 
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
+const ONE_DAY = 24 * 60 * 60 * 1000;
 const start = Date.UTC(2025, 0, 1);
 
-function fixture(count = 1_000) {
+function fixture(count = 1_000, interval = FOUR_HOURS, firstTimestamp = start) {
   const candles = [];
   let prior = 100;
   for (let i = 0; i < count; i += 1) {
     const close = 100 + i * 0.025 + 6 * Math.sin(i / 17) + 2 * Math.sin(i / 5);
     const open = prior;
     candles.push({
-      timestamp: start + i * FOUR_HOURS,
+      timestamp: firstTimestamp + i * interval,
       open,
       high: Math.max(open, close) + 0.15,
       low: Math.min(open, close) - 0.15,
@@ -35,6 +36,34 @@ test("runs a chronological holdout over at least 60 days with costs and a trade 
   assert.ok(result.test.tradeLog.length > 0);
   assert.ok(result.test.tradeLog.every((trade) => Number.isFinite(trade.returnPct)));
   assert.ok(result.test.equityCurve.every((point) => Number.isFinite(point.equity) && point.equity > 0));
+});
+
+test("uses current Bitget-sized 4H history while preserving 30-day training and holdout windows", () => {
+  const candles = fixture(540);
+  const result = runBacktest("RTSLAUSDT", "4H", candles);
+  const day = 24 * 60 * 60 * 1000;
+  assert.equal(result.parameters.trainFraction, 0.66);
+  assert.ok(candles.at(-1).timestamp - candles[0].timestamp >= 60 * day);
+  assert.ok(candles.at(-1).timestamp - candles[result.splitIndex].timestamp >= 30 * day);
+  assert.ok(candles[result.splitIndex - 1].timestamp - candles[result.parameters.slowWindow].timestamp >= 30 * day);
+});
+
+test("rejects 90 daily candles when the SMA warm-up leaves too little evaluated training data", () => {
+  assert.throws(() => runBacktest("RAAPLUSDT", "1D", fixture(90, ONE_DAY)), /training window is shorter than 30 days after the 50-candle warm-up/);
+});
+
+test("excludes the current unfinished candle from the run and its score", () => {
+  const asOf = Date.UTC(2026, 9, 5, 13, 30);
+  const currentBarStart = Math.floor(asOf / FOUR_HOURS) * FOUR_HOURS;
+  const candles = fixture(540, FOUR_HOURS, currentBarStart - 539 * FOUR_HOURS);
+  const changedForming = [...candles];
+  changedForming[539] = { ...changedForming[539], open: 90, high: 240, low: 89, close: 230 };
+
+  const result = runBacktest("RTSLAUSDT", "4H", candles, asOf);
+  const changedResult = runBacktest("RTSLAUSDT", "4H", changedForming, asOf);
+  assert.equal(result.candleCount, 539);
+  assert.equal(result.dataEnd, currentBarStart - FOUR_HOURS);
+  assert.deepEqual(changedResult, result);
 });
 
 test("produces the same result when provider candles arrive in reverse order", () => {

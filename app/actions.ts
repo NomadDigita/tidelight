@@ -70,7 +70,7 @@ export async function updateRiskProfile(formData: FormData) {
 }
 
 type EvidenceClaim = { claim: string; quote: string; stance: "supports" | "contradicts" | "context"; confidence: number; sourceUrl?: string };
-type QwenBrief = { summary: string; upside: string; downside: string; catalysts: string[]; claims: EvidenceClaim[] };
+type QwenBrief = { summary: string; upside: string; downside: string; catalysts: string[]; claims: EvidenceClaim[]; citation_coverage: number };
 
 function normalizeQuote(value: string) {
   return value.toLocaleLowerCase().replace(/\s+/g, " ").trim();
@@ -101,6 +101,7 @@ function validateBrief(value: unknown, sources: Array<{ url: string; excerpt: st
     downside: (candidate.downside as string).trim(),
     catalysts,
     claims,
+    citation_coverage: Math.round((claims.length / Math.max(candidate.claims.length, 1)) * 100),
   };
 }
 
@@ -115,6 +116,7 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
   });
   if (sources.some((source) => !source || !source.title || source.title.length > 200 || source.excerpt.length < 80 || source.excerpt.length > 6000)) return { error: "Each source needs a title and an excerpt between 80 and 6,000 characters." };
   const validSources = sources as Array<{ title: string; url: string; excerpt: string }>;
+  if (new Set(validSources.map((source) => source.url)).size !== validSources.length) return { error: "Each source needs a different link so evidence can be traced clearly." };
 
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -154,7 +156,7 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
 
     const { data: savedSources, error: sourceError } = await supabase.from("research_sources").insert(validSources.map((source) => ({
       research_run_id: run.id, url: source.url, title: source.title, publisher: new URL(source.url).hostname, source_type: "user_note", excerpt: source.excerpt,
-    }))).select("id, url");
+    }))).select("id, url, publisher, retrieved_at");
     if (sourceError || !savedSources?.length) throw new Error("source-save-failed");
 
     const { error: evidenceError } = await supabase.from("research_evidence").insert(brief.claims.map((claim) => ({
@@ -168,7 +170,8 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
     if (evidenceError) throw new Error("evidence-save-failed");
 
     const exposure = mapResearchExposure([question, ...validSources.map((source) => source.excerpt)].join("\n"));
-    const summary = { ...brief, sources: validSources.map(({ title, url }) => ({ title, url })), exposure, citation_coverage: Math.round((brief.claims.length / Math.max(brief.claims.length, 1)) * 100), evidence_basis: "user-provided excerpts; every quote validated against stored source text" };
+    const counterpointCount = brief.claims.filter((claim) => claim.stance === "contradicts").length;
+    const summary = { ...brief, claims: brief.claims.map((claim) => ({ ...claim, quote_validated: true })), sources: validSources.map((source) => { const saved = savedSources.find((item) => item.url === source.url); return { title: source.title, url: source.url, publisher: saved?.publisher ?? new URL(source.url).hostname, retrieved_at: saved?.retrieved_at ?? new Date().toISOString(), publication_date: null, source_quality: "User-supplied link; publisher identity and publication date not independently verified." }; }), exposure, counterpoint_count: counterpointCount, evidence_basis: "User-provided excerpts; each displayed quote was matched against its stored source text." };
     const { error: completeError } = await supabase.from("research_runs").update({ summary, status: "complete", completed_at: new Date().toISOString() }).eq("id", run.id);
     if (completeError) throw new Error("brief-save-failed");
     return { id: run.id, brief: summary };

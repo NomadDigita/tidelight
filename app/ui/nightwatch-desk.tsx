@@ -36,7 +36,8 @@ function MarketCurve({ marks }: { marks: Mark[] }) {
 }
 
 function IssuerMark({ ticker, logoUrl }: { ticker: string | null; logoUrl: string | null }) {
-  return <span className="nw-issuer-mark">{logoUrl ? <Image src={logoUrl} alt="" width={30} height={30} unoptimized /> : <b>{(ticker ?? "R").slice(0, 1)}</b>}</span>;
+  const [failed, setFailed] = useState(false);
+  return <span className="nw-issuer-mark">{logoUrl && !failed ? <Image src={logoUrl} alt="" width={30} height={30} unoptimized onError={() => setFailed(true)} /> : <b>{(ticker ?? "R").slice(0, 1)}</b>}</span>;
 }
 
 export default function NightwatchDesk({ signedIn, assets, initialRuns, initialOrders, positions, cashBalance, paused, initialHistory, defaultSymbol, initialAlerts }: {

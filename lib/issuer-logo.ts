@@ -23,5 +23,12 @@ export function issuerLogoUrl(values: { symbol?: string; baseCoin?: string; name
   const ticker = candidates.flatMap((value) => [normalize(value), realityPairTicker(value)]).find((value) => issuerDomains[value]) ??
     (values.name?.toLowerCase().includes("ishares") ? "HYG" : values.name?.toLowerCase().includes("vanguard") ? "VTEB" : null);
   const domain = ticker ? issuerDomains[ticker] : null;
-  return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null;
+  if (domain) return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
+  const unrecognizedTicker = candidates
+    .map((value) => realityPairTicker(value))
+    .find((value) => /^[A-Z][A-Z0-9.\\-]{0,9}$/.test(value));
+  return unrecognizedTicker
+    ? `https://img.loadlogo.com/ticker/${encodeURIComponent(unrecognizedTicker)}?size=128&format=webp`
+    : null;
 }

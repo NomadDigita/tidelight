@@ -47,9 +47,9 @@ function MetricCard({ label, value, note, positive }: { label: string; value: st
   return <div className="strategy-metric"><span>{label}</span><b className={positive === undefined ? "" : positive ? "metric-positive" : "metric-negative"}>{value}</b><small>{note}</small></div>;
 }
 
-export default function StrategyLab({ signedIn, initialRuns }: { signedIn: boolean; initialRuns: SavedRun[] }) {
+export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RAAPLUSDT" }: { signedIn: boolean; initialRuns: SavedRun[]; initialSymbol?: string }) {
   const router = useRouter();
-  const [symbol, setSymbol] = useState("RAAPLUSDT");
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [interval, setInterval] = useState<CandleInterval>("4H");
   const [run, setRun] = useState<DisplayRun | null>(null);
   const [matrix, setMatrix] = useState<DisplayRun[]>([]);

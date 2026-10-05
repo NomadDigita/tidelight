@@ -5,7 +5,8 @@ import NightwatchDesk from "@/app/ui/nightwatch-desk";
 
 export const revalidate = 60;
 
-export default async function NightwatchPage() {
+export default async function NightwatchPage({ searchParams }: { searchParams: Promise<{ symbol?: string }> }) {
+  const { symbol: requestedSymbol } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const universe = await getBitgetMarketUniverse().catch(() => null);
@@ -13,7 +14,9 @@ export default async function NightwatchPage() {
     symbol: asset.symbol, name: asset.name, ticker: asset.underlyingTicker, lastPrice: asset.lastPrice, change24h: asset.change24h,
     logoUrl: asset.logoUrl ?? issuerLogoUrl(asset),
   }));
-  const defaultSymbol = assets.find((asset) => asset.symbol === "RAAPLUSDT")?.symbol ?? assets[0]?.symbol ?? "RAAPLUSDT";
+  const defaultSymbol = (requestedSymbol && assets.some((asset) => asset.symbol === requestedSymbol.toUpperCase())
+    ? requestedSymbol.toUpperCase()
+    : null) ?? assets.find((asset) => asset.symbol === "RAAPLUSDT")?.symbol ?? assets[0]?.symbol ?? "RAAPLUSDT";
   const [accountResult, runsResult, ordersResult, positionsResult, alertsResult] = user ? await Promise.all([
     supabase.from("nightwatch_accounts").select("id, cash_balance, paused").maybeSingle(),
     supabase.from("nightwatch_runs").select("id, symbol, signal, outcome, reason, as_of, reference_price, fast_sma, slow_sma, created_at").order("created_at", { ascending: false }).limit(30),

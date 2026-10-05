@@ -76,7 +76,7 @@ The goal is not a confident-sounding prediction. It is a more inspectable path f
 - **Source-based research.** Submit a source link and the passage you want to examine. Qwen can organize a structured brief; claims are checked against the passage supplied for that brief, with evidence and limitations shown for review.
 - **Exposure mapping.** Connect a research event to relevant companies, sectors, and tokenized-market instruments, then inspect possible catalysts and risks.
 - **Strategy Lab.** Replay a clearly labeled baseline against historical public candles. Review costs, trade records, test windows, and saved runs. A historical replay is an experiment, not a forecast.
-- **Nightwatch.** A user-triggered paper agent can evaluate its rules against public Bitget market data, maintain simulated positions, and record its decision trail. Controls and risk limits are designed to keep the current experience in simulation.
+- **Nightwatch.** Start a paper check against public Bitget market data, review simulated positions, and follow each decision. Active paper workspaces can also receive a daily in-app summary. Market checks remain user-triggered; nothing places a live order.
 - **Your private workspace.** Sign in to save briefs, watchlists, strategy runs, and account preferences. Row-level access rules scope private records to their owner.
 - **A desk that feels like yours.** Choose among three visual themes and use the compact mobile navigation on a phone.
 

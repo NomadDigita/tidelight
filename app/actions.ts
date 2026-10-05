@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getBitgetAsset } from "@/lib/bitget-market";
+import { mapResearchExposure } from "@/lib/exposure-map";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -166,7 +167,8 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
     })));
     if (evidenceError) throw new Error("evidence-save-failed");
 
-    const summary = { ...brief, sources: validSources.map(({ title, url }) => ({ title, url })), citation_coverage: Math.round((brief.claims.length / Math.max(brief.claims.length, 1)) * 100), evidence_basis: "user-provided excerpts; every quote validated against stored source text" };
+    const exposure = mapResearchExposure([question, ...validSources.map((source) => source.excerpt)].join("\n"));
+    const summary = { ...brief, sources: validSources.map(({ title, url }) => ({ title, url })), exposure, citation_coverage: Math.round((brief.claims.length / Math.max(brief.claims.length, 1)) * 100), evidence_basis: "user-provided excerpts; every quote validated against stored source text" };
     const { error: completeError } = await supabase.from("research_runs").update({ summary, status: "complete", completed_at: new Date().toISOString() }).eq("id", run.id);
     if (completeError) throw new Error("brief-save-failed");
     return { id: run.id, brief: summary };

@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Asset = { symbol: string; name: string; ticker: string | null; lastPrice: number; change24h: number | null; logoUrl: string | null };
 type Run = { id: string; symbol: string; signal: string; outcome: string; reason: string; as_of: string; reference_price: number; fast_sma: number; slow_sma: number; created_at: string };
 type Order = { id: string; symbol: string; side: string; quantity: number; simulated_fill_price: number; notional: number; fee: number; realized_pnl: number | null; created_at: string };
 type Position = { id: string; symbol: string; quantity: number; average_cost: number; opened_at: string; currentPrice: number | null; name: string; ticker: string | null; logoUrl: string | null };
 type Mark = { t: number; c: number };
+type NightwatchPreferences = { trigger_mode: "manual" | "every_check"; alert_on_signal: boolean; alert_on_fill: boolean; daily_summary: boolean };
 
 const usd = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
 const price = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumSignificantDigits: 7 }).format(value);
@@ -51,12 +52,23 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [view, setView] = useState<"decisions" | "orders">("decisions");
+  const [preferences, setPreferences] = useState<NightwatchPreferences>({ trigger_mode: "manual", alert_on_signal: true, alert_on_fill: true, daily_summary: true });
+  const [savingPreferences, setSavingPreferences] = useState(false);
   const selected = assets.find((asset) => asset.symbol === symbol);
   const allRuns = localRun ? [localRun, ...initialRuns.filter((run) => run.id !== localRun.id)] : initialRuns;
   const marketChange = selected?.change24h;
   const positionsValue = useMemo(() => positions.reduce((sum, item) => sum + item.quantity * (item.currentPrice ?? item.average_cost), 0), [positions]);
   const equity = cashBalance + positionsValue;
   const realizedToday = initialOrders.filter((order) => isUtcToday(order.created_at)).reduce((sum, order) => sum + (order.realized_pnl ?? 0), 0);
+
+  useEffect(() => { if (signedIn) void fetch("/api/nightwatch/preferences").then((response) => response.ok ? response.json() : null).then((data: NightwatchPreferences | null) => { if (data) setPreferences(data); }).catch(() => undefined); }, [signedIn]);
+
+  async function savePreferences(next: Partial<NightwatchPreferences>) {
+    if (!signedIn) { router.push("/login"); return; }
+    const updated = { ...preferences, ...next }; setPreferences(updated); setSavingPreferences(true);
+    try { await fetch("/api/nightwatch/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updated) }); }
+    finally { setSavingPreferences(false); }
+  }
 
   async function runCheck() {
     if (!signedIn) { router.push("/login"); return; }
@@ -109,6 +121,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     </section>
 
     <section className="nw-command-bar"><div className="nw-status-line"><span className={`nw-state-dot${isPaused ? " paused" : ""}`}/><div><b>{isPaused ? "Agent is paused" : "Paper agent is standing by"}</b><small>{signedIn ? "Private to your account · account-backed audit" : "Sign in to create your private paper account"}</small></div></div><div className="nw-command-actions"><button type="button" className="nw-secondary-button" onClick={() => void togglePause()} disabled={changing}>{changing ? "Updating…" : isPaused ? "Resume agent" : "Pause agent"}</button><Link href="/strategies" className="nw-inline-link">Strategy lab <span>↗</span></Link></div></section>
+    <section className="nw-preferences"><div><span className="eyebrow small-eyebrow">CONTROL SURFACE</span><h2>Choose how Nightwatch speaks.</h2><p>These preferences affect paper-agent checks and notification intent. No live order is enabled.</p></div><div className="nw-preference-controls"><label>TRIGGER MODE<select value={preferences.trigger_mode} onChange={(event) => void savePreferences({ trigger_mode: event.target.value as NightwatchPreferences["trigger_mode"] })} disabled={!signedIn || savingPreferences}><option value="manual">Manual checks</option><option value="every_check">Every completed check</option></select></label><label><input type="checkbox" checked={preferences.alert_on_signal} onChange={(event) => void savePreferences({ alert_on_signal: event.target.checked })} disabled={!signedIn || savingPreferences}/> Signal alerts</label><label><input type="checkbox" checked={preferences.alert_on_fill} onChange={(event) => void savePreferences({ alert_on_fill: event.target.checked })} disabled={!signedIn || savingPreferences}/> Paper-fill alerts</label><label><input type="checkbox" checked={preferences.daily_summary} onChange={(event) => void savePreferences({ daily_summary: event.target.checked })} disabled={!signedIn || savingPreferences}/> Daily summary</label></div></section>
 
     {error ? <div className="strategy-error" role="alert">{error}</div> : null}{notice ? <div className="nw-notice" role="status"><span>✓</span>{notice}</div> : null}
 

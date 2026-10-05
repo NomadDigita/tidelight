@@ -1,38 +1,158 @@
-# Tidelight
+<div align="center">
+  <img src="./public/tidelight-readme-banner.svg" alt="Tidelight — a calmer way to follow tokenized markets" width="100%" />
+  <br />
+  <a href="https://tidelight-two.vercel.app/"><strong>Open Tidelight ↗</strong></a>
+  &nbsp; · &nbsp;
+  <a href="https://tidelight-two.vercel.app/markets">Explore the live market map</a>
+  &nbsp; · &nbsp;
+  <a href="https://tidelight-two.vercel.app/research">Start a research brief</a>
+</div>
 
-**See the signal between sessions.**
+<br />
 
-An after-hours research desk for tokenized US equities. Tidelight turns an event question into a source-linked research brief with market context, scenarios, exposure, and risks to watch.
+<div align="center">
 
-## Current status
+![Live market data](https://img.shields.io/badge/MARKETS-live%20public%20data-70d9b0?style=for-the-badge&labelColor=10201f)
+![Research first](https://img.shields.io/badge/BUILT%20FOR-evidence%20first-9ce7ca?style=for-the-badge&labelColor=10201f)
+![Paper only](https://img.shields.io/badge/NIGHTWATCH-paper%20only-f0c77e?style=for-the-badge&labelColor=10201f)
 
-The public product has a live, read-only Bitget USDT spot map with explicit Reality/rToken flags, quote timestamps, and asset details. Per-pair detail routes add public Bitget OHLCV history and session eligibility. Supabase Auth uses email magic links; signed-in users can save owner-scoped research and Bitget markets. The evidence workflow accepts a source title, secure URL, and user-provided passage; a server-only Bitget Qwen adapter returns a structured brief, quote-checks every claim against the supplied passage, and saves the source and evidence under RLS. The Strategy Lab runs a deterministic 20/50 SMA baseline using up to 1,000 public Bitget candles, rejects windows shorter than 60 days / 30-day holdout, models estimated costs, and archives exact candles, parameters, run metrics and a SHA-256 fingerprint in Supabase. Nightwatch adds a user-triggered, paper-only Bitget Reality agent with atomic database risk checks, a private decision ledger, simulated fills, and pause/resume controls. Nightwatch does not run on a schedule yet. These are research tools, not performance claims or investment signals.
+</div>
 
-## Stack
+# Meet Tidelight
 
-- Next.js App Router + TypeScript
-- Supabase Postgres and Auth (database schema and RLS policies are provisioned)
-- Live site: [tidelight-two.vercel.app](https://tidelight-two.vercel.app/)
-- Strategy Lab: [/strategies](https://tidelight-two.vercel.app/strategies) — signed-in users can save private, chronological out-of-sample replays
-- Nightwatch paper agent: [/nightwatch](https://tidelight-two.vercel.app/nightwatch) — explicit 4H check, per-user paper account, atomic $500 position cap, $200 daily loss stop, five-fill limit, pause/resume, fee/slippage model, and append-only decisions
-- Qwen synthesis uses Bitget's hackathon gateway (`https://hackathon.bitgetops.com/v1`) with `qwen3.8-max`; `BITGET_QWEN_API_KEY` is server-only
-- Bitget public market APIs provide spot instruments, tickers, Reality metadata, and candles; account credentials are not required for these read-only routes
+### A clearer view of the stories moving tokenized markets.
 
-## Run locally
+Markets do not pause when the closing bell rings. A company announcement, a policy change, or a surprise in another sector can ripple through tokenized shares while the usual headlines are quiet.
 
-Run `npm ci`, copy `.env.example` to `.env.local`, then run `npm run dev`.
-Fill `.env.local` with the Tidelight project's Supabase URL and publishable key before using Supabase features.
+**Tidelight helps you follow that ripple.** Ask a question in everyday language. Bring the original source. See what it says, what might disagree, which assets could be exposed, and what would change the picture.
 
-## Database
+> **The idea in one line:** Event → Evidence → Exposure → Scenario → Decision.
 
-Schema changes are in `supabase/migrations`. Every public table has RLS enabled; authenticated users are scoped to their own records. Anonymous users receive no table grants. Research evidence is constrained to sources from the same research run. Strategy backtests archive the exact candles and owner-scoped result metrics for repeatable inspection.
+Tidelight is a research companion. It helps organize information so people can make their own decisions; it does not tell anyone what to buy or sell.
 
-The migrations were applied to Supabase project `plmdnzbmvgigkzfmfwov`. Nightwatch tables have owner-select RLS; direct anonymous reads and user DML are revoked. Paper fills are written by authenticated RPC wrappers around owner-checked functions in an unexposed schema. The Supabase CLI config uses the local project slug; link the Tidelight project before running `supabase db push`.
+---
 
-## Product plan
+## Your first look
 
-See [PROJECT_PLAN.md](./PROJECT_PLAN.md) and [docs/HACKATHON_PRODUCT_PLAN.md](./docs/HACKATHON_PRODUCT_PLAN.md) for the hackathon thesis, all-track architecture, credential inventory, build sequence, safety model, and demo scorecard.
+No installation or trading account needed. [Open the public app](https://tidelight-two.vercel.app/) and explore the market map.
 
-## Validation targets
+| If you want to… | Go here |
+| --- | --- |
+| Browse market assets and their latest public quotes | [Markets](https://tidelight-two.vercel.app/markets) |
+| Turn a question and a source into a cited research brief | [Research desk](https://tidelight-two.vercel.app/research) |
+| Keep track of assets you care about | [Watchlist](https://tidelight-two.vercel.app/watchlist) |
+| Explore a historical strategy replay | [Strategy Lab](https://tidelight-two.vercel.app/strategies) |
+| See how the paper-only market watcher works | [Nightwatch](https://tidelight-two.vercel.app/nightwatch) |
 
-Track source citation coverage, factual claim support, task completion, response time, and performance against a fixed research baseline. Label any simulated or estimated output clearly.
+Some personal features ask you to sign in so your saved work stays with your account.
+
+## Two ways to use one desk
+
+### Mini — a simple answer, with its receipts
+
+Start with a question, choose a company, and read a plain-language summary. Open the supporting evidence and the conditions that could change the conclusion. You do not need to understand trading terminology to follow the story.
+
+### Pro — the details behind the story
+
+Inspect evidence cards, source dates, claim confidence, counter-evidence, market exposure, catalysts, invalidation conditions, and scenario notes. Pro is for people who want to examine the reasoning step by step.
+
+Both views share the same research trail. A simpler screen does not mean a less careful answer.
+
+## What makes Tidelight different?
+
+Most market screens begin and end with a price. Tidelight is designed to connect the *reason a story matters* to the evidence for it and the assets it may touch.
+
+1. **Event** — frame the news or question you are investigating.
+2. **Evidence** — attach a source and see claims tied back to its supplied text.
+3. **Exposure** — map the story to relevant issuers, sectors, and tokenized assets.
+4. **Scenario** — lay out what could happen, including opposing evidence and what would invalidate the view.
+5. **Decision** — keep a transparent research record for your own judgment.
+
+The goal is not a confident-sounding prediction. It is a more inspectable path from a story to a considered decision.
+
+## What you can explore today
+
+- **Live market map.** Public Bitget spot-market quotes, asset details, token classifications, quote freshness, and candle history where available. Prices and availability can change, and some tokenized assets may have limited history or market hours.
+- **Source-based research.** Submit a source link and the passage you want to examine. Qwen can organize a structured brief; claims are checked against the passage supplied for that brief, with evidence and limitations shown for review.
+- **Exposure mapping.** Connect a research event to relevant companies, sectors, and tokenized-market instruments, then inspect possible catalysts and risks.
+- **Strategy Lab.** Replay a clearly labeled baseline against historical public candles. Review costs, trade records, test windows, and saved runs. A historical replay is an experiment, not a forecast.
+- **Nightwatch.** A user-triggered paper agent can evaluate its rules against public Bitget market data, maintain simulated positions, and record its decision trail. Controls and risk limits are designed to keep the current experience in simulation.
+- **Your private workspace.** Sign in to save briefs, watchlists, strategy runs, and account preferences. Row-level access rules scope private records to their owner.
+- **A desk that feels like yours.** Choose among three visual themes and use the compact mobile navigation on a phone.
+
+## A few important boundaries
+
+| Tidelight does | Tidelight does not |
+| --- | --- |
+| Show public market data with source and freshness context | Promise that every market or quote is available at all times |
+| Help organize user-provided source material into reviewable research | Independently verify every statement in an external article |
+| Run historical and paper simulations with visible assumptions | Guarantee a strategy will work in the future |
+| Keep Nightwatch in paper mode | Place live exchange orders or manage customer funds |
+
+**Please treat every brief and simulation as informational research, not financial advice or a recommendation.** Always check original sources and your own local rules before acting on market information.
+
+## Privacy & account safety
+
+- Private briefs, watchlists, and saved runs are associated with your signed-in account and protected by database access policies.
+- Tidelight's market pages use public market endpoints. A Bitget trading key is not required to browse them.
+- Nightwatch currently simulates activity. The app does not enable live order execution.
+- An authenticator app can be enrolled for additional account verification. Passkey sign-in is not available yet.
+- Qwen credentials are configured on the server and should never be placed in a public repository or browser code.
+
+## For the curious (and the people building with us)
+
+If technical setup is not your thing, you can stop here and enjoy the app. If you would like to help improve it, this section is for you.
+
+### The building blocks
+
+| Part | What it does |
+| --- | --- |
+| Next.js and TypeScript | The pages and server-side application logic |
+| Supabase | Sign-in, PostgreSQL storage, and owner-scoped database policies |
+| Bitget public market API | Public tickers, instrument details, and historical candles |
+| Bitget Qwen gateway | Source-bounded research synthesis, called only from the server |
+| Vercel | Application hosting and production deployments |
+
+### Run a local copy
+
+You will need Node.js, npm, and access to the Tidelight Supabase project. From this folder:
+
+```bash
+npm ci
+cp .env.example .env.local
+```
+
+Add your Supabase project URL and publishable key to `.env.local`. To use Qwen synthesis locally, add the hackathon-provided key as `BITGET_QWEN_API_KEY`. Keep `.env.local` private; do not commit it or paste secrets into issues.
+
+Then start the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Helpful checks before sharing a change:
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Database changes live in [`supabase/migrations`](./supabase/migrations). They use Supabase row-level security so each signed-in person can access only their own private records.
+
+## What we are building toward
+
+Tidelight is being developed as a connected research loop: stronger multi-source evidence and contradiction tracking; clearer links from events to exposed assets; longer, repeatable strategy validation; and a transparent paper-agent timeline. Our product thesis and milestone notes are in the [product plan](./PROJECT_PLAN.md) and the [hackathon plan](./docs/HACKATHON_PRODUCT_PLAN.md).
+
+We are building carefully: show the evidence, label assumptions, preserve uncertainty, and keep simulated results visibly simulated.
+
+## Come build a calmer market desk with us
+
+Try the [live app](https://tidelight-two.vercel.app/), explore the [market map](https://tidelight-two.vercel.app/markets), or open an issue with a confusing moment, a missing source, or an idea that would make the product more useful.
+
+<div align="center">
+  <br />
+  <strong>Read the story. Check the evidence. Keep your bearings.</strong>
+  <br /><br />
+  <sub>Made for the hours between headlines. · Tidelight</sub>
+</div>

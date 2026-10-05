@@ -20,6 +20,13 @@ type SavedRun = {
   created_at: string;
 };
 type DisplayRun = BacktestResult & { id: string; createdAt: string; assetName: string; candleHash: string };
+const validationSet = [
+  { label: "Apple · Reality", symbol: "RAAPLUSDT", interval: "4H" as CandleInterval },
+  { label: "NVIDIA · Reality", symbol: "RNVDAUSDT", interval: "4H" as CandleInterval },
+  { label: "Bitcoin · crypto", symbol: "BTCUSDT", interval: "4H" as CandleInterval },
+  { label: "Ethereum · crypto", symbol: "ETHUSDT", interval: "4H" as CandleInterval },
+  { label: "Solana · crypto", symbol: "SOLUSDT", interval: "4H" as CandleInterval },
+];
 
 function pct(value: number | null | undefined) { return value == null ? "—" : `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`; }
 function number(value: number | null | undefined) { return value == null ? "—" : value.toFixed(2); }
@@ -69,6 +76,7 @@ export default function StrategyLab({ signedIn, initialRuns }: { signedIn: boole
     <section className="strategy-workbench" aria-labelledby="strategy-workbench-title">
       <div className="strategy-workbench-head"><div><span className="eyebrow small-eyebrow">REPLAY A PUBLIC MARKET</span><h2 id="strategy-workbench-title">Build a baseline</h2></div><span className="strategy-readonly">PAPER RESEARCH ONLY</span></div>
       <div className="strategy-controls"><label>Bitget spot symbol<input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32))} placeholder="RAAPLUSDT" maxLength={32} /></label><label>Candle interval<select value={interval} onChange={(event) => setInterval(event.target.value as CandleInterval)}><option value="1H">1 hour</option><option value="4H">4 hours</option><option value="1D">1 day</option></select></label><button type="button" className="strategy-run-button" onClick={() => void execute()} disabled={busy || !symbol}>{busy ? <><span className="strategy-spinner"/> Replaying candles…</> : <>Run holdout test <span>↗</span></>}</button></div>
+      <div className="validation-set"><span>REPRESENTATIVE VALIDATION SET</span>{validationSet.map((item) => <button type="button" key={item.symbol} onClick={() => { setSymbol(item.symbol); setInterval(item.interval); }}>{item.label}</button>)}</div>
       {error ? <div className="strategy-error" role="alert">{error}</div> : null}
       {busy ? <div className="strategy-progress"><span/><span/><span/> Fetching Bitget candles and evaluating the fixed 20 / 50 SMA rule…</div> : null}
       {display ? <div className="strategy-result" aria-live="polite">

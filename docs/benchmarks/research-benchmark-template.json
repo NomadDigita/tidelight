@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "name": "Tidelight real-event evidence benchmark",
+    "promptVersion": "baseline-2026-10-05",
+    "capturedAt": null,
+    "reviewProtocol": "docs/RESEARCH_EVALUATION_PROTOCOL.md",
+    "notes": "Copy this file, freeze 10–20 public events across at least three categories, and retain the original labels and adjudication. Do not publish fabricated or partial results as a completed benchmark."
+  },
+  "events": [],
+  "eventExample": {
+    "id": "event-001",
+    "category": "issuer",
+    "question": "The exact question asked in the product",
+    "askedAt": "2026-10-05T09:00:00Z",
+    "taskTimeSeconds": 94,
+    "sources": [
+      {
+        "url": "https://example.com/primary-source",
+        "sourceClass": "primary",
+        "publicationAt": null,
+        "capturedAt": "2026-10-05T09:00:00Z",
+        "accessible": true,
+        "capturedText": "Paste the exact captured source passage used to review claim quotes."
+      },
+      {
+        "url": "https://example.org/independent-reporting",
+        "sourceClass": "independent_reporting",
+        "publicationAt": null,
+        "capturedAt": "2026-10-05T09:00:00Z",
+        "accessible": false,
+        "capturedText": ""
+      }
+    ],
+    "claims": [
+      {
+        "text": "One factual claim displayed in the generated brief",
+        "kind": "factual",
+        "quote": "The exact quote displayed in the brief",
+        "sourceUrl": "https://example.com/primary-source",
+        "reviewers": [
+          { "reviewerId": "reviewer-a", "quoteMatch": "exact", "entailment": "supported", "sourceFit": "primary", "interpretationBoundary": "sourced_fact" },
+          { "reviewerId": "reviewer-b", "quoteMatch": "substantially_exact", "entailment": "supported", "sourceFit": "primary", "interpretationBoundary": "sourced_fact" }
+        ],
+        "resolution": { "quoteMatch": "exact", "entailment": "supported", "sourceFit": "primary", "interpretationBoundary": "sourced_fact", "adjudicatorId": "reviewer-a", "note": "Record why initial labels differed, if applicable." }
+      }
+    ],
+    "review": { "counterEvidenceInCapturedSources": false },
+    "brief": { "counterEvidencePresent": false }
+  }
+}

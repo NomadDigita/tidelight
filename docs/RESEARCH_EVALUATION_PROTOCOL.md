@@ -50,3 +50,15 @@ Report raw numerator and denominator with every rate. Segment official, publishe
 5. Publish aggregate metrics alongside known limitations and at least one failure case.
 
 Current implementation supports up to three fetched public sources in Mini and up to five user-pasted passages in Pro. Fetching is restricted to the selected issuer, SEC.gov, and a curated publisher allowlist. Domain identity is not independent verification; richer source discovery and source-level benchmark outcomes remain future work.
+
+## Reproducible scoring
+
+Copy `docs/benchmarks/research-benchmark-template.json`, replace the example with the frozen event set, and preserve two independent reviewer labels plus the resolved adjudication for every claim. Include exact captured passages when a source was accessible. The scorer rejects incomplete review sets and does not convert an empty denominator into a 0% score.
+
+Run it with:
+
+```sh
+node scripts/score-research-benchmark.mjs path/to/research-benchmark.json
+```
+
+The JSON report includes raw counts, rates, source-class totals, distinct-domain/source-class averages, task-time median and range, and a completion gate. A complete score requires at least 10 events from three categories, valid source capture metadata, and two reviewers plus adjudication for each displayed claim. Keep the benchmark input private if it contains unpublished review notes; publish only the resolved report and methodology.

@@ -11,7 +11,7 @@ type Run = { id: string; symbol: string; signal: string; outcome: string; reason
 type Order = { id: string; symbol: string; side: string; quantity: number; simulated_fill_price: number; notional: number; fee: number; realized_pnl: number | null; created_at: string };
 type Position = { id: string; symbol: string; quantity: number; average_cost: number; opened_at: string; currentPrice: number | null; name: string; ticker: string | null; logoUrl: string | null };
 type Mark = { t: number; c: number };
-type NightwatchPreferences = { alert_on_signal: boolean; alert_on_fill: boolean; daily_summary: boolean };
+type NightwatchPreferences = { trigger_mode: "manual" | "every_check"; monitor_symbol: string | null; research_run_id: string | null; alert_on_signal: boolean; alert_on_fill: boolean; daily_summary: boolean };
 type Alert = { id: string; kind: "signal" | "fill" | "summary"; title: string; body: string; read_at: string | null; created_at: string };
 
 const usd = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
@@ -40,9 +40,10 @@ function IssuerMark({ ticker, logoUrl }: { ticker: string | null; logoUrl: strin
   return <span className="nw-issuer-mark">{logoUrl && !failed ? <Image src={logoUrl} alt="" width={30} height={30} unoptimized onError={() => setFailed(true)} /> : <b>{(ticker ?? "R").slice(0, 1)}</b>}</span>;
 }
 
-export default function NightwatchDesk({ signedIn, assets, initialRuns, initialOrders, positions, cashBalance, paused, initialHistory, defaultSymbol, initialAlerts }: {
+export default function NightwatchDesk({ signedIn, assets, initialRuns, initialOrders, positions, cashBalance, paused, initialHistory, defaultSymbol, initialAlerts, researchRunId = null }: {
   signedIn: boolean; assets: Asset[]; initialRuns: Run[]; initialOrders: Order[]; positions: Position[];
   cashBalance: number; paused: boolean; initialHistory: Mark[]; defaultSymbol: string; initialAlerts: Alert[];
+  researchRunId?: string | null;
 }) {
   const router = useRouter();
   const [symbol, setSymbol] = useState(defaultSymbol);
@@ -55,7 +56,8 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [view, setView] = useState<"decisions" | "orders">("decisions");
-  const [preferences, setPreferences] = useState<NightwatchPreferences>({ alert_on_signal: true, alert_on_fill: true, daily_summary: true });
+  const [preferences, setPreferences] = useState<NightwatchPreferences>({ trigger_mode: "manual", monitor_symbol: null, research_run_id: null, alert_on_signal: true, alert_on_fill: true, daily_summary: true });
+  const [schedulerAvailable, setSchedulerAvailable] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [alerts, setAlerts] = useState(initialAlerts);
   const [summaryBusy, setSummaryBusy] = useState(false);
@@ -67,12 +69,13 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const equity = cashBalance + positionsValue;
   const realizedToday = initialOrders.filter((order) => isUtcToday(order.created_at)).reduce((sum, order) => sum + (order.realized_pnl ?? 0), 0);
 
-  useEffect(() => { if (signedIn) void fetch("/api/nightwatch/preferences").then((response) => response.ok ? response.json() : null).then((data: NightwatchPreferences | null) => { if (data) setPreferences(data); }).catch(() => undefined); }, [signedIn]);
+  useEffect(() => { if (signedIn) void fetch("/api/nightwatch/preferences").then((response) => response.ok ? response.json() : null).then((data: (NightwatchPreferences & { scheduler_available?: boolean }) | null) => { if (data) { setPreferences(data); setSchedulerAvailable(Boolean(data.scheduler_available)); } }).catch(() => undefined); }, [signedIn]);
 
   async function savePreferences(next: Partial<NightwatchPreferences>) {
     if (!signedIn) { router.push("/login"); return; }
     const updated = { ...preferences, ...next }; setPreferences(updated); setSavingPreferences(true);
-    try { await fetch("/api/nightwatch/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updated) }); }
+    try { const response = await fetch("/api/nightwatch/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updated) }); if (!response.ok) { const payload = await response.json() as { error?: string }; setPreferences(preferences); setError(payload.error ?? "Could not save Nightwatch preferences."); } }
+    catch { setPreferences(preferences); setError("Could not save Nightwatch preferences."); }
     finally { setSavingPreferences(false); }
   }
 
@@ -97,7 +100,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     if (!signedIn) { router.push("/login"); return; }
     setRunning(true); setError(""); setNotice(""); setLocalRun(null);
     try {
-      const response = await fetch("/api/nightwatch/tick", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol }) });
+      const response = await fetch("/api/nightwatch/tick", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol, researchRunId }) });
       const payload = await response.json() as { error?: string; signal?: string; fastSma?: number; slowSma?: number; asOf?: string; price?: number; history?: Mark[]; result?: { run_id: string; outcome: string; reason: string } };
       if (!response.ok || !payload.result) throw new Error(payload.error ?? "Market check could not complete.");
       setHistory(payload.history ?? []);
@@ -147,7 +150,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     </section>
 
     <section className="nw-command-bar"><div className="nw-status-line"><span className={`nw-state-dot${isPaused ? " paused" : ""}`}/><div><b>{isPaused ? "Agent is paused" : "Paper agent is standing by"}</b><small>{signedIn ? "Private to your account · account-backed audit" : "Sign in to create your private paper account"}</small></div></div><div className="nw-command-actions"><button type="button" className="nw-secondary-button" onClick={() => void togglePause()} disabled={changing}>{changing ? "Updating…" : isPaused ? "Resume agent" : "Pause agent"}</button><Link href="/strategies" className="nw-inline-link">Strategy lab <span>↗</span></Link></div></section>
-    <section className="nw-preferences"><div><span className="eyebrow small-eyebrow">CONTROL SURFACE</span><h2>Choose how Nightwatch speaks.</h2><p>Market checks start when you run them. Active paper workspaces can receive an in-app daily summary. No live order is enabled.</p></div><div className="nw-preference-controls"><div className="nw-cadence-note"><span>CHECK CADENCE</span><b>Manual · completed 4H candle</b></div><label><input type="checkbox" checked={preferences.alert_on_signal} onChange={(event) => void savePreferences({ alert_on_signal: event.target.checked })} disabled={!signedIn || savingPreferences}/> Signal alerts</label><label><input type="checkbox" checked={preferences.alert_on_fill} onChange={(event) => void savePreferences({ alert_on_fill: event.target.checked })} disabled={!signedIn || savingPreferences}/> Paper-fill alerts</label><label><input type="checkbox" checked={preferences.daily_summary} onChange={(event) => void savePreferences({ daily_summary: event.target.checked })} disabled={!signedIn || savingPreferences}/> Daily summary</label><button type="button" className="nw-summary-button" onClick={() => void generateSummary()} disabled={!signedIn || summaryBusy}>{summaryBusy ? "Building summary…" : "Generate today's summary"}</button></div></section>
+    <section className="nw-preferences"><div><span className="eyebrow small-eyebrow">CONTROL SURFACE</span><h2>Choose how Nightwatch speaks.</h2><p>Run checks manually or opt in to one scheduled daily Reality market check. Pausing the paper agent skips scheduled checks; every fill remains simulated and guardrail-bound.</p></div><div className="nw-preference-controls"><div className="nw-cadence-note"><span>CHECK CADENCE</span><b>{preferences.trigger_mode === "every_check" ? `Scheduled · ${preferences.monitor_symbol}` : "Manual · completed 4H candle"}</b></div><label className="nw-schedule-control"><input type="checkbox" checked={preferences.trigger_mode === "every_check"} onChange={(event) => void savePreferences({ trigger_mode: event.target.checked ? "every_check" : "manual", monitor_symbol: event.target.checked ? (preferences.monitor_symbol ?? symbol) : preferences.monitor_symbol, research_run_id: event.target.checked ? researchRunId : preferences.research_run_id })} disabled={!signedIn || savingPreferences || !schedulerAvailable}/> Schedule one daily check</label><label className="nw-monitor-select">SCHEDULED REALITY MARKET<select value={preferences.monitor_symbol ?? symbol} onChange={(event) => void savePreferences({ monitor_symbol: event.target.value, trigger_mode: preferences.trigger_mode })} disabled={!signedIn || savingPreferences || !schedulerAvailable}>{assets.map((asset) => <option key={asset.symbol} value={asset.symbol}>{asset.name} · {asset.symbol}</option>)}</select></label>{!schedulerAvailable ? <small className="nw-scheduler-setup">Scheduler setup required on this deployment. Manual checks and daily summaries remain available.</small> : <small className="nw-scheduler-setup">Scheduled for 09:00 UTC daily; Hobby may start it any time during that hour. One market per account. Uses completed candles, skips while paused, and never sends exchange orders.</small>}{preferences.research_run_id ? <small className="nw-scheduler-setup">Linked research note {preferences.research_run_id.slice(0, 8).toUpperCase()} follows this schedule.</small> : null}<label><input type="checkbox" checked={preferences.alert_on_signal} onChange={(event) => void savePreferences({ alert_on_signal: event.target.checked })} disabled={!signedIn || savingPreferences}/> Signal alerts</label><label><input type="checkbox" checked={preferences.alert_on_fill} onChange={(event) => void savePreferences({ alert_on_fill: event.target.checked })} disabled={!signedIn || savingPreferences}/> Paper-fill alerts</label><label><input type="checkbox" checked={preferences.daily_summary} onChange={(event) => void savePreferences({ daily_summary: event.target.checked })} disabled={!signedIn || savingPreferences}/> Daily summary</label><button type="button" className="nw-summary-button" onClick={() => void generateSummary()} disabled={!signedIn || summaryBusy}>{summaryBusy ? "Building summary…" : "Generate today's summary"}</button></div></section>
 
     {error ? <div className="strategy-error" role="alert">{error}</div> : null}{notice ? <div className="nw-notice" role="status"><span>✓</span>{notice}</div> : null}
 

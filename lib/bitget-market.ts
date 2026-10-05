@@ -147,8 +147,9 @@ function getLogo(baseCoin: string, underlyingTicker: string | null, isReality: b
   if (underlyingTicker && companyDomains[underlyingTicker]) {
     return `https://www.google.com/s2/favicons?domain=${companyDomains[underlyingTicker]}&sz=128`;
   }
-  // Use a ticker logo when a company domain is not in our curated map.
-  if (isReality && underlyingTicker && /^[A-Z][A-Z0-9.\\-]{0,9}$/.test(underlyingTicker)) {
+  // Ticker logos preserve issuer branding when a company domain is not in our
+  // curated map. Do not send token contract/base symbols to a coin logo service.
+  if (isReality && underlyingTicker && /^[A-Z][A-Z0-9.\-]{0,9}$/.test(underlyingTicker)) {
     return `https://img.loadlogo.com/ticker/${encodeURIComponent(underlyingTicker)}?size=128&format=webp`;
   }
   if (isReality) return null;

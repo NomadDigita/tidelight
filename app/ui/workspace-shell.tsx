@@ -15,6 +15,8 @@ const navigation = [
   { href: "/nightwatch", label: "Nightwatch agent", icon: "◉", technical: true },
   { href: "/watchlist", label: "Watchlist", icon: "⌖" },
   { href: "/briefs", label: "Saved briefs", icon: "▤", technical: true },
+  { href: "/demo", label: "Product walkthrough", icon: "▷", technical: true },
+  { href: "/systems", label: "Research systems", icon: "◉", technical: true },
 ];
 const mobilePrimary = [navigation[0], navigation[1], navigation[2], navigation[4]];
 

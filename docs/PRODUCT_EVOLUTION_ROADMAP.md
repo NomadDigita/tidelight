@@ -36,10 +36,20 @@ Research exposure cards will link to the matching Bitget Reality symbol in Strat
 
 “Institutional grade” is a target, not a current claim. Tidelight can become a professional research and paper-decision tool with strong provenance and controls while remaining paper-only. Do not claim institutional readiness, audited alpha, autonomous execution, or production trading until the corresponding evidence gates above have passed and the relevant independent reviews are complete.
 
+## Delivery status · 2026-10-05
+
+| Priority | Shipped in code | Remaining proof or dependency |
+|---|---|---|
+| P0 | Research exposure handoffs preserve the Bitget Reality pair and the owner-scoped research run ID into Strategy Lab and Nightwatch. Strategy run parameters and Nightwatch snapshots keep that lineage. | Verify the linked journey against the current production deployment after this change is published. |
+| P1 | Mini can capture up to three allowlisted public sources; Pro accepts up to five excerpts. Official issuer and SEC filing starters are available. Quote-validated claims, observed publisher domains, counterpoints, and “what would change this view” checks appear in the branded brief. | Complete the real-event reviewer benchmark in `RESEARCH_EVALUATION_PROTOCOL.md`; broader discovery and independent publisher verification are not claimed. |
+| P2 | Strategy runs return three disjoint trailing evaluation windows when sufficient history exists, a three-level fee/slippage stress, market freshness metadata, and a saved fingerprint. Short histories keep the base holdout but state why rolling windows are unavailable. | Validate real production histories over longer periods. Session-aware rToken fills and issuer-specific execution/liquidity are still not modeled. |
+| P3 | An opt-in daily schedule, protected Vercel Cron route, Supabase server-secret-only wrapper, symbol and research-note owner checks, pause recheck, duplicate protection, and paper guardrails are implemented. Migrations are applied. | The owner reports adding the Supabase server key to Vercel. After deployment, verify scheduler health and a daily run. A representative supervised paper observation period remains. |
+| P4 | Branded `/systems` dashboard and no-store health endpoint show request IDs, deploy SHA, Bitget freshness, provider configuration, and whether scheduler prerequisites are present. Operations and recovery steps are documented. | Perform a backup restore rehearsal in an isolated environment and inspect real deployment logs during a representative run. |
+| P5 | A branded `/demo` walkthrough now links all three tracks, includes the architecture/data-flow story, and makes limitations explicit. | Observe a new-user walkthrough, record the demo, and publish actual benchmark and strategy outcomes after measurement. |
+
 ## Current next items
 
-1. Complete and verify the P0 cross-track handoff.
-2. Define the real-event research benchmark and capture baseline results before changing prompts or source coverage.
-3. Implement walk-forward strategy validation using archived, completed candles and session-aware assumptions.
-4. Design the scheduled paper-check service and operational stop controls; run in paper mode only.
-5. Rehearse the integrated product journey and publish exact observed metrics and limitations.
+1. Use a daily 09:00 UTC Vercel Cron schedule, compatible with Hobby's once-per-day limit. The owner reports that the Supabase server-only key is already in Vercel; keep it sensitive and Production-only. The existing `CRON_SECRET` is already configured.
+2. Deploy, then verify the health view, Mini multi-source research capture, Research → Strategy → Nightwatch lineage, and one scheduled paper run with an opted-in test account.
+4. Capture and review the frozen event benchmark before making further research prompt changes.
+5. Rehearse recovery against an isolated backup/branch, then run the judge/customer walkthrough and report measured results with limitations.

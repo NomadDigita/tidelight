@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runBacktest } from "../lib/backtest.ts";
+import { runBacktest, runCostSensitivity, runWalkForward } from "../lib/backtest.ts";
 
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
 const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -102,4 +102,24 @@ test("changing a future candle cannot rewrite trades that already exited", () =>
     after.test.tradeLog.filter((trade) => trade.exitTime < cutoff),
     before.test.tradeLog.filter((trade) => trade.exitTime < cutoff),
   );
+});
+
+test("walk-forward windows are disjoint, chronological, and reproducible", () => {
+  const candles = fixture(1_000);
+  const result = runWalkForward("RAAPLUSDT", "4H", candles);
+  assert.equal(result.totalFolds, 3);
+  assert.equal(result.folds[0].testStart, candles.at(-1 - Math.floor((candles.length - 50) / 4) * 3 + 1).timestamp);
+  assert.ok(result.folds[0].testEnd < result.folds[1].testStart);
+  assert.ok(result.folds[1].testEnd < result.folds[2].testStart);
+  assert.ok(result.folds.every((fold) => fold.metrics.candles >= 60));
+  assert.deepEqual(result, runWalkForward("RAAPLUSDT", "4H", candles));
+});
+
+test("cost stress uses identical candles and shows increasing assumed friction", () => {
+  const scenarios = runCostSensitivity("RAAPLUSDT", "4H", fixture());
+  assert.deepEqual(scenarios.map(({ label }) => label), ["Base", "Elevated", "Stress"]);
+  assert.ok(scenarios[0].feeBpsPerSide < scenarios[1].feeBpsPerSide);
+  assert.ok(scenarios[1].slippageBpsPerSide < scenarios[2].slippageBpsPerSide);
+  assert.ok(scenarios.every((item) => Number.isFinite(item.returnPct)));
+  assert.ok(scenarios[2].returnPct <= scenarios[0].returnPct);
 });

@@ -40,6 +40,9 @@ export type BacktestResult = {
   splitIndex: number;
 };
 
+export type WalkForwardFold = { index: number; trainStart: number; testStart: number; testEnd: number; metrics: BacktestMetrics };
+export type WalkForwardResult = { folds: WalkForwardFold[]; meanReturnPct: number; positiveFolds: number; totalFolds: number; evaluationStart: number; evaluationEnd: number };
+
 function validateCandles(input: MarketCandle[]) {
   const candles = [...input].sort((a, b) => a.timestamp - b.timestamp);
   for (let i = 0; i < candles.length; i += 1) {
@@ -92,8 +95,8 @@ function intervalBarsPerYear(interval: CandleInterval) {
   return interval === "1H" ? 8760 : interval === "4H" ? 2190 : 365;
 }
 
-function measure(candles: MarketCandle[], fast: (number | null)[], slow: (number | null)[], start: number, end: number, interval: CandleInterval): BacktestMetrics {
-  const cost = (BACKTEST_PARAMETERS.feeBpsPerSide + BACKTEST_PARAMETERS.slippageBpsPerSide) / 10_000;
+function measure(candles: MarketCandle[], fast: (number | null)[], slow: (number | null)[], start: number, end: number, interval: CandleInterval, feeBps: number = BACKTEST_PARAMETERS.feeBpsPerSide, slippageBps: number = BACKTEST_PARAMETERS.slippageBpsPerSide): BacktestMetrics {
+  const cost = (feeBps + slippageBps) / 10_000;
   let cash: number = BACKTEST_PARAMETERS.initialEquity;
   let quantity = 0;
   let entryPrice = 0;
@@ -201,4 +204,38 @@ export function runBacktest(symbol: string, interval: CandleInterval, input: Mar
     candleCount: candles.length,
     splitIndex,
   };
+}
+
+/** Three disjoint trailing evaluation windows, each using only earlier candles to warm the rule. */
+export function runWalkForward(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now()): WalkForwardResult {
+  const candles = prepareBacktestCandles(input, interval, asOf);
+  const fast = movingAverages(candles, BACKTEST_PARAMETERS.fastWindow);
+  const slow = movingAverages(candles, BACKTEST_PARAMETERS.slowWindow);
+  const warmup = BACKTEST_PARAMETERS.slowWindow;
+  const foldSize = Math.floor((candles.length - warmup) / 4);
+  if (foldSize < 60) throw new Error("Walk-forward validation needs at least 60 completed candles in each evaluation window.");
+  const firstTest = candles.length - foldSize * 3;
+  const folds: WalkForwardFold[] = [];
+  for (let index = 0; index < 3; index += 1) {
+    const testStart = firstTest + index * foldSize;
+    const testEnd = index === 2 ? candles.length : testStart + foldSize;
+    if (testStart - warmup < 60) throw new Error("Walk-forward validation needs at least 60 earlier candles before every evaluation window.");
+    folds.push({ index: index + 1, trainStart: candles[warmup].timestamp, testStart: candles[testStart].timestamp, testEnd: candles[testEnd - 1].timestamp, metrics: measure(candles, fast, slow, testStart, testEnd, interval) });
+  }
+  const meanReturnPct = folds.reduce((sum, fold) => sum + fold.metrics.totalReturnPct, 0) / folds.length;
+  return { folds, meanReturnPct, positiveFolds: folds.filter((fold) => fold.metrics.totalReturnPct > 0).length, totalFolds: folds.length, evaluationStart: folds[0].testStart, evaluationEnd: folds.at(-1)!.testEnd };
+}
+
+/** Stress the same fixed holdout under higher execution-cost assumptions. */
+export function runCostSensitivity(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now()) {
+  const candles = prepareBacktestCandles(input, interval, asOf);
+  if (candles.length < 80) throw new Error("Cost sensitivity needs at least 80 completed candles.");
+  const splitIndex = Math.floor(candles.length * BACKTEST_PARAMETERS.trainFraction);
+  const fast = movingAverages(candles, BACKTEST_PARAMETERS.fastWindow);
+  const slow = movingAverages(candles, BACKTEST_PARAMETERS.slowWindow);
+  return [
+    { label: "Base", feeBpsPerSide: 10, slippageBpsPerSide: 5 },
+    { label: "Elevated", feeBpsPerSide: 15, slippageBpsPerSide: 10 },
+    { label: "Stress", feeBpsPerSide: 25, slippageBpsPerSide: 25 },
+  ].map((scenario) => ({ ...scenario, returnPct: measure(candles, fast, slow, splitIndex, candles.length, interval, scenario.feeBpsPerSide, scenario.slippageBpsPerSide).totalReturnPct }));
 }

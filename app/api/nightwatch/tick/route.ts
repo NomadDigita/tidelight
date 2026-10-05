@@ -11,9 +11,16 @@ export async function POST(request: Request) {
   if (authError || !user) return NextResponse.json({ error: "Sign in to run Nightwatch." }, { status: 401 });
 
   let symbol = "";
+  let researchRunId: string | null = null;
   try {
-    const body = await request.json() as { symbol?: unknown };
+    const body = await request.json() as { symbol?: unknown; researchRunId?: unknown };
     symbol = typeof body.symbol === "string" ? body.symbol.toUpperCase() : "";
+    researchRunId = typeof body.researchRunId === "string" ? body.researchRunId : null;
+    if (researchRunId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(researchRunId)) return NextResponse.json({ error: "The linked research run ID is invalid." }, { status: 400 });
+    if (researchRunId) {
+      const { data: linkedRun, error: linkedRunError } = await supabase.from("research_runs").select("id").eq("id", researchRunId).maybeSingle();
+      if (linkedRunError || !linkedRun) return NextResponse.json({ error: "The linked research note is unavailable in this account." }, { status: 403 });
+    }
   } catch {
     return NextResponse.json({ error: "Choose a valid Bitget Reality market." }, { status: 400 });
   }
@@ -41,6 +48,7 @@ export async function POST(request: Request) {
       p_slow_sma: slow,
       p_signal: signal,
       p_snapshot: {
+        ...(researchRunId ? { researchRunId } : {}),
         provider: "Bitget public Spot candles",
         interval: "4H",
         closedCandleStart: new Date(current.timestamp).toISOString(),

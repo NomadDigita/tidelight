@@ -11,6 +11,7 @@ type ResearchBrief = {
   catalysts: string[];
   claims: { claim: string; quote: string; stance: string; confidence: number; sourceUrl?: string }[];
   sources: { title: string; url: string }[];
+  exposure?: { ticker: string; issuer: string; sector: string; realityPair: string }[];
   citation_coverage?: number;
   evidence_basis: string;
 };
@@ -101,7 +102,8 @@ export default function ResearchWorkspace({ qwenAvailable, initialQuestion = "" 
             <div className="brief-section"><div className="brief-section-title"><span>01</span> WHAT THE SOURCE SAYS</div><p>{brief.summary}</p></div>
             <div className="scenario-grid"><div><small>UPSIDE CASE</small><b>{brief.upside}</b></div><div><small>WHAT COULD BREAK THE THESIS</small><b>{brief.downside}</b></div></div>
             {brief.catalysts.length ? <div className="brief-section"><div className="brief-section-title"><span>02</span> WHAT TO WATCH NEXT</div><ul>{brief.catalysts.map((item, index) => <li key={index}>{item}</li>)}</ul></div> : null}
-            <div className="brief-section"><div className="brief-section-title"><span>03</span> CLAIMS WITH SOURCE QUOTES <em>{brief.citation_coverage ?? 100}% CITED</em></div>{brief.claims.map((item, index) => <blockquote className={`evidence-claim ${item.stance}`} key={index}><b>{item.claim}</b><q>{item.quote}</q><small>{item.stance.toUpperCase()} · {Math.round(item.confidence * 100)}% model confidence · {item.sourceUrl ?? "source matched"}</small></blockquote>)}</div>
+            {brief.exposure?.length ? <div className="brief-section"><div className="brief-section-title"><span>03</span> MARKET EXPOSURE</div><div className="exposure-grid">{brief.exposure.map((item) => <div className="exposure-chip" key={item.ticker}><b>{item.ticker}</b><span>{item.issuer}</span><small>{item.sector} · {item.realityPair}</small></div>)}</div></div> : null}
+            <div className="brief-section"><div className="brief-section-title"><span>04</span> CLAIMS WITH SOURCE QUOTES <em>{brief.citation_coverage ?? 100}% CITED</em></div>{brief.claims.map((item, index) => <blockquote className={`evidence-claim ${item.stance}`} key={index}><b>{item.claim}</b><q>{item.quote}</q><small>{item.stance.toUpperCase()} · {Math.round(item.confidence * 100)}% model confidence · {item.sourceUrl ?? "source matched"}</small></blockquote>)}</div>
             <div className="source-citation-list">{brief.sources.map((source) => <a className="source-citation" href={source.url} target="_blank" rel="noreferrer" key={source.url}>↗ {source.title}</a>)}</div>
           </div> : null}
           {!qwenAvailable ? <p className="provider-warning" role="status">Qwen is not configured on this deployment yet. The button stays disabled, and no research is presented as AI-generated.</p> : null}

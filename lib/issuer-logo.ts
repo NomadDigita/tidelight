@@ -27,7 +27,7 @@ export function issuerLogoUrl(values: { symbol?: string; baseCoin?: string; name
 
   const unrecognizedTicker = candidates
     .map((value) => realityPairTicker(value))
-    .find((value) => /^[A-Z][A-Z0-9.\\-]{0,9}$/.test(value));
+    .find((value) => /^[A-Z][A-Z0-9.\-]{0,9}$/.test(value));
   return unrecognizedTicker
     ? `https://img.loadlogo.com/ticker/${encodeURIComponent(unrecognizedTicker)}?size=128&format=webp`
     : null;

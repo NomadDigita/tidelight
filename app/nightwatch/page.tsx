@@ -5,8 +5,9 @@ import NightwatchDesk from "@/app/ui/nightwatch-desk";
 
 export const revalidate = 60;
 
-export default async function NightwatchPage({ searchParams }: { searchParams: Promise<{ symbol?: string }> }) {
-  const { symbol: requestedSymbol } = await searchParams;
+export default async function NightwatchPage({ searchParams }: { searchParams: Promise<{ symbol?: string; researchRunId?: string }> }) {
+  const { symbol: requestedSymbol, researchRunId: requestedResearchRunId } = await searchParams;
+  const researchRunId = requestedResearchRunId?.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)?.[0] ?? null;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const universe = await getBitgetMarketUniverse().catch(() => null);
@@ -46,6 +47,7 @@ export default async function NightwatchPage({ searchParams }: { searchParams: P
     paused={accountResult.data?.paused ?? false}
     initialHistory={initialHistory}
     defaultSymbol={defaultSymbol}
+    researchRunId={researchRunId}
     initialAlerts={(alertsResult.data ?? []) as never}
   />;
 }

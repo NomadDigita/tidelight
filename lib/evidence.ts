@@ -11,6 +11,7 @@ export type QwenBrief = {
   upside: string;
   downside: string;
   catalysts: string[];
+  what_would_change: string[];
   claims: EvidenceClaim[];
   citation_coverage: number;
 };
@@ -44,11 +45,15 @@ export function validateBrief(value: unknown, sources: EvidenceSource[]): QwenBr
   if (!claims.length) return null;
 
   const catalysts = candidate.catalysts.flatMap((item) => typeof item === "string" && item.trim() ? [item.trim().slice(0, 240)] : []).slice(0, 5);
+  const whatWouldChange = Array.isArray(candidate.what_would_change)
+    ? candidate.what_would_change.flatMap((item) => typeof item === "string" && item.trim() ? [item.trim().slice(0, 240)] : []).slice(0, 4)
+    : [];
   return {
     summary: (candidate.summary as string).trim(),
     upside: (candidate.upside as string).trim(),
     downside: (candidate.downside as string).trim(),
     catalysts,
+    what_would_change: whatWouldChange.length ? whatWouldChange : ["A newer primary-source update that changes the reported facts.", "Independent reporting or an official filing that challenges the current interpretation."],
     claims,
     citation_coverage: Math.round((claims.length / Math.max(candidate.claims.length, 1)) * 100),
   };

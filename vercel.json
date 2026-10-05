@@ -1,1 +1,8 @@
-{}
+{
+  "crons": [
+    {
+      "path": "/api/cron/nightwatch",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}

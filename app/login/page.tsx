@@ -49,9 +49,9 @@ export default function LoginPage() {
         router.refresh();
         return;
       }
-      // Numeric email OTP verification stays on this page. Passing a redirect URL
-      // makes Supabase validate it against the Auth allow-list even though the user
-      // never follows a magic link, which can reject code requests.
+      // Numeric email OTP verification stays on this page. Supplying a redirect URL
+      // here makes Supabase validate it against the Auth redirect allow-list even
+      // though the user never follows a magic link, which can reject code requests.
       const authError = method === "code"
         ? (await supabase.auth.signInWithOtp({ email })).error
         : method === "link"

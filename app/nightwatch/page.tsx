@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getBitgetAsset, getBitgetCandles, getBitgetMarketUniverse } from "@/lib/bitget-market";
+import { issuerLogoUrl } from "@/lib/issuer-logo";
 import NightwatchDesk from "@/app/ui/nightwatch-desk";
 
 export const revalidate = 60;
@@ -9,7 +10,8 @@ export default async function NightwatchPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const universe = await getBitgetMarketUniverse().catch(() => null);
   const assets = (universe?.assets ?? []).filter((asset) => asset.isReality).map((asset) => ({
-    symbol: asset.symbol, name: asset.name, ticker: asset.underlyingTicker, lastPrice: asset.lastPrice, change24h: asset.change24h, logoUrl: asset.logoUrl,
+    symbol: asset.symbol, name: asset.name, ticker: asset.underlyingTicker, lastPrice: asset.lastPrice, change24h: asset.change24h,
+    logoUrl: asset.logoUrl ?? issuerLogoUrl(asset),
   }));
   const defaultSymbol = assets.find((asset) => asset.symbol === "RAAPLUSDT")?.symbol ?? assets[0]?.symbol ?? "RAAPLUSDT";
   const [accountResult, runsResult, ordersResult, positionsResult] = user ? await Promise.all([
@@ -22,7 +24,8 @@ export default async function NightwatchPage() {
   const positions = await Promise.all((positionsResult.data ?? []).map(async (position) => {
     const asset = assets.find((item) => item.symbol === position.symbol) ?? await getBitgetAsset(position.symbol).catch(() => null);
     const ticker = asset ? ("ticker" in asset ? asset.ticker : asset.underlyingTicker) : null;
-    return { ...position, currentPrice: asset?.lastPrice ?? null, name: asset?.name ?? position.symbol, ticker, logoUrl: asset?.logoUrl ?? null };
+    return { ...position, currentPrice: asset?.lastPrice ?? null, name: asset?.name ?? position.symbol, ticker,
+      logoUrl: asset?.logoUrl ?? (asset ? issuerLogoUrl(asset) : issuerLogoUrl({ symbol: position.symbol })) };
   }));
   const initialHistory = await getBitgetCandles(defaultSymbol, "4H", 1000).then((candles) => {
     const fourHours = 4 * 60 * 60 * 1000;

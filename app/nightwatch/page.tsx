@@ -14,12 +14,13 @@ export default async function NightwatchPage() {
     logoUrl: asset.logoUrl ?? issuerLogoUrl(asset),
   }));
   const defaultSymbol = assets.find((asset) => asset.symbol === "RAAPLUSDT")?.symbol ?? assets[0]?.symbol ?? "RAAPLUSDT";
-  const [accountResult, runsResult, ordersResult, positionsResult] = user ? await Promise.all([
+  const [accountResult, runsResult, ordersResult, positionsResult, alertsResult] = user ? await Promise.all([
     supabase.from("nightwatch_accounts").select("id, cash_balance, paused").maybeSingle(),
     supabase.from("nightwatch_runs").select("id, symbol, signal, outcome, reason, as_of, reference_price, fast_sma, slow_sma, created_at").order("created_at", { ascending: false }).limit(30),
     supabase.from("nightwatch_orders").select("id, symbol, side, quantity, simulated_fill_price, notional, fee, realized_pnl, created_at").order("created_at", { ascending: false }).limit(50),
     supabase.from("nightwatch_positions").select("id, symbol, quantity, average_cost, opened_at"),
-  ]) : [{ data: null }, { data: [] }, { data: [] }, { data: [] }];
+    supabase.from("nightwatch_alerts").select("id, kind, title, body, read_at, created_at").order("created_at", { ascending: false }).limit(20),
+  ]) : [{ data: null }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
   const positions = await Promise.all((positionsResult.data ?? []).map(async (position) => {
     const asset = assets.find((item) => item.symbol === position.symbol) ?? await getBitgetAsset(position.symbol).catch(() => null);
@@ -42,5 +43,6 @@ export default async function NightwatchPage() {
     paused={accountResult.data?.paused ?? false}
     initialHistory={initialHistory}
     defaultSymbol={defaultSymbol}
+    initialAlerts={(alertsResult.data ?? []) as never}
   />;
 }

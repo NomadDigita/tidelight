@@ -37,6 +37,27 @@ export type BacktestResult = {
   splitIndex: number;
 };
 
+function validateCandles(input: MarketCandle[]) {
+  const candles = [...input].sort((a, b) => a.timestamp - b.timestamp);
+  for (let i = 0; i < candles.length; i += 1) {
+    const candle = candles[i];
+    const prices = [candle.open, candle.high, candle.low, candle.close];
+    if (!Number.isSafeInteger(candle.timestamp) || candle.timestamp <= 0 || prices.some((price) => !Number.isFinite(price) || price <= 0)) {
+      throw new Error("Bitget candle history contains an invalid timestamp or price.");
+    }
+    if (candle.high < Math.max(candle.open, candle.close, candle.low) || candle.low > Math.min(candle.open, candle.close, candle.high)) {
+      throw new Error("Bitget candle history contains inconsistent OHLC values.");
+    }
+    if ((candle.volume !== null && (!Number.isFinite(candle.volume) || candle.volume < 0)) || (candle.turnover !== null && (!Number.isFinite(candle.turnover) || candle.turnover < 0))) {
+      throw new Error("Bitget candle history contains invalid volume data.");
+    }
+    if (i > 0 && candle.timestamp <= candles[i - 1].timestamp) {
+      throw new Error("Bitget candle history contains duplicate timestamps.");
+    }
+  }
+  return candles;
+}
+
 function movingAverages(candles: MarketCandle[], window: number) {
   const values: (number | null)[] = Array(candles.length).fill(null);
   let sum = 0;
@@ -136,7 +157,7 @@ function measure(candles: MarketCandle[], fast: (number | null)[], slow: (number
 }
 
 export function runBacktest(symbol: string, interval: CandleInterval, input: MarketCandle[]): BacktestResult {
-  const candles = [...input].sort((a, b) => a.timestamp - b.timestamp);
+  const candles = validateCandles(input);
   if (candles.length < 80) throw new Error("At least 80 Bitget candles are required to evaluate a 50-period strategy with an out-of-sample window.");
   const splitIndex = Math.floor(candles.length * BACKTEST_PARAMETERS.trainFraction);
   if (splitIndex < BACKTEST_PARAMETERS.slowWindow + 5 || candles.length - splitIndex < 20) throw new Error("This candle history is too short for a meaningful chronological holdout.");

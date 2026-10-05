@@ -75,7 +75,7 @@ The goal is not a confident-sounding prediction. It is a more inspectable path f
 - **Live market map.** Public Bitget spot-market quotes, asset details, token classifications, quote freshness, and candle history where available. Prices and availability can change, and some tokenized assets may have limited history or market hours.
 - **Source-based research.** Submit a source link and the passage you want to examine. Qwen can organize a structured brief; claims are checked against the passage supplied for that brief, with evidence and limitations shown for review.
 - **Exposure mapping.** Connect a research event to relevant companies, sectors, and tokenized-market instruments, then inspect possible catalysts and risks.
-- **Strategy Lab.** Replay a clearly labeled baseline against historical public candles. Review costs, trade records, test windows, and saved runs. A historical replay is an experiment, not a forecast.
+- **Strategy Lab.** Replay a clearly labeled baseline against historical public candles. Review costs, trade records, test windows, and saved runs. [See the latest five-market test](./docs/STRATEGY_VALIDATION_2026-10-05.md): in that 30-day snapshot, the baseline trailed buy-and-hold on every market. We show that plainly; a historical replay is an experiment, not a forecast.
 - **Nightwatch.** Start a paper check against public Bitget market data, review simulated positions, and follow each decision. Active paper workspaces can also receive a daily in-app summary. Market checks remain user-triggered; nothing places a live order.
 - **Your private workspace.** Sign in to save briefs, watchlists, strategy runs, and account preferences. Row-level access rules scope private records to their owner.
 - **A desk that feels like yours.** Choose among three visual themes and use the compact mobile navigation on a phone.
@@ -142,7 +142,7 @@ Database changes live in [`supabase/migrations`](./supabase/migrations). They us
 
 ## What we are building toward
 
-Tidelight is being developed as a connected research loop: stronger multi-source evidence and contradiction tracking; clearer links from events to exposed assets; longer, repeatable strategy validation; and a transparent paper-agent timeline. Our product thesis and milestone notes are in the [product plan](./PROJECT_PLAN.md) and the [hackathon plan](./docs/HACKATHON_PRODUCT_PLAN.md).
+The next steps are automatic capture of permitted public sources, more independent source verification, longer rolling market histories, a scheduled paper-check observation period, and final account-security verification. Passkeys and leaked-password protection still depend on completing Supabase Auth settings. Live exchange orders stay disabled. Our product thesis and current milestone notes are in the [product plan](./PROJECT_PLAN.md) and the [hackathon plan](./docs/HACKATHON_PRODUCT_PLAN.md).
 
 We are building carefully: show the evidence, label assumptions, preserve uncertainty, and keep simulated results visibly simulated.
 

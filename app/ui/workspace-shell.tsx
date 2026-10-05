@@ -5,16 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions";
-import { ThemeQuickSwitch } from "@/app/ui/theme-provider";
+import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
 
 const navigation = [
   { href: "/", label: "Overview", icon: "◫" },
   { href: "/research", label: "Research desk", icon: "⌕" },
   { href: "/markets", label: "Market map", icon: "⌁" },
-  { href: "/strategies", label: "Strategy lab", icon: "⌗" },
-  { href: "/nightwatch", label: "Nightwatch agent", icon: "◉" },
+  { href: "/strategies", label: "Strategy lab", icon: "⌗", technical: true },
+  { href: "/nightwatch", label: "Nightwatch agent", icon: "◉", technical: true },
   { href: "/watchlist", label: "Watchlist", icon: "⌖" },
-  { href: "/briefs", label: "Saved briefs", icon: "▤" },
+  { href: "/briefs", label: "Saved briefs", icon: "▤", technical: true },
 ];
 const mobilePrimary = [navigation[0], navigation[1], navigation[2], navigation[4]];
 
@@ -37,7 +37,7 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
         <nav className="nav-list">
           {navigation.map((item) => {
             const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            return <Link className={`nav-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}>
+            return <Link data-technical={item.technical ? "true" : undefined} className={`nav-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}>
               <span className="nav-icon">{item.icon}</span>{item.label}{item.href === "/briefs" ? <span className="nav-count">↗</span> : null}
             </Link>;
           })}
@@ -63,7 +63,7 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
         <header className="topbar">
           <Link className="mobile-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={28} height={28} /> Tidelight</Link>
           <div className="breadcrumb">Workspace <span>/</span> {active.label}</div>
-          <div className="top-actions"><span className="market-clock"><i /> AFTER HOURS <b>RESEARCH MODE</b></span><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div>
+          <div className="top-actions"><span className="market-clock"><i /> AFTER HOURS <b>RESEARCH MODE</b></span><ExperienceSwitch /><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div>
         </header>
         <div className="route-content">{children}</div>
         <footer className="page-footer"><span>© 2026 Tidelight Research</span><span><b>Clarity when the bell is quiet.</b> <i>Built for markets that never sleep.</i></span><Link href="/settings">PRIVACY & SETTINGS <span className="footer-dot">●</span></Link></footer>
@@ -82,7 +82,7 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
           <div className="mobile-more-heading">YOUR WORKSPACE <button type="button" aria-label="Close navigation menu" onClick={() => setMobileMenuPath(null)}>×</button></div>
           {navigation.filter((item) => !mobilePrimary.some((primary) => primary.href === item.href)).map((item) => {
             const isActive = pathname.startsWith(item.href);
-            return <Link className={`mobile-more-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}><span aria-hidden="true">{item.icon}</span>{item.label}<span className="mobile-more-arrow">↗</span></Link>;
+            return <Link data-technical={item.technical ? "true" : undefined} className={`mobile-more-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}><span aria-hidden="true">{item.icon}</span>{item.label}<span className="mobile-more-arrow">↗</span></Link>;
           })}
           <Link className="mobile-more-link" href="/settings"><span aria-hidden="true">⚙</span>Settings<span className="mobile-more-arrow">↗</span></Link>
           <Link className="mobile-more-account" href={email ? "/settings" : "/login"}>{email ? email : "Sign in to save your research"}<span>↗</span></Link>

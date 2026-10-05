@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getBitgetAsset } from "@/lib/bitget-market";
+import { requiresMfa } from "@/lib/supabase/aal";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: "Sign in to close a paper position." }, { status: 401 });
+  if (await requiresMfa(supabase)) return NextResponse.json({ code: "mfa_required", error: "Verify your authenticator before closing a paper position." }, { status: 403 });
   let body: { symbol?: unknown; reason?: unknown };
   try { body = await request.json() as typeof body; } catch { return NextResponse.json({ error: "Send a valid JSON request." }, { status: 400 }); }
   const symbol = typeof body.symbol === "string" ? body.symbol.toUpperCase() : "";

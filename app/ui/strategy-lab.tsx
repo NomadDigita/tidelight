@@ -95,6 +95,7 @@ export default function StrategyLab({ signedIn, initialRuns }: { signedIn: boole
   const matrixDrawdown = matrix.length ? matrix.reduce((sum, item) => sum + item.test.maxDrawdownPct, 0) / matrix.length : null;
 
   return <>
+    <section className="strategy-spine" aria-label="Tidelight decision spine"><span>EVENT</span><i>→</i><span>EVIDENCE</span><i>→</i><span>EXPOSURE</span><i>→</i><span>SCENARIO</span><i>→</i><b>DECISION</b></section>
     <section className="strategy-workbench" aria-labelledby="strategy-workbench-title">
       <div className="strategy-workbench-head"><div><span className="eyebrow small-eyebrow">REPLAY A PUBLIC MARKET</span><h2 id="strategy-workbench-title">Build a baseline</h2></div><span className="strategy-readonly">PAPER RESEARCH ONLY</span></div>
       <div className="strategy-controls"><label>Bitget spot symbol<input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32))} placeholder="RAAPLUSDT" maxLength={32} /></label><label>Candle interval<select value={interval} onChange={(event) => setInterval(event.target.value as CandleInterval)}><option value="1H">1 hour</option><option value="4H">4 hours</option><option value="1D">1 day</option></select></label><button type="button" className="strategy-run-button" onClick={() => void execute()} disabled={busy || !symbol}>{busy ? <><span className="strategy-spinner"/> Replaying candles…</> : <>Run holdout test <span>↗</span></>}</button></div>

@@ -11,6 +11,7 @@ type Order = { id: string; symbol: string; side: string; quantity: number; simul
 type Position = { id: string; symbol: string; quantity: number; average_cost: number; opened_at: string; currentPrice: number | null; name: string; ticker: string | null; logoUrl: string | null };
 type Mark = { t: number; c: number };
 type NightwatchPreferences = { trigger_mode: "manual" | "every_check"; alert_on_signal: boolean; alert_on_fill: boolean; daily_summary: boolean };
+type Alert = { id: string; kind: "signal" | "fill" | "summary"; title: string; body: string; read_at: string | null; created_at: string };
 
 const usd = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
 const price = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumSignificantDigits: 7 }).format(value);
@@ -37,9 +38,9 @@ function IssuerMark({ ticker, logoUrl }: { ticker: string | null; logoUrl: strin
   return <span className="nw-issuer-mark">{logoUrl ? <Image src={logoUrl} alt="" width={30} height={30} unoptimized /> : <b>{(ticker ?? "R").slice(0, 1)}</b>}</span>;
 }
 
-export default function NightwatchDesk({ signedIn, assets, initialRuns, initialOrders, positions, cashBalance, paused, initialHistory, defaultSymbol }: {
+export default function NightwatchDesk({ signedIn, assets, initialRuns, initialOrders, positions, cashBalance, paused, initialHistory, defaultSymbol, initialAlerts }: {
   signedIn: boolean; assets: Asset[]; initialRuns: Run[]; initialOrders: Order[]; positions: Position[];
-  cashBalance: number; paused: boolean; initialHistory: Mark[]; defaultSymbol: string;
+  cashBalance: number; paused: boolean; initialHistory: Mark[]; defaultSymbol: string; initialAlerts: Alert[];
 }) {
   const router = useRouter();
   const [symbol, setSymbol] = useState(defaultSymbol);
@@ -155,6 +156,10 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     <section className="nw-panel nw-positions-panel"><div className="nw-panel-head"><div><span className="eyebrow small-eyebrow">PRIVATE PAPER BOOK</span><h2>Open positions <span className="nw-count">{positions.length}</span></h2></div><span className="nw-account-tag">{signedIn ? "YOUR ACCOUNT · $10,000 START" : "PREVIEW MODE"}</span></div>
       {positions.length ? <div className="nw-position-table"><div className="nw-table-head"><span>MARKET</span><span>SIZE</span><span>AVERAGE COST</span><span>LAST MARK</span><span>OPEN P&L*</span><span>ACTION</span></div>{positions.map((item) => { const mark = item.currentPrice ?? item.average_cost; const pnl = (mark - item.average_cost) * item.quantity; return <div className="nw-position-row" key={item.id}><span className="nw-position-market"><IssuerMark ticker={item.ticker} logoUrl={item.logoUrl}/><span><b>{item.ticker ?? item.symbol.replace("USDT", "")}</b><small>{item.name} · {item.symbol}</small></span></span><b>{item.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 })}</b><b>{price(item.average_cost)}</b><b>{price(mark)}</b><b className={pnl >= 0 ? "positive" : "negative"}>{pnl >= 0 ? "+" : ""}{usd(pnl)}</b><button type="button" className="nw-close-position" onClick={() => void closePosition(item)} disabled={closing === item.symbol}>{closing === item.symbol ? "Closing…" : "Close paper"}</button></div>; })}</div> : <div className="nw-empty-book"><span>⌁</span><div><b>Nothing at risk. That’s a position too.</b><small>Nightwatch will only open a simulated position after a fresh golden cross passes every guardrail.</small></div></div>}
       <p className="nw-footnote">* Open P&amp;L is an estimate before exit fees/slippage. Open positions are marked with the latest public Bitget quote.</p>
+    </section>
+
+    <section className="nw-panel nw-alerts-panel"><div className="nw-panel-head"><div><span className="eyebrow small-eyebrow">ALERT STREAM · PRIVATE</span><h2>What changed while you were away.</h2></div><span className="nw-count">{initialAlerts.length}</span></div>
+      {initialAlerts.length ? <div className="nw-alert-list">{initialAlerts.slice(0, 8).map((alert) => <article className={`nw-alert ${alert.kind}`} key={alert.id}><span>{alert.kind === "fill" ? "↗" : alert.kind === "summary" ? "≋" : "!"}</span><div><b>{alert.title}</b><p>{alert.body}</p><small>{date(alert.created_at)}</small></div></article>)}</div> : <div className="nw-empty-activity"><span>!</span><div><b>No alerts yet.</b><small>Signal and paper-fill alerts will appear here after a completed-candle check.</small></div></div>}
     </section>
 
     <section className="nw-panel nw-activity-panel"><div className="nw-panel-head"><div><span className="eyebrow small-eyebrow">THE AUDIT TRAIL · PRIVATE & APPEND-ONLY</span><h2>Every signal has a reason.</h2></div><div className="nw-tabs"><button type="button" className={view === "decisions" ? "active" : ""} onClick={() => setView("decisions")}>Decisions <span>{allRuns.length}</span></button><button type="button" className={view === "orders" ? "active" : ""} onClick={() => setView("orders")}>Paper fills <span>{initialOrders.length}</span></button></div></div>

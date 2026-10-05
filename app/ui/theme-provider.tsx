@@ -53,6 +53,10 @@ export function ThemePicker() {
   </fieldset>;
 }
 
+export function useExperience() {
+  return useContext(ExperienceContext);
+}
+
 export function ThemeQuickSwitch() {
   const { theme, setTheme } = useContext(ThemeContext);
   return <div className="theme-quick-switch" role="group" aria-label="Quick theme switcher">

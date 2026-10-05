@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import MfaChallenge from "@/app/ui/mfa-challenge";
 
 type Asset = { symbol: string; name: string; ticker: string | null; lastPrice: number; change24h: number | null; logoUrl: string | null };
 type Run = { id: string; symbol: string; signal: string; outcome: string; reason: string; as_of: string; reference_price: number; fast_sma: number; slow_sma: number; created_at: string };
@@ -57,6 +58,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [alerts, setAlerts] = useState(initialAlerts);
   const [summaryBusy, setSummaryBusy] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
   const selected = assets.find((asset) => asset.symbol === symbol);
   const allRuns = localRun ? [localRun, ...initialRuns.filter((run) => run.id !== localRun.id)] : initialRuns;
   const marketChange = selected?.change24h;
@@ -110,7 +112,8 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     setChanging(true); setError(""); setNotice("");
     try {
       const response = await fetch("/api/nightwatch/control", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paused: !isPaused }) });
-      const payload = await response.json() as { paused?: boolean; error?: string };
+      const payload = await response.json() as { paused?: boolean; error?: string; code?: string };
+      if (payload.code === "mfa_required") { setMfaRequired(true); setChanging(false); return; }
       if (!response.ok || typeof payload.paused !== "boolean") throw new Error(payload.error ?? "Could not update the agent state.");
       setIsPaused(payload.paused); setNotice(payload.paused ? "Paper agent paused. Checks will be recorded without fills." : "Paper agent resumed."); router.refresh();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update agent state."); }
@@ -122,7 +125,8 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     setClosing(position.symbol); setError(""); setNotice("");
     try {
       const response = await fetch("/api/nightwatch/close", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: position.symbol, reason: "Manual paper exit from Nightwatch" }) });
-      const payload = await response.json() as { error?: string };
+      const payload = await response.json() as { error?: string; code?: string };
+      if (payload.code === "mfa_required") { setMfaRequired(true); setClosing(null); return; }
       if (!response.ok) throw new Error(payload.error ?? "Could not close the paper position.");
       setNotice("Paper position closed and realized P&L recorded."); router.refresh();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not close the paper position."); }
@@ -130,6 +134,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   }
 
   return <div className="content-wrap inner-page nightwatch-page">
+    {mfaRequired ? <MfaChallenge onVerified={() => { setMfaRequired(false); setNotice("Authenticator verified. Retry the control you were changing."); }} /> : null}
     <section className="nw-hero">
       <div className="nw-hero-copy"><div className="eyebrow"><span className="eyebrow-line" /> TRACK 03 · AGENT HUB · PAPER EXECUTION</div>
         <h1>Watch the tide.<br/><span>Keep your hands steady.</span></h1>

@@ -3,3 +3,4 @@
     { "path": "/api/cron/nightwatch-summary", "schedule": "0 23 * * *" }
   ]
 }
+

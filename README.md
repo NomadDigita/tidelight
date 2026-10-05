@@ -96,7 +96,7 @@ The goal is not a confident-sounding prediction. It is a more inspectable path f
 - Private briefs, watchlists, and saved runs are associated with your signed-in account and protected by database access policies.
 - Tidelight's market pages use public market endpoints. A Bitget trading key is not required to browse them.
 - Nightwatch currently simulates activity. The app does not enable live order execution.
-- An authenticator app can be enrolled for additional account verification. Passkey sign-in is not available yet.
+- An authenticator app can be enrolled for extra verification. Passkey enrollment and sign-in are implemented against Supabase Auth’s experimental WebAuthn support, but stay hidden until the provider and relying-party domain are configured for the production site.
 - Qwen credentials are configured on the server and should never be placed in a public repository or browser code.
 
 ## For the curious (and the people building with us)

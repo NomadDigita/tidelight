@@ -49,18 +49,34 @@ export default function LoginPage() {
         router.refresh();
         return;
       }
-      const authError = method === "link" || method === "code"
-        ? (await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
-        : isSignUp
-          ? (await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
-          : (await supabase.auth.signInWithPassword({ email, password })).error;
+      // Numeric email OTP verification stays on this page. Passing a redirect URL
+      // makes Supabase validate it against the Auth allow-list even though the user
+      // never follows a magic link, which can reject code requests.
+      const authError = method === "code"
+        ? (await supabase.auth.signInWithOtp({ email })).error
+        : method === "link"
+          ? (await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
+          : isSignUp
+            ? (await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
+            : (await supabase.auth.signInWithPassword({ email, password })).error;
       if (authError) throw authError;
       if (method === "code") setCodeSent(true);
       else if (method === "link" || isSignUp) setSent(true);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "";
+      const normalized = message.toLowerCase();
       setError(method === "code"
-        ? (codeSent ? "That code could not be verified. Check it and try again." : "We couldn't send a sign-in code. Try again or use an email link.")
+        ? codeSent
+          ? normalized.includes("expired")
+            ? "That code has expired. Request a new code and try again."
+            : "That code could not be verified. Check the 8 digits and try again."
+          : normalized.includes("rate limit") || normalized.includes("too many")
+            ? "Too many code requests. Wait a minute before requesting another one."
+            : normalized.includes("redirect") || normalized.includes("not allowed")
+              ? "Supabase rejected the auth redirect. Check the production URL in Supabase Auth → URL Configuration."
+              : normalized.includes("sending") || normalized.includes("smtp") || normalized.includes("email")
+                ? "Supabase Auth could not send the email. Check Auth → SMTP Settings, the sender address, and the OTP email template."
+                : `We couldn't send a sign-in code${message ? ` (${message.slice(0, 120)})` : ""}. Try again or use an email link.`
         : method === "link"
           ? "We couldn't send a sign-in link. Check your email address and try again."
           : message || "We couldn't complete sign-in. Check your details and try again.");

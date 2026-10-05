@@ -5,6 +5,7 @@ const issuerDomains: Record<string, string> = {
   PLTR: "palantir.com", MSTR: "strategy.com", COST: "costco.com", CRM: "salesforce.com", QCOM: "qualcomm.com", BA: "boeing.com",
   UBER: "uber.com", HYG: "ishares.com", LQD: "ishares.com", IVV: "ishares.com", MUB: "ishares.com", IDEV: "ishares.com",
   VTEB: "vanguard.com", IEFA: "ishares.com", EWZ: "ishares.com", SOXL: "direxion.com",
+  QRVO: "qorvo.com", SPY: "ssga.com",
 };
 
 function normalize(value: string) {

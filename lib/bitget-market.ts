@@ -88,7 +88,9 @@ const companyDomains: Record<string, string> = {
   TMO: "thermofisher.com", TMUS: "t-mobile.com", TSM: "tsmc.com", V: "visa.com", VZ: "verizon.com",
   UPS: "ups.com", UNH: "unitedhealthgroup.com", WFC: "wellsfargo.com", WBD: "wbd.com",
   AXP: "americanexpress.com", BX: "blackstone.com", CEG: "constellationenergy.com", CRWD: "crowdstrike.com",
-  PANW: "paloaltonetworks.com", SHOP: "shopify.com", SPOT: "spotify.com",
+  PANW: "paloaltonetworks.com", SHOP: "shopify.com", SPOT: "spotify.com", QRVO: "qorvo.com", SPY: "ssga.com",
+  HYG: "ishares.com", LQD: "ishares.com", IVV: "ishares.com", MUB: "ishares.com", IDEV: "ishares.com",
+  IEFA: "ishares.com", VTEB: "vanguard.com", EWZ: "ishares.com", SOXL: "direxion.com",
 };
 
 const issuerNames: Record<string, string> = {
@@ -116,6 +118,7 @@ const issuerNames: Record<string, string> = {
   UNH: "UnitedHealth Group Incorporated", WFC: "Wells Fargo & Company", WBD: "Warner Bros. Discovery, Inc.",
   AXP: "American Express Company", BX: "Blackstone Inc.", CEG: "Constellation Energy Corporation", CRWD: "CrowdStrike Holdings, Inc.",
   PANW: "Palo Alto Networks, Inc.", SHOP: "Shopify Inc.", SPOT: "Spotify Technology S.A.",
+  QRVO: "Qorvo, Inc.", SPY: "SPDR S&P 500 ETF Trust",
   HYG: "iShares iBoxx $ High Yield Corporate Bond ETF", LQD: "iShares iBoxx $ Investment Grade Corporate Bond ETF",
   IVV: "iShares Core S&P 500 ETF", MUB: "iShares National Muni Bond ETF", IDEV: "iShares Core MSCI International Developed Markets ETF",
   VTEB: "Vanguard Tax-Exempt Bond ETF", IEFA: "iShares Core MSCI EAFE ETF", EWZ: "iShares MSCI Brazil ETF",

@@ -4,6 +4,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { MarketAsset } from "@/lib/bitget-market";
+import { issuerLogoUrl } from "@/lib/issuer-logo";
+import IssuerLogo from "@/app/ui/issuer-logo";
 
 type MarketPayload = {
   provider: string;
@@ -19,13 +21,6 @@ type Filter = "all" | "rtoken" | "rwa" | "crypto";
 const filterOptions: { value: Filter; label: string }[] = [
   { value: "all", label: "All spot assets" }, { value: "rtoken", label: "rTokens" }, { value: "rwa", label: "Other RWA" }, { value: "crypto", label: "Crypto" },
 ];
-
-function AssetLogo({ asset }: { asset: MarketAsset }) {
-  const [failed, setFailed] = useState(false);
-  return <span className={`universe-logo ${asset.kind}`} aria-hidden="true">
-    {asset.logoUrl && !failed ? <img src={asset.logoUrl} alt="" loading="lazy" onError={() => setFailed(true)} /> : <b>{(asset.underlyingTicker ?? asset.baseCoin).slice(0, 1)}</b>}
-  </span>;
-}
 
 function price(value: number | null, maximumDecimals = 6) {
   if (value === null) return "—";
@@ -101,7 +96,7 @@ export default function MarketUniverse() {
       <div className="universe-grid">{filteredAssets.slice(0, visibleCount).map((asset) => {
         const age = freshness(asset.providerTimestamp, payload.staleAfterMs);
         return <Link className="universe-card-link" href={`/markets/${encodeURIComponent(asset.symbol)}`} aria-label={`Open ${asset.name} market details`} key={asset.symbol}><article className="universe-card">
-          <div className="universe-card-head"><AssetLogo asset={asset} /><div className="universe-identity"><b>{asset.name}</b><span>{asset.underlyingTicker ? `${asset.underlyingTicker} · ${asset.symbol}` : asset.symbol}</span></div><span className={`asset-class ${asset.kind}`}>{asset.kind === "rtoken" ? "rTOKEN" : asset.kind === "rwa" ? "RWA" : "SPOT"}</span></div>
+          <div className="universe-card-head"><IssuerLogo className={`universe-logo ${asset.kind}`} ticker={asset.underlyingTicker ?? asset.baseCoin} logoUrl={asset.logoUrl ?? issuerLogoUrl(asset)} /><div className="universe-identity"><b>{asset.name}</b><span>{asset.underlyingTicker ? `${asset.underlyingTicker} · ${asset.symbol}` : asset.symbol}</span></div><span className={`asset-class ${asset.kind}`}>{asset.kind === "rtoken" ? "rTOKEN" : asset.kind === "rwa" ? "RWA" : "SPOT"}</span></div>
           <div className="universe-price">${price(asset.lastPrice)} <span className={asset.change24h !== null && asset.change24h < 0 ? "negative" : "positive"}>{asset.change24h === null ? "—" : `${asset.change24h >= 0 ? "+" : ""}${(asset.change24h * 100).toFixed(2)}%`}</span></div>
           <div className="universe-range"><span><small>24H LOW</small><b>${price(asset.low24h)}</b></span><span className="range-line"><i style={{ left: `${asset.high24h && asset.low24h && asset.high24h > asset.low24h ? Math.max(0, Math.min(100, ((asset.lastPrice - asset.low24h) / (asset.high24h - asset.low24h)) * 100)) : 50}%` }} /></span><span><small>24H HIGH</small><b>${price(asset.high24h)}</b></span></div>
           <div className="universe-card-foot"><span className={age.fresh ? "quote-fresh" : "quote-stale"}><i /> {age.label}</span><span>VOL ${price(asset.turnover24h, 0)}</span></div>

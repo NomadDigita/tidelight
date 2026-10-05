@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions";
+import { ThemeQuickSwitch } from "@/app/ui/theme-provider";
 
 const navigation = [
   { href: "/", label: "Overview", icon: "◫" },
@@ -62,7 +63,7 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
         <header className="topbar">
           <Link className="mobile-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={28} height={28} /> Tidelight</Link>
           <div className="breadcrumb">Workspace <span>/</span> {active.label}</div>
-          <div className="top-actions"><span className="market-clock"><i /> AFTER HOURS <b>RESEARCH MODE</b></span><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div>
+          <div className="top-actions"><span className="market-clock"><i /> AFTER HOURS <b>RESEARCH MODE</b></span><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div>
         </header>
         <div className="route-content">{children}</div>
         <footer className="page-footer"><span>© 2026 Tidelight Research</span><span><b>Clarity when the bell is quiet.</b> <i>Built for markets that never sleep.</i></span><Link href="/settings">PRIVACY & SETTINGS <span className="footer-dot">●</span></Link></footer>

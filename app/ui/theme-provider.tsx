@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
 
 export type Theme = "daylight" | "night" | "blue";
-const themes: { id: Theme; name: string; detail: string; swatches: string[] }[] = [
+export const themes: { id: Theme; name: string; detail: string; swatches: string[] }[] = [
   { id: "daylight", name: "Daylight", detail: "Warm paper, clear ink", swatches: ["#f5f3eb", "#18382f", "#76ae88"] },
   { id: "night", name: "Night Tide", detail: "The original deep sea", swatches: ["#080f11", "#a8ebc8", "#142522"] },
   { id: "blue", name: "Blue Hour", detail: "A cooler evening desk", swatches: ["#0b1020", "#b6c5ff", "#222b4c"] },
@@ -42,4 +42,14 @@ export function ThemePicker() {
       <span className="theme-check" aria-hidden="true">{theme === option.id ? "✓" : ""}</span>
     </button>)}
   </fieldset>;
+}
+
+export function ThemeQuickSwitch() {
+  const { theme, setTheme } = useContext(ThemeContext);
+  return <div className="theme-quick-switch" role="group" aria-label="Quick theme switcher">
+    {themes.map((option) => <button type="button" key={option.id} className={`theme-quick-option${theme === option.id ? " selected" : ""}`} aria-label={`Use ${option.name} theme`} aria-pressed={theme === option.id} onClick={() => setTheme(option.id)}>
+      <span className="theme-quick-swatch" style={{ backgroundColor: option.swatches[0], borderColor: option.swatches[1] }} aria-hidden="true" />
+    </button>)}
+    <span className="theme-quick-label" aria-hidden="true">{themes.find((option) => option.id === theme)?.name}</span>
+  </div>;
 }

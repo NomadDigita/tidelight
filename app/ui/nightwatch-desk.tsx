@@ -46,6 +46,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [localRun, setLocalRun] = useState<Run | null>(null);
   const [running, setRunning] = useState(false);
   const [changing, setChanging] = useState(false);
+  const [closing, setClosing] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(paused);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -82,6 +83,18 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
       setIsPaused(payload.paused); setNotice(payload.paused ? "Paper agent paused. Checks will be recorded without fills." : "Paper agent resumed."); router.refresh();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update agent state."); }
     finally { setChanging(false); }
+  }
+
+  async function closePosition(position: Position) {
+    if (!signedIn) { router.push("/login"); return; }
+    setClosing(position.symbol); setError(""); setNotice("");
+    try {
+      const response = await fetch("/api/nightwatch/close", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: position.symbol, reason: "Manual paper exit from Nightwatch" }) });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Could not close the paper position.");
+      setNotice("Paper position closed and realized P&L recorded."); router.refresh();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not close the paper position."); }
+    finally { setClosing(null); }
   }
 
   return <div className="content-wrap inner-page nightwatch-page">
@@ -127,7 +140,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     </div>
 
     <section className="nw-panel nw-positions-panel"><div className="nw-panel-head"><div><span className="eyebrow small-eyebrow">PRIVATE PAPER BOOK</span><h2>Open positions <span className="nw-count">{positions.length}</span></h2></div><span className="nw-account-tag">{signedIn ? "YOUR ACCOUNT · $10,000 START" : "PREVIEW MODE"}</span></div>
-      {positions.length ? <div className="nw-position-table"><div className="nw-table-head"><span>MARKET</span><span>SIZE</span><span>AVERAGE COST</span><span>LAST MARK</span><span>OPEN P&L*</span></div>{positions.map((item) => { const mark = item.currentPrice ?? item.average_cost; const pnl = (mark - item.average_cost) * item.quantity; return <div className="nw-position-row" key={item.id}><span className="nw-position-market"><IssuerMark ticker={item.ticker} logoUrl={item.logoUrl}/><span><b>{item.ticker ?? item.symbol.replace("USDT", "")}</b><small>{item.name} · {item.symbol}</small></span></span><b>{item.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 })}</b><b>{price(item.average_cost)}</b><b>{price(mark)}</b><b className={pnl >= 0 ? "positive" : "negative"}>{pnl >= 0 ? "+" : ""}{usd(pnl)}</b></div>; })}</div> : <div className="nw-empty-book"><span>⌁</span><div><b>Nothing at risk. That’s a position too.</b><small>Nightwatch will only open a simulated position after a fresh golden cross passes every guardrail.</small></div></div>}
+      {positions.length ? <div className="nw-position-table"><div className="nw-table-head"><span>MARKET</span><span>SIZE</span><span>AVERAGE COST</span><span>LAST MARK</span><span>OPEN P&L*</span><span>ACTION</span></div>{positions.map((item) => { const mark = item.currentPrice ?? item.average_cost; const pnl = (mark - item.average_cost) * item.quantity; return <div className="nw-position-row" key={item.id}><span className="nw-position-market"><IssuerMark ticker={item.ticker} logoUrl={item.logoUrl}/><span><b>{item.ticker ?? item.symbol.replace("USDT", "")}</b><small>{item.name} · {item.symbol}</small></span></span><b>{item.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 })}</b><b>{price(item.average_cost)}</b><b>{price(mark)}</b><b className={pnl >= 0 ? "positive" : "negative"}>{pnl >= 0 ? "+" : ""}{usd(pnl)}</b><button type="button" className="nw-close-position" onClick={() => void closePosition(item)} disabled={closing === item.symbol}>{closing === item.symbol ? "Closing…" : "Close paper"}</button></div>; })}</div> : <div className="nw-empty-book"><span>⌁</span><div><b>Nothing at risk. That’s a position too.</b><small>Nightwatch will only open a simulated position after a fresh golden cross passes every guardrail.</small></div></div>}
       <p className="nw-footnote">* Open P&amp;L is an estimate before exit fees/slippage. Open positions are marked with the latest public Bitget quote.</p>
     </section>
 

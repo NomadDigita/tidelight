@@ -56,6 +56,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [preferences, setPreferences] = useState<NightwatchPreferences>({ trigger_mode: "manual", alert_on_signal: true, alert_on_fill: true, daily_summary: true });
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [alerts, setAlerts] = useState(initialAlerts);
+  const [summaryBusy, setSummaryBusy] = useState(false);
   const selected = assets.find((asset) => asset.symbol === symbol);
   const allRuns = localRun ? [localRun, ...initialRuns.filter((run) => run.id !== localRun.id)] : initialRuns;
   const marketChange = selected?.change24h;
@@ -76,6 +77,17 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     if (!signedIn) { router.push("/login"); return; }
     const response = await fetch("/api/nightwatch/alerts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(id ? { id } : { all: true }) });
     if (response.ok) setAlerts((items) => items.map((item) => id && item.id !== id ? item : { ...item, read_at: new Date().toISOString() }));
+  }
+
+  async function generateSummary() {
+    if (!signedIn) { router.push("/login"); return; }
+    setSummaryBusy(true);
+    try {
+      const response = await fetch("/api/nightwatch/summary", { method: "POST" });
+      const payload = await response.json() as { alert?: Alert; error?: string };
+      if (response.ok && payload.alert) setAlerts((items) => [payload.alert!, ...items.filter((item) => item.kind !== "summary")]);
+      else setError(payload.error ?? "Could not generate the daily summary.");
+    } finally { setSummaryBusy(false); }
   }
 
   async function runCheck() {
@@ -129,7 +141,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     </section>
 
     <section className="nw-command-bar"><div className="nw-status-line"><span className={`nw-state-dot${isPaused ? " paused" : ""}`}/><div><b>{isPaused ? "Agent is paused" : "Paper agent is standing by"}</b><small>{signedIn ? "Private to your account · account-backed audit" : "Sign in to create your private paper account"}</small></div></div><div className="nw-command-actions"><button type="button" className="nw-secondary-button" onClick={() => void togglePause()} disabled={changing}>{changing ? "Updating…" : isPaused ? "Resume agent" : "Pause agent"}</button><Link href="/strategies" className="nw-inline-link">Strategy lab <span>↗</span></Link></div></section>
-    <section className="nw-preferences"><div><span className="eyebrow small-eyebrow">CONTROL SURFACE</span><h2>Choose how Nightwatch speaks.</h2><p>These preferences affect paper-agent checks and notification intent. No live order is enabled.</p></div><div className="nw-preference-controls"><label>TRIGGER MODE<select value={preferences.trigger_mode} onChange={(event) => void savePreferences({ trigger_mode: event.target.value as NightwatchPreferences["trigger_mode"] })} disabled={!signedIn || savingPreferences}><option value="manual">Manual checks</option><option value="every_check">Every completed check</option></select></label><label><input type="checkbox" checked={preferences.alert_on_signal} onChange={(event) => void savePreferences({ alert_on_signal: event.target.checked })} disabled={!signedIn || savingPreferences}/> Signal alerts</label><label><input type="checkbox" checked={preferences.alert_on_fill} onChange={(event) => void savePreferences({ alert_on_fill: event.target.checked })} disabled={!signedIn || savingPreferences}/> Paper-fill alerts</label><label><input type="checkbox" checked={preferences.daily_summary} onChange={(event) => void savePreferences({ daily_summary: event.target.checked })} disabled={!signedIn || savingPreferences}/> Daily summary</label></div></section>
+    <section className="nw-preferences"><div><span className="eyebrow small-eyebrow">CONTROL SURFACE</span><h2>Choose how Nightwatch speaks.</h2><p>These preferences affect paper-agent checks and notification intent. No live order is enabled.</p></div><div className="nw-preference-controls"><label>TRIGGER MODE<select value={preferences.trigger_mode} onChange={(event) => void savePreferences({ trigger_mode: event.target.value as NightwatchPreferences["trigger_mode"] })} disabled={!signedIn || savingPreferences}><option value="manual">Manual checks</option><option value="every_check">Every completed check</option></select></label><label><input type="checkbox" checked={preferences.alert_on_signal} onChange={(event) => void savePreferences({ alert_on_signal: event.target.checked })} disabled={!signedIn || savingPreferences}/> Signal alerts</label><label><input type="checkbox" checked={preferences.alert_on_fill} onChange={(event) => void savePreferences({ alert_on_fill: event.target.checked })} disabled={!signedIn || savingPreferences}/> Paper-fill alerts</label><label><input type="checkbox" checked={preferences.daily_summary} onChange={(event) => void savePreferences({ daily_summary: event.target.checked })} disabled={!signedIn || savingPreferences}/> Daily summary</label><button type="button" className="nw-summary-button" onClick={() => void generateSummary()} disabled={!signedIn || summaryBusy}>{summaryBusy ? "Building summary…" : "Generate today's summary"}</button></div></section>
 
     {error ? <div className="strategy-error" role="alert">{error}</div> : null}{notice ? <div className="nw-notice" role="status"><span>✓</span>{notice}</div> : null}
 

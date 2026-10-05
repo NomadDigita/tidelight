@@ -55,6 +55,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [view, setView] = useState<"decisions" | "orders">("decisions");
   const [preferences, setPreferences] = useState<NightwatchPreferences>({ trigger_mode: "manual", alert_on_signal: true, alert_on_fill: true, daily_summary: true });
   const [savingPreferences, setSavingPreferences] = useState(false);
+  const [alerts, setAlerts] = useState(initialAlerts);
   const selected = assets.find((asset) => asset.symbol === symbol);
   const allRuns = localRun ? [localRun, ...initialRuns.filter((run) => run.id !== localRun.id)] : initialRuns;
   const marketChange = selected?.change24h;
@@ -69,6 +70,12 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     const updated = { ...preferences, ...next }; setPreferences(updated); setSavingPreferences(true);
     try { await fetch("/api/nightwatch/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updated) }); }
     finally { setSavingPreferences(false); }
+  }
+
+  async function markAlertRead(id?: string) {
+    if (!signedIn) { router.push("/login"); return; }
+    const response = await fetch("/api/nightwatch/alerts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(id ? { id } : { all: true }) });
+    if (response.ok) setAlerts((items) => items.map((item) => id && item.id !== id ? item : { ...item, read_at: new Date().toISOString() }));
   }
 
   async function runCheck() {
@@ -158,8 +165,8 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
       <p className="nw-footnote">* Open P&amp;L is an estimate before exit fees/slippage. Open positions are marked with the latest public Bitget quote.</p>
     </section>
 
-    <section className="nw-panel nw-alerts-panel"><div className="nw-panel-head"><div><span className="eyebrow small-eyebrow">ALERT STREAM · PRIVATE</span><h2>What changed while you were away.</h2></div><span className="nw-count">{initialAlerts.length}</span></div>
-      {initialAlerts.length ? <div className="nw-alert-list">{initialAlerts.slice(0, 8).map((alert) => <article className={`nw-alert ${alert.kind}`} key={alert.id}><span>{alert.kind === "fill" ? "↗" : alert.kind === "summary" ? "≋" : "!"}</span><div><b>{alert.title}</b><p>{alert.body}</p><small>{date(alert.created_at)}</small></div></article>)}</div> : <div className="nw-empty-activity"><span>!</span><div><b>No alerts yet.</b><small>Signal and paper-fill alerts will appear here after a completed-candle check.</small></div></div>}
+    <section className="nw-panel nw-alerts-panel"><div className="nw-panel-head"><div><span className="eyebrow small-eyebrow">ALERT STREAM · PRIVATE</span><h2>What changed while you were away.</h2></div><div className="nw-alert-actions"><span className="nw-count">{alerts.filter((alert) => !alert.read_at).length} unread</span>{alerts.some((alert) => !alert.read_at) ? <button type="button" onClick={() => void markAlertRead()} disabled={!signedIn}>Mark all read</button> : null}</div></div>
+      {alerts.length ? <div className="nw-alert-list">{alerts.slice(0, 8).map((alert) => <article className={`nw-alert ${alert.kind}${alert.read_at ? " read" : ""}`} key={alert.id}><span>{alert.kind === "fill" ? "↗" : alert.kind === "summary" ? "≋" : "!"}</span><div><b>{alert.title}</b><p>{alert.body}</p><small>{date(alert.created_at)}{alert.read_at ? " · read" : " · new"}</small></div>{!alert.read_at ? <button type="button" aria-label={`Mark ${alert.title} as read`} onClick={() => void markAlertRead(alert.id)} disabled={!signedIn}>✓</button> : null}</article>)}</div> : <div className="nw-empty-activity"><span>!</span><div><b>No alerts yet.</b><small>Signal and paper-fill alerts will appear here after a completed-candle check.</small></div></div>}
     </section>
 
     <section className="nw-panel nw-activity-panel"><div className="nw-panel-head"><div><span className="eyebrow small-eyebrow">THE AUDIT TRAIL · PRIVATE & APPEND-ONLY</span><h2>Every signal has a reason.</h2></div><div className="nw-tabs"><button type="button" className={view === "decisions" ? "active" : ""} onClick={() => setView("decisions")}>Decisions <span>{allRuns.length}</span></button><button type="button" className={view === "orders" ? "active" : ""} onClick={() => setView("orders")}>Paper fills <span>{initialOrders.length}</span></button></div></div>

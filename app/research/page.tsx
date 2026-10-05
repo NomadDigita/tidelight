@@ -1,6 +1,8 @@
 import Link from "next/link";
 import ResearchWorkspace from "@/app/ui/research-workspace";
 
+export const maxDuration = 60;
+
 const workflow = [
   { number: "01", label: "Frame the event", detail: "Ask a specific, decision-relevant question." },
   { number: "02", label: "Bring a source", detail: "Paste an excerpt and its original link." },

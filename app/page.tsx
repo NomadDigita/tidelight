@@ -4,6 +4,8 @@ import MarketRadar from "./ui/market-radar";
 import { getBitgetMarketUniverse } from "@/lib/bitget-market";
 import { createClient } from "@/lib/supabase/server";
 
+export const maxDuration = 60;
+
 export default async function Home() {
   const today = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "America/New_York" }).format(new Date());
   const supabase = await createClient();

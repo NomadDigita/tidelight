@@ -73,7 +73,7 @@ The goal is not a confident-sounding prediction. It is a more inspectable path f
 ## What you can explore today
 
 - **Live market map.** Public Bitget spot-market quotes, asset details, token classifications, quote freshness, and candle history where available. Prices and availability can change, and some tokenized assets may have limited history or market hours.
-- **Source-based research.** Submit a source link and the passage you want to examine. Qwen can organize a structured brief; claims are checked against the passage supplied for that brief, with evidence and limitations shown for review.
+- **Source-based research.** Mini can read a supported HTTPS link from the selected company, SEC.gov, or a selected public publisher. Pro can compare up to five excerpts you provide. Tidelight checks every shown quote against the captured text and shows the source link and limits.
 - **Exposure mapping.** Connect a research event to relevant companies, sectors, and tokenized-market instruments, then inspect possible catalysts and risks.
 - **Strategy Lab.** Replay a clearly labeled baseline against historical public candles. Review costs, trade records, test windows, and saved runs. [See the latest five-market test](./docs/STRATEGY_VALIDATION_2026-10-05.md): in that 30-day snapshot, the baseline trailed buy-and-hold on every market. We show that plainly; a historical replay is an experiment, not a forecast.
 - **Nightwatch.** Start a paper check against public Bitget market data, review simulated positions, and follow each decision. Active paper workspaces can also receive a daily in-app summary. Market checks remain user-triggered; nothing places a live order.
@@ -96,6 +96,7 @@ The goal is not a confident-sounding prediction. It is a more inspectable path f
 - Private briefs, watchlists, and saved runs are associated with your signed-in account and protected by database access policies.
 - Tidelight's market pages use public market endpoints. A Bitget trading key is not required to browse them.
 - Nightwatch currently simulates activity. The app does not enable live order execution.
+- Mini reads only allowlisted public-source hosts, caps fetched pages at 2 MB, and rejects redirects to unapproved hosts. Pro stores only the excerpts you submit with their source links.
 - An authenticator app can be enrolled for extra verification. Passkey enrollment and sign-in are implemented against Supabase Auth’s experimental WebAuthn support, but stay hidden until the provider and relying-party domain are configured for the production site.
 - Qwen credentials are configured on the server and should never be placed in a public repository or browser code.
 
@@ -142,7 +143,7 @@ Database changes live in [`supabase/migrations`](./supabase/migrations). They us
 
 ## What we are building toward
 
-The next steps are automatic capture of permitted public sources, more independent source verification, longer rolling market histories, a scheduled paper-check observation period, and final account-security verification. Passkeys and leaked-password protection still depend on completing Supabase Auth settings. Live exchange orders stay disabled. Our product thesis and current milestone notes are in the [product plan](./PROJECT_PLAN.md) and the [hackathon plan](./docs/HACKATHON_PRODUCT_PLAN.md).
+The next steps are broader source coverage and independent publisher verification, source discovery beyond a link you provide, longer rolling market histories, a scheduled paper-check observation period, and final account-security verification. Passkeys and leaked-password protection still depend on completing Supabase Auth settings. Live exchange orders stay disabled. Our product thesis and current milestone notes are in the [product plan](./PROJECT_PLAN.md) and the [hackathon plan](./docs/HACKATHON_PRODUCT_PLAN.md).
 
 We are building carefully: show the evidence, label assumptions, preserve uncertainty, and keep simulated results visibly simulated.
 

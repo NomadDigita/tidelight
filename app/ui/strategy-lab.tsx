@@ -52,7 +52,9 @@ export default function StrategyLab({ signedIn, initialRuns }: { signedIn: boole
   const [symbol, setSymbol] = useState("RAAPLUSDT");
   const [interval, setInterval] = useState<CandleInterval>("4H");
   const [run, setRun] = useState<DisplayRun | null>(null);
+  const [matrix, setMatrix] = useState<DisplayRun[]>([]);
   const [busy, setBusy] = useState(false);
+  const [matrixBusy, setMatrixBusy] = useState(false);
   const [error, setError] = useState("");
 
   async function execute() {
@@ -68,6 +70,23 @@ export default function StrategyLab({ signedIn, initialRuns }: { signedIn: boole
     finally { setBusy(false); }
   }
 
+  async function executeMatrix() {
+    if (!signedIn) { router.push("/login"); return; }
+    setMatrixBusy(true); setError(""); setMatrix([]);
+    try {
+      const results: DisplayRun[] = [];
+      for (const item of validationSet) {
+        const response = await fetch("/api/strategies/backtest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: item.symbol, interval: item.interval }) });
+        const payload = await response.json() as { run?: DisplayRun; error?: string };
+        if (payload.run) results.push(payload.run);
+        else if (!response.ok) throw new Error(`${item.label}: ${payload.error ?? "validation failed"}`);
+        setMatrix([...results]);
+      }
+      router.refresh();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Validation matrix unavailable."); }
+    finally { setMatrixBusy(false); }
+  }
+
   const display = run;
   const test = display?.test;
   const latestSaved = initialRuns[0];
@@ -76,7 +95,7 @@ export default function StrategyLab({ signedIn, initialRuns }: { signedIn: boole
     <section className="strategy-workbench" aria-labelledby="strategy-workbench-title">
       <div className="strategy-workbench-head"><div><span className="eyebrow small-eyebrow">REPLAY A PUBLIC MARKET</span><h2 id="strategy-workbench-title">Build a baseline</h2></div><span className="strategy-readonly">PAPER RESEARCH ONLY</span></div>
       <div className="strategy-controls"><label>Bitget spot symbol<input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32))} placeholder="RAAPLUSDT" maxLength={32} /></label><label>Candle interval<select value={interval} onChange={(event) => setInterval(event.target.value as CandleInterval)}><option value="1H">1 hour</option><option value="4H">4 hours</option><option value="1D">1 day</option></select></label><button type="button" className="strategy-run-button" onClick={() => void execute()} disabled={busy || !symbol}>{busy ? <><span className="strategy-spinner"/> Replaying candles…</> : <>Run holdout test <span>↗</span></>}</button></div>
-      <div className="validation-set"><span>REPRESENTATIVE VALIDATION SET</span>{validationSet.map((item) => <button type="button" key={item.symbol} onClick={() => { setSymbol(item.symbol); setInterval(item.interval); }}>{item.label}</button>)}</div>
+      <div className="validation-set"><span>REPRESENTATIVE VALIDATION SET</span>{validationSet.map((item) => <button type="button" key={item.symbol} onClick={() => { setSymbol(item.symbol); setInterval(item.interval); }}>{item.label}</button>)}<button type="button" className="validation-matrix-button" onClick={() => void executeMatrix()} disabled={matrixBusy}>{matrixBusy ? "Running matrix…" : "Run full matrix ↗"}</button></div>
       {error ? <div className="strategy-error" role="alert">{error}</div> : null}
       {busy ? <div className="strategy-progress"><span/><span/><span/> Fetching Bitget candles and evaluating the fixed 20 / 50 SMA rule…</div> : null}
       {display ? <div className="strategy-result" aria-live="polite">
@@ -87,6 +106,7 @@ export default function StrategyLab({ signedIn, initialRuns }: { signedIn: boole
         <details className="strategy-train-details"><summary>View training window, risk metrics and raw trades</summary><div className="strategy-train-grid"><span>Training return <b>{pct(display.train.totalReturnPct)}</b></span><span>Training baseline <b>{pct(display.train.buyAndHoldReturnPct)}</b></span><span>Holdout Sharpe / Sortino <b>{number(display.test.sharpeRatio)} / {number(display.test.sortinoRatio)}</b></span><span>Starting equity <b>$10,000 simulated</b></span></div><div className="strategy-trades"><span className="eyebrow small-eyebrow">HOLDOUT EXECUTIONS · COSTS APPLIED ON BOTH SIDES</span>{display.test.tradeLog.length ? display.test.tradeLog.map((trade, index) => <div className="strategy-trade-row" key={`${trade.entryTime}-${index}`}><span>{date(trade.entryTime)}</span><span>${trade.entryPrice.toFixed(4)}</span><span>→ {date(trade.exitTime)}</span><span>${trade.exitPrice.toFixed(4)}</span><b className={trade.returnPct >= 0 ? "metric-positive" : "metric-negative"}>{pct(trade.returnPct)}</b></div>) : <p>No long entries triggered in this holdout window.</p>}</div></details>
       </div> : null}
     </section>
+    {matrix.length ? <section className="strategy-history validation-matrix"><div className="section-heading"><div><div className="eyebrow small-eyebrow">CROSS-MARKET VALIDATION · AFTER COSTS</div><h2>One rule, five markets.</h2></div><span className="strategy-history-note">{matrix.length} / {validationSet.length} complete</span></div><div className="strategy-history-table"><div className="strategy-history-row strategy-history-labels"><span>Market</span><span>Holdout</span><span>Max drawdown</span><span>Trades / win</span></div>{matrix.map((item) => <div className="strategy-history-row" key={item.id}><span><b>{item.assetName}</b><small>{item.symbol} · {item.interval}</small></span><b className={item.test.totalReturnPct >= 0 ? "metric-positive" : "metric-negative"}>{pct(item.test.totalReturnPct)}</b><span className="metric-negative">-{item.test.maxDrawdownPct.toFixed(2)}%</span><small>{item.test.trades} / {item.test.winRatePct == null ? "—" : `${item.test.winRatePct.toFixed(0)}%`}</small></div>)}</div><p className="strategy-history-note matrix-note">This is comparative research, not a ranking or a promise of future performance.</p></section> : null}
     {latestSaved ? <section className="strategy-history"><div className="section-heading"><div><div className="eyebrow small-eyebrow">PRIVATE RUN LOG</div><h2>Recent replays</h2></div><span className="strategy-history-note">{initialRuns.length} latest saved</span></div><div className="strategy-history-table"><div className="strategy-history-row strategy-history-labels"><span>Market</span><span>Holdout</span><span>Return vs hold</span><span>Ran</span></div>{initialRuns.map((item) => <div className="strategy-history-row" key={item.id}><span><b>{item.symbol}</b><small>{item.interval} · SMA 20 / 50</small></span><b className={item.test_metrics.totalReturnPct >= 0 ? "metric-positive" : "metric-negative"}>{pct(item.test_metrics.totalReturnPct)}</b><span>{pct(item.test_metrics.buyAndHoldReturnPct)}</span><small>{date(item.created_at)}</small></div>)}</div><p className="strategy-history-link"><Link href="/markets">Choose from the live Bitget market map <span>↗</span></Link></p></section> : null}
   </>;
 }

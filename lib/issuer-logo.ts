@@ -11,9 +11,15 @@ function normalize(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
+function realityPairTicker(value: string) {
+  const normalized = normalize(value);
+  if (normalized.endsWith("USDT")) return normalized.slice(0, -4).replace(/^R(?=[A-Z])/, "");
+  return normalized.replace(/^R(?=[A-Z])/, "");
+}
+
 export function issuerLogoUrl(values: { symbol?: string; baseCoin?: string; name?: string; underlyingTicker?: string | null }) {
   const candidates = [values.underlyingTicker ?? "", values.symbol ?? "", values.baseCoin ?? ""];
-  const ticker = candidates.map(normalize).find((value) => issuerDomains[value]) ??
+  const ticker = candidates.flatMap((value) => [normalize(value), realityPairTicker(value)]).find((value) => issuerDomains[value]) ??
     (values.name?.toLowerCase().includes("ishares") ? "HYG" : values.name?.toLowerCase().includes("vanguard") ? "VTEB" : null);
   const domain = ticker ? issuerDomains[ticker] : null;
   return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null;

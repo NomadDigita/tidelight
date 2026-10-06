@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getBitgetCredentials, bitgetPrivateRequest } from "@/lib/bitget-private";
 import { getBitgetAsset } from "@/lib/bitget-market";
+import { estimateOrderNotional, isLimitPriceWithinBand, MAX_ORDER_NOTIONAL_USDT, MAX_ORDER_ATTEMPTS_PER_HOUR } from "@/lib/bitget-order-policy";
 
 export const runtime = "nodejs";
 export async function POST(request: Request) {
@@ -27,13 +28,13 @@ export async function POST(request: Request) {
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count: attempts, error: auditReadError } = await supabase.from("security_events").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("event_type", "bitget_order_attempt").gte("created_at", hourAgo);
     if (auditReadError) return NextResponse.json({ error: "Could not check the order safety limit. No order was sent." }, { status: 503 });
-    if ((attempts ?? 0) >= 5) return NextResponse.json({ error: "This account has reached the five order attempts per hour safety limit." }, { status: 429 });
+    if ((attempts ?? 0) >= MAX_ORDER_ATTEMPTS_PER_HOUR) return NextResponse.json({ error: "This account has reached the five order attempts per hour safety limit." }, { status: 429 });
     const asset = await getBitgetAsset(symbol);
     if (!asset?.isReality || asset.kind !== "rtoken" || asset.quoteCoin !== "USDT") return NextResponse.json({ error: "Tidelight only routes spot orders for verified Bitget Reality stock tokens." }, { status: 422 });
     if (!Number.isFinite(asset.lastPrice) || asset.lastPrice <= 0) return NextResponse.json({ error: "A current Bitget price is unavailable. No order was sent." }, { status: 422 });
-    if (orderType === "limit" && (!Number.isFinite(limitPrice) || limitPrice <= 0 || Math.abs(limitPrice / asset.lastPrice - 1) > 0.05)) return NextResponse.json({ error: "A limit price must be within 5% of the latest Bitget reference price." }, { status: 400 });
-    const estimatedNotional = side === "buy" && orderType === "market" ? quantity : quantity * (orderType === "limit" ? limitPrice : asset.lastPrice);
-    if (estimatedNotional > 250) return NextResponse.json({ error: "This first release caps each order at 250 USDT. Reduce the order size." }, { status: 400 });
+    if (orderType === "limit" && !isLimitPriceWithinBand(limitPrice, asset.lastPrice)) return NextResponse.json({ error: "A limit price must be within 5% of the latest Bitget reference price." }, { status: 400 });
+    const estimatedNotional = estimateOrderNotional({ side, orderType, quantity, referencePrice: asset.lastPrice, limitPrice });
+    if (estimatedNotional == null || estimatedNotional > MAX_ORDER_NOTIONAL_USDT) return NextResponse.json({ error: "This first release caps each order at 250 USDT. Reduce the order size." }, { status: 400 });
     const payload: Record<string, unknown> = {
       category: "SPOT", symbol, qty: String(quantity), side, orderType,
       clientOid: crypto.randomUUID(),

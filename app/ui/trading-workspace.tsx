@@ -1,0 +1,63 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import MfaChallenge from "@/app/ui/mfa-challenge";
+
+type Asset = { symbol: string; name: string; lastPrice: number };
+type Connection = { label: string; mode: "paper" | "demo" | "live"; live_enabled: boolean; last_validated_at: string } | null;
+export default function TradingWorkspace({ signedIn, assets }: { signedIn: boolean; assets: Asset[] }) {
+  const [connection, setConnection] = useState<Connection>(null);
+  const [mode, setMode] = useState<"demo" | "live">("demo");
+  const [apiKey, setApiKey] = useState(""); const [apiSecret, setApiSecret] = useState(""); const [passphrase, setPassphrase] = useState("");
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  const [symbol, setSymbol] = useState(assets[0]?.symbol ?? ""); const [side, setSide] = useState<"buy" | "sell">("buy");
+  const [orderType, setOrderType] = useState<"market" | "limit">("market"); const [quantity, setQuantity] = useState(""); const [limitPrice, setLimitPrice] = useState("");
+  const [confirming, setConfirming] = useState(false); const [needsMfa, setNeedsMfa] = useState(false);
+  const selected = assets.find((asset) => asset.symbol === symbol);
+  useEffect(() => {
+    if (!signedIn) return;
+    fetch("/api/bitget/connection").then((response) => response.json().then((data) => ({ response, data }))).then(({ response, data }) => {
+      if (!response.ok) return;
+      setConnection(data.connection ?? null);
+      if (data.connection?.mode === "live" || data.connection?.mode === "demo") setMode(data.connection.mode);
+    }).catch(() => {});
+  }, [signedIn]);
+  async function connect(event: React.FormEvent) {
+    event.preventDefault(); setBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch("/api/bitget/connection", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode, apiKey, apiSecret, passphrase }) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error ?? "Could not verify this Bitget key.");
+      setApiKey(""); setApiSecret(""); setPassphrase(""); setConnection({ label: mode === "demo" ? "Bitget demo account" : "Bitget live account", mode, live_enabled: mode === "live", last_validated_at: data.last_validated_at }); setNotice(mode === "demo" ? "Demo account verified. Demo orders use virtual funds." : "Live account verified. Live order access is enabled with the controls below.");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not verify this Bitget key."); } finally { setBusy(false); }
+  }
+  async function disconnect() {
+    setBusy(true); setError(""); try { const response = await fetch("/api/bitget/connection", { method: "DELETE" }); const data = await response.json(); if (!response.ok) throw new Error(data.error); setConnection(null); setNotice("Bitget credentials removed from Tidelight."); } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not disconnect."); } finally { setBusy(false); }
+  }
+  async function placeOrder(confirmation: string) {
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch("/api/bitget/order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol, side, orderType, quantity, price: limitPrice, confirmation }) });
+      const data = await response.json(); if (data.mfaRequired) { setNeedsMfa(true); return; } if (!response.ok) throw new Error(data.error ?? "Bitget did not accept this order.");
+      setNotice(`${data.mode === "live" ? "Live" : "Demo"} ${side} order accepted for ${symbol}. Order ID: ${data.order?.orderId ?? "check Bitget order history"}.`); setConfirming(false);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Bitget did not accept this order."); } finally { setBusy(false); }
+  }
+  const connectedMode = connection?.mode === "demo" || connection?.mode === "live";
+  return <div className="tw-grid">
+    {needsMfa ? <MfaChallenge context="live_bitget_order" onVerified={() => { setNeedsMfa(false); void placeOrder(connection?.mode === "live" ? "PLACE LIVE ORDER" : "PLACE DEMO ORDER"); }} /> : null}
+    {!signedIn ? <section className="settings-card"><h2>Sign in to connect an account</h2><p>Bitget keys are private to your Tidelight account.</p><a className="primary-link" href="/login">Sign in</a></section> : <>
+      <section className="settings-card tw-card"><div className="settings-card-head"><span className="settings-icon blue">⌁</span><div><span className="eyebrow small-eyebrow">PRIVATE BITGET CONNECTION</span><h2>{connection ? "Account verified" : "Connect your Bitget account"}</h2></div></div>
+        <p>Use a dedicated API key with account read and spot trade permissions. Keep withdrawals disabled in Bitget. Keys are encrypted on the server and are never returned to this page.</p>
+        {connection ? <div className="tw-connected"><span><i/> {connection.label}</span><b>{connection.mode.toUpperCase()} · VERIFIED</b><small>Checked {new Date(connection.last_validated_at).toLocaleString()}</small><button type="button" className="nw-secondary-button" onClick={() => void disconnect()} disabled={busy}>Remove keys</button></div> : null}
+        <form className="tw-form" onSubmit={connect}><label>ACCOUNT MODE<select value={mode} onChange={(event) => setMode(event.target.value as "demo" | "live")}><option value="demo">Bitget demo · virtual funds</option><option value="live">Bitget live · real funds</option></select></label><label>API KEY<input autoComplete="off" value={apiKey} onChange={(event) => setApiKey(event.target.value)} required/></label><label>API SECRET<input type="password" autoComplete="new-password" value={apiSecret} onChange={(event) => setApiSecret(event.target.value)} required/></label><label>API PASSPHRASE<input type="password" autoComplete="new-password" value={passphrase} onChange={(event) => setPassphrase(event.target.value)} required/></label><button type="submit" className="primary-link" disabled={busy}>{busy ? "Verifying securely…" : `Verify ${mode} key`}</button></form>
+        <p className="tw-footnote">The Bitget API key must match the selected account mode. Tidelight can’t recover your secret; remove it here and replace it in Bitget if compromised.</p>
+      </section>
+      <section className="settings-card tw-card"><div className="settings-card-head"><span className="settings-icon mint">◉</span><div><span className="eyebrow small-eyebrow">CONFIRM BEFORE SENDING</span><h2>Place a spot order.</h2></div></div>
+        <p>Only verified Bitget Reality stock tokens are available. This desk places one order after your confirmation; it does not turn Nightwatch signals into automatic live trades.</p>
+        <div className="tw-form tw-order-form"><label>REALITY TOKEN<select value={symbol} onChange={(event) => setSymbol(event.target.value)}>{assets.map((asset) => <option key={asset.symbol} value={asset.symbol}>{asset.name} · {asset.symbol}</option>)}</select></label><div className="tw-two"><label>SIDE<select value={side} onChange={(event) => setSide(event.target.value as "buy" | "sell")}><option value="buy">Buy</option><option value="sell">Sell</option></select></label><label>ORDER TYPE<select value={orderType} onChange={(event) => setOrderType(event.target.value as "market" | "limit")}><option value="market">Market</option><option value="limit">Limit</option></select></label></div><label>{side === "buy" && orderType === "market" ? "AMOUNT · USDT" : "QUANTITY · TOKEN"}<input inputMode="decimal" type="number" min="0" step="any" value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder={side === "buy" && orderType === "market" ? "e.g. 25" : "e.g. 0.1"}/></label>{orderType === "limit" ? <label>LIMIT PRICE · USDT<input inputMode="decimal" type="number" min="0" step="any" value={limitPrice} onChange={(event) => setLimitPrice(event.target.value)}/></label> : null}<div className="tw-order-note"><b>Reference</b><span>{selected ? `${selected.name} · ${selected.lastPrice} USDT` : "No eligible Reality token is currently available."}</span><small>Maximum estimated order value: 250 USDT. Orders may execute immediately.</small></div><button type="button" className="primary-link" disabled={!connectedMode || busy || !symbol || !quantity || assets.length === 0} onClick={() => setConfirming(true)}>Review {connection?.mode === "live" ? "live" : "demo"} order</button></div>
+      </section>
+      {error ? <p className="action-error" role="alert">{error}</p> : null}{notice ? <p className="action-notice" role="status">{notice}</p> : null}
+      {confirming ? <div className="tw-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setConfirming(false); }}><section className="tw-confirm" role="dialog" aria-modal="true" aria-labelledby="tw-confirm-title"><span className="eyebrow small-eyebrow">{connection?.mode === "live" ? "REAL MONEY ORDER" : "VIRTUAL FUNDS"}</span><h2 id="tw-confirm-title">Confirm this {connection?.mode} order.</h2><p>{side.toUpperCase()} {quantity} {side === "buy" && orderType === "market" ? "USDT" : symbol} · {orderType.toUpperCase()}{orderType === "limit" ? ` at ${limitPrice} USDT` : ""} · estimated cap 250 USDT</p>{connection?.mode === "live" ? <p className="tw-live-warning">This order uses real funds. Check the symbol, side, amount, and Bitget account before continuing. Live order confirmation also requires your authenticator.</p> : null}<div className="tw-confirm-actions"><button type="button" className="nw-secondary-button" onClick={() => setConfirming(false)} disabled={busy}>Go back</button><button type="button" className="primary-link" onClick={() => void placeOrder(connection?.mode === "live" ? "PLACE LIVE ORDER" : "PLACE DEMO ORDER")} disabled={busy}>{busy ? "Sending…" : connection?.mode === "live" ? "Place live order" : "Place demo order"}</button></div></section></div> : null}
+    </>}
+    <style jsx>{`.tw-grid{display:grid;grid-template-columns:1fr;gap:18px;max-width:970px;margin:22px auto 30px}.tw-card{padding:clamp(20px,4vw,30px)}.tw-card>p{line-height:1.65}.tw-form{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:18px}.tw-form label{display:grid;gap:7px;font-size:12px;font-weight:750;letter-spacing:.07em;color:var(--text-muted,#74858d)}.tw-form input,.tw-form select{min-height:45px;width:100%;box-sizing:border-box;border:1px solid var(--border,#dbe4e5);border-radius:10px;padding:10px 12px;background:var(--surface,#fff);color:var(--text,#132833);font:inherit;font-size:15px;letter-spacing:normal}.tw-form button{align-self:end;justify-self:start}.tw-connected{display:grid;grid-template-columns:1fr auto;gap:8px 14px;padding:14px;border-radius:12px;background:var(--surface-muted,#f4f8f8)}.tw-connected>span{font-weight:700}.tw-connected i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#36b68e;margin-right:7px}.tw-connected b{font-size:12px;color:#188c78}.tw-connected small{color:var(--text-muted,#74858d)}.tw-connected button{grid-column:2;grid-row:1/4}.tw-footnote{font-size:13px;color:var(--text-muted,#74858d);line-height:1.55}.tw-order-form{grid-template-columns:1fr 1fr}.tw-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tw-order-note{grid-column:1/-1;display:grid;gap:5px;padding:13px;border:1px solid var(--border,#dbe4e5);border-radius:11px}.tw-order-note span{font-size:14px}.tw-order-note small{color:var(--text-muted,#74858d)}.tw-order-form>button{grid-column:1/-1;justify-self:start}.tw-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgba(3,14,22,.75)}.tw-confirm{width:min(500px,100%);padding:25px;border-radius:18px;background:var(--surface,#fff);color:var(--text,#132833);box-shadow:0 24px 90px #0006}.tw-confirm h2{margin:10px 0}.tw-confirm p{line-height:1.6}.tw-live-warning{padding:12px;border-radius:10px;background:#fff0ee;color:#a73c39;font-size:14px}.tw-confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.tw-confirm-actions button{min-height:42px;cursor:pointer}.tw-confirm-actions .primary-link{border:0;padding:0 14px}@media(max-width:650px){.tw-form,.tw-order-form{grid-template-columns:1fr}.tw-two{grid-template-columns:1fr 1fr}.tw-order-note,.tw-order-form>button{grid-column:auto}.tw-connected{grid-template-columns:1fr}.tw-connected button{grid-column:1;grid-row:auto;justify-self:start}.tw-confirm-actions{flex-direction:column-reverse}.tw-confirm-actions button{width:100%}}`}</style>
+  </div>;
+}

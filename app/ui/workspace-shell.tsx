@@ -14,6 +14,7 @@ const navigation = [
   { href: "/markets", label: "Market map", icon: "⌁" },
   { href: "/strategies", label: "Strategy lab", icon: "⌗", technical: true },
   { href: "/nightwatch", label: "Nightwatch agent", icon: "◉", technical: true },
+  { href: "/trading", label: "Bitget trading", icon: "⌁", technical: true },
   { href: "/watchlist", label: "Watchlist", icon: "⌖" },
   { href: "/briefs", label: "Saved briefs", icon: "▤", technical: true },
   { href: "/demo", label: "Product walkthrough", icon: "▷", technical: true },
@@ -75,7 +76,7 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
         {mobilePrimary.map((item) => {
           const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return <Link className={`mobile-nav-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}>
-            <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span><span>{item.label === "Research desk" ? "Research" : item.label === "Market map" ? "Markets" : item.label === "Nightwatch agent" ? "Nightwatch" : "Home"}</span>
+            <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span><span>{item.href === "/" ? "Overview" : item.href === "/guide" ? "Start here" : item.href === "/research" ? "Research" : item.href === "/strategies" ? "Strategy" : item.label}</span>
           </Link>;
         })}
         <button className={`mobile-nav-link${mobileMenuOpen || navigation.slice(3).some((item) => pathname.startsWith(item.href)) ? " active" : ""}`} type="button" aria-expanded={mobileMenuOpen} aria-controls="mobile-more-menu" onClick={() => setMobileMenuPath(mobileMenuOpen ? null : pathname)}>

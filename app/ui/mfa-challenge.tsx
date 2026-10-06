@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function MfaChallenge({ onVerified }: { onVerified: () => void }) {
+export default function MfaChallenge({ onVerified, context = "nightwatch_control" }: { onVerified: () => void; context?: string }) {
   const [code, setCode] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   async function verify() {
     if (!/^\d{6}$/.test(code)) { setError("Enter the six-digit authenticator code."); return; }
@@ -14,10 +14,10 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
     const result = await client.auth.mfa.verify({ factorId: factor.id, challengeId: challenge.data.id, code });
     if (result.error) setError(result.error.message); else {
       const { data: { user } } = await client.auth.getUser();
-      if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "mfa_verified", metadata: { factor_type: "totp", context: "nightwatch_control" } });
+      if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "mfa_verified", metadata: { factor_type: "totp", context } });
       onVerified();
     }
     setBusy(false);
   }
-  return <div className="mfa-challenge" role="dialog" aria-label="Verify authenticator"><div><span className="eyebrow small-eyebrow">STEP-UP SECURITY</span><h3>Confirm it’s you.</h3><p>This control needs your authenticator code before it can change the paper agent.</p></div><input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="000000"/><button type="button" onClick={() => void verify()} disabled={busy}>{busy ? "Checking…" : "Verify and continue"}</button>{error ? <small className="action-error">{error}</small> : null}</div>;
+  return <div className="mfa-challenge" role="dialog" aria-label="Verify authenticator"><div><span className="eyebrow small-eyebrow">STEP-UP SECURITY</span><h3>Confirm it’s you.</h3><p>This action needs your authenticator code before it can continue.</p></div><input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="000000"/><button type="button" onClick={() => void verify()} disabled={busy}>{busy ? "Checking…" : "Verify and continue"}</button>{error ? <small className="action-error">{error}</small> : null}</div>;
 }

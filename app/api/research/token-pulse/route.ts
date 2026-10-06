@@ -112,6 +112,6 @@ export async function POST(request: Request) {
     const error = cause instanceof Error && cause.message === "ai-http-401"
       ? "Bitget rejected Tidelight’s Qwen key (401). Check that BITGET_QWEN_API_KEY contains the active Bitget Qwen key, then redeploy."
       : "The latest items were found, but Tidelight couldn’t safely complete the analysis. Please try again.";
-    return NextResponse.json({ token, collectedAt: new Date().toISOString(), coverage: { news: items.filter((item) => item.channel === "News").length, community: items.filter((item) => item.channel === "Community").length }, sources: items, analysis: null, error }, { status: 503 });
+    return NextResponse.json({ token, collectedAt: new Date().toISOString(), coverage: { news: items.filter((item) => item.channel === "News").length, community: items.filter((item) => item.channel === "Community").length }, sources: items, analysis: { overview: "Public coverage was collected, but the AI summary could not be generated. Review the linked items below.", mood: "unclear", mood_explanation: "No AI interpretation is available for this run.", notable_developments: [], risks: [], watch_next: [], confidence: 0, limitations: "AI synthesis is unavailable. Read the gathered links directly; no summary or trade signal was generated." }, error }, { status: 503 });
   }
 }

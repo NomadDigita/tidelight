@@ -17,8 +17,24 @@ async function getNews(query: string): Promise<SearchItem[]> {
     const item = match[1];
     const field = (name: string) => text(item.match(new RegExp("<" + name + "(?:\\s[^>]*)?>([\s\S]*?)<\/" + name + ">", "i"))?.[1] ?? "");
     const link = field("link");
-    let publisher = "News publisher";
-    try { publisher = new URL(link).hostname.replace(/^www\./, ""); } catch {}
+    let publisher = field("source") || field("News:Source") || "News publisher";
+    try { if (publisher === "News publisher") publisher = new URL(link).hostname.replace(/^www\./, ""); } catch {}
+    const date = Date.parse(field("pubDate"));
+    return { title: field("title"), url: link, publisher, publishedAt: Number.isFinite(date) ? new Date(date).toISOString() : null, snippet: field("description").slice(0, 800), channel: "News" as const };
+  }).filter((item) => item.title && item.url.startsWith("https://"));
+}
+async function getBingNews(query: string): Promise<SearchItem[]> {
+  const url = new URL("https://www.bing.com/news/search");
+  url.search = new URLSearchParams({ q: query, format: "rss" }).toString();
+  const response = await fetch(url, { headers: { "User-Agent": "Tidelight Research/1.0", Accept: "application/rss+xml, application/xml, text/xml" }, signal: AbortSignal.timeout(9000), cache: "no-store" });
+  if (!response.ok) return [];
+  const xml = await response.text();
+  return [...xml.matchAll(/<item>([\\s\\S]*?)<\\/item>/gi)].slice(0, 8).map((match) => {
+    const item = match[1];
+    const field = (name: string) => text(item.match(new RegExp("<" + name + "(?:\\\\s[^>]*)?>([\\\\s\\S]*?)<\\/" + name + ">", "i"))?.[1] ?? "");
+    const link = field("link");
+    let publisher = field("source") || field("News:Source") || "News publisher";
+    try { if (publisher === "News publisher") publisher = new URL(link).hostname.replace(/^www\\./, ""); } catch {}
     const date = Date.parse(field("pubDate"));
     return { title: field("title"), url: link, publisher, publishedAt: Number.isFinite(date) ? new Date(date).toISOString() : null, snippet: field("description").slice(0, 800), channel: "News" as const };
   }).filter((item) => item.title && item.url.startsWith("https://"));
@@ -49,7 +65,7 @@ export async function POST(request: Request) {
   if ((count ?? 0) >= 10) return NextResponse.json({ error: "You’ve reached the hourly research limit. Try again later." }, { status: 429 });
   const queries = [...new Set([token, `"${token}" (crypto OR cryptocurrency OR token)`, `${token} crypto`])];
   const [newsResults, community] = await Promise.all([
-    Promise.allSettled(queries.map((query) => getNews(query))),
+    Promise.allSettled(queries.flatMap((query) => [getNews(query), getBingNews(query)])),
     getCommunity(token).catch(() => []),
   ]);
   const gathered = [

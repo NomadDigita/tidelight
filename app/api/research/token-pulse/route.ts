@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 export const maxDuration = 60;
 type SearchItem = { title: string; url: string; publisher: string; publishedAt: string | null; snippet: string; channel: "News" | "Community" };
 
-function qwenApiKey() { return process.env.BITGET_QWEN_API_KEY?.trim().replace(/^Bearer\\s+/i, "") ?? ""; }
+function qwenApiKey() { return process.env.BITGET_QWEN_API_KEY?.trim().replace(/^Bearer\s+/i, "") ?? ""; }
 
 function text(value: string) {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();

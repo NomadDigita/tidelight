@@ -1709,3 +1709,25 @@ button.primary-link,
   .top-actions { gap:6px !important; }
   .market-clock { display:none !important; }
 }
+
+/* Mobile masthead refinement: the rail owns the brand; keep the utility bar utility-only. */
+@media(max-width:780px) {
+  .mobile-brand { display:none !important; }
+  .topbar {
+    min-height:46px !important;
+    height:auto !important;
+    padding:6px 14px !important;
+    justify-content:flex-end !important;
+    background:color-mix(in srgb, var(--bg) 96%, transparent) !important;
+    border-bottom:1px solid color-mix(in srgb, var(--brand-teal) 15%, var(--line)) !important;
+  }
+  .top-actions { margin-left:auto; gap:10px !important; }
+  .sidebar { z-index:20; }
+}
+@media(max-width:520px) {
+  .topbar { min-height:42px !important; padding:5px 10px !important; }
+  .top-actions { gap:7px !important; }
+  .top-signin { padding:6px 8px !important; }
+  .content-wrap { padding-top:18px !important; }
+  .page-heading { gap:16px !important; }
+}

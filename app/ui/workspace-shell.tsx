@@ -9,6 +9,7 @@ import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
 
 const navigation = [
   { href: "/", label: "Overview", icon: "◫" },
+  { href: "/guide", label: "Start here", icon: "◎" },
   { href: "/research", label: "Research desk", icon: "⌕" },
   { href: "/markets", label: "Market map", icon: "⌁" },
   { href: "/strategies", label: "Strategy lab", icon: "⌗", technical: true },

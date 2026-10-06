@@ -1582,3 +1582,130 @@ a{transition:color .18s ease,border-color .18s ease,background .18s ease,transfo
 .strategy-result-actions{display:flex;align-items:center;gap:9px}.strategy-export-button{border:1px solid var(--line);border-radius:6px;background:var(--panel-2);color:var(--mint);padding:9px 11px;font:9px var(--mono);cursor:pointer}.strategy-export-button:hover{border-color:var(--mint-2);background:color-mix(in srgb,var(--mint) 9%,var(--panel-2))}.strategy-export-button:focus-visible{outline:2px solid var(--mint);outline-offset:2px}@media(max-width:680px){.strategy-result-heading{align-items:flex-start;flex-direction:column}.strategy-result-actions{width:100%;justify-content:space-between}}
 
 .dashboard-welcome-actions{display:grid;justify-items:end;gap:8px}.welcome-guide-link{color:var(--muted);font-size:9px;text-decoration:none}.welcome-guide-link:hover,.demo-final-actions>a:last-child:hover{color:var(--mint)}.demo-final-actions{display:flex;align-items:center;gap:20px}.demo-final-actions>a:last-child{color:var(--muted);font-size:9px;text-decoration:none}@media(max-width:680px){.dashboard-welcome-actions{justify-items:start}.dashboard-welcome{align-items:flex-start;flex-direction:column;gap:14px}.demo-final-actions{align-items:flex-start;flex-direction:column;gap:12px}}
+
+/* Tidelight brand system + desktop navigation parity on narrow screens */
+:root {
+  --brand-ink:#06181d;
+  --brand-teal:#29c8bb;
+  --brand-aqua:#9df6dc;
+  --brand-glow:rgba(71,224,194,.28);
+}
+body {
+  background:
+    radial-gradient(900px 480px at 92% -8%, rgba(44,196,173,.12), transparent 55%),
+    var(--bg);
+}
+.brand,
+.mobile-brand {
+  position:relative;
+}
+.brand:after,
+.mobile-brand:after {
+  content:"";
+  position:absolute;
+  inset:-8px -14px;
+  pointer-events:none;
+  background:radial-gradient(ellipse, var(--brand-glow), transparent 68%);
+  opacity:.38;
+  z-index:-1;
+}
+.brand img,
+.mobile-brand img {
+  filter:drop-shadow(0 0 13px rgba(83,236,197,.42));
+}
+.brand-light { color:var(--brand-aqua); }
+.nav-link.active {
+  background:
+    linear-gradient(100deg, rgba(41,200,187,.16), rgba(41,200,187,.04)),
+    #12211f;
+  border:1px solid rgba(96,231,201,.18);
+  box-shadow:inset 2px 0 var(--brand-teal), 0 0 20px rgba(41,200,187,.08);
+}
+.nav-link:hover { border-color:rgba(96,231,201,.15); }
+button.primary-link,
+.primary-link,
+.nw-run-button,
+.strategy-run-button {
+  box-shadow:0 8px 25px rgba(41,200,187,.16);
+}
+.hero-card,
+.markets-hero,
+.strategy-hero,
+.nw-hero {
+  box-shadow:0 22px 80px rgba(20,144,130,.11);
+}
+@media(max-width:780px) {
+  /*
+   * Keep the desktop information architecture on mobile:
+   * the sidebar becomes a branded, scrollable desktop-like rail;
+   * the separate bottom-nav is removed so navigation does not change meaning.
+   */
+  .sidebar {
+    display:flex !important;
+    position:sticky !important;
+    inset:auto !important;
+    top:0 !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    padding:12px 14px 10px !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    gap:14px !important;
+    overflow:hidden !important;
+    background:color-mix(in srgb, var(--bg) 94%, transparent) !important;
+    border-right:0 !important;
+    border-bottom:1px solid color-mix(in srgb, var(--brand-teal) 22%, var(--line)) !important;
+    backdrop-filter:blur(18px);
+  }
+  .sidebar .brand {
+    flex:0 0 auto;
+    padding:0 !important;
+    font-size:17px !important;
+    letter-spacing:-.7px !important;
+  }
+  .sidebar .brand img { width:31px !important; height:31px !important; }
+  .sidebar .brand small { display:none !important; }
+  .workspace-label,
+  .sidebar-promo,
+  .sidebar-bottom { display:none !important; }
+  .nav-list {
+    display:flex !important;
+    flex:1 1 auto;
+    min-width:0;
+    gap:5px !important;
+    overflow-x:auto;
+    padding:0 1px 2px !important;
+    scrollbar-width:none;
+  }
+  .nav-list::-webkit-scrollbar { display:none; }
+  .nav-link {
+    flex:0 0 auto;
+    height:36px !important;
+    padding:0 10px !important;
+    border:1px solid transparent;
+    border-radius:8px !important;
+    font-size:10px !important;
+    gap:7px !important;
+    white-space:nowrap;
+  }
+  .nav-icon { width:auto !important; font-size:14px !important; }
+  .main-area { margin-left:0 !important; }
+  .mobile-nav { display:none !important; }
+  .topbar {
+    height:52px !important;
+    padding:0 16px !important;
+    border-bottom-color:color-mix(in srgb, var(--brand-teal) 18%, var(--line)) !important;
+  }
+  .route-content { min-height:calc(100vh - 118px) !important; padding-bottom:20px; }
+  .content-wrap { padding-top:24px !important; }
+}
+@media(max-width:520px) {
+  .sidebar { gap:10px !important; padding-inline:10px !important; }
+  .sidebar .brand { font-size:15px !important; }
+  .sidebar .brand img { width:28px !important; height:28px !important; }
+  .nav-link { padding:0 8px !important; font-size:9px !important; }
+  .nav-icon { display:none; }
+  .top-actions { gap:6px !important; }
+  .market-clock { display:none !important; }
+}

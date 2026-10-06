@@ -9,6 +9,15 @@ import { validateBrief } from "@/lib/evidence";
 import { fetchPublicResearchSource, validatePublicSourceUrl, type RetrievedPublicSource } from "@/lib/public-source";
 
 function qwenApiKey() { return process.env.BITGET_QWEN_API_KEY?.trim().replace(/^Bearer\s+/i, "") ?? ""; }
+function qwenConfig() {
+  const rawBaseUrl = process.env.BITGET_QWEN_BASE_URL?.trim() || "https://hackathon.bitgetops.com/v1";
+  let baseUrl: URL;
+  try { baseUrl = new URL(rawBaseUrl); } catch { return null; }
+  if (baseUrl.protocol !== "https:" || baseUrl.hostname !== "hackathon.bitgetops.com" || baseUrl.username || baseUrl.password || baseUrl.search || baseUrl.hash || baseUrl.pathname.replace(/\\/+$/, "") !== "/v1") return null;
+  const model = process.env.BITGET_QWEN_MODEL?.trim() || "qwen3.8-max";
+  if (!/^[a-zA-Z0-9._:-]{1,80}$/.test(model)) return null;
+  return { endpoint: baseUrl.origin + "/v1/chat/completions", model };
+}
 
 export async function signOut() {
   const supabase = await createClient();
@@ -96,7 +105,9 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return { error: "Sign in to create a private evidence brief." };
   const apiKey = qwenApiKey();
+  const qwen = qwenConfig();
   if (!apiKey) return { error: "Qwen is not configured yet. The brief is not generated; add the Qwen API key on the server to enable it." };
+  if (!qwen) return { error: "The Bitget Qwen base URL or model setting is invalid. Check BITGET_QWEN_BASE_URL and BITGET_QWEN_MODEL." };
 
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const { count: recentRunCount, error: limitError } = await supabase.from("research_runs").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", hourAgo);
@@ -125,12 +136,12 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
         provenance.set(fetched.url, fetched);
       });
     }
-    const response = await fetch("https://hackathon.bitgetops.com/v1/chat/completions", {
+    const response = await fetch(qwen.endpoint, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       signal: AbortSignal.timeout(25000),
       body: JSON.stringify({
-        model: "qwen3.8-max",
+        model: qwen.model,
         temperature: 0.2,
         response_format: { type: "json_object" },
         messages: [

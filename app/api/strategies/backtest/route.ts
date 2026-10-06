@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       console.error("Backtest persistence failed", error.code);
       return Response.json({ error: "The run completed, but could not be saved. Please try again." }, { status: 503 });
     }
-    return Response.json({ run: { ...result, id: data.id, runId: data.id, createdAt: data.created_at, assetName: asset.name, assetKind: asset.kind, candleHash, walkForward, walkForwardStatus, costSensitivity, researchRunId, providerTimestamp: asset.providerTimestamp, sessionHours: asset.tradingSessions, weekendTradable: asset.weekendTradable } });
+    return Response.json({ run: { ...result, id: data.id, runId: data.id, createdAt: data.created_at, assetName: asset.name, assetKind: asset.kind, candleHash, candles, walkForward, walkForwardStatus, costSensitivity, researchRunId, providerTimestamp: asset.providerTimestamp, sessionHours: asset.tradingSessions, weekendTradable: asset.weekendTradable } }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Backtest unavailable.";
     const status = /At least|too short/.test(message) ? 422 : 503;

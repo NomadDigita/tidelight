@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { BacktestMetrics, BacktestResult, WalkForwardResult } from "@/lib/backtest";
-import type { CandleInterval } from "@/lib/bitget-market";
+import type { CandleInterval, MarketCandle } from "@/lib/bitget-market";
 
 type SavedRun = {
   id: string;
@@ -19,7 +19,7 @@ type SavedRun = {
   candle_count: number;
   created_at: string;
 };
-type DisplayRun = BacktestResult & { id: string; runId: string; createdAt: string; assetName: string; candleHash: string; walkForward: WalkForwardResult | null; walkForwardStatus: string; costSensitivity: Array<{ label: string; feeBpsPerSide: number; slippageBpsPerSide: number; returnPct: number }>; researchRunId: string | null; providerTimestamp: number | null; sessionHours: string[]; weekendTradable: boolean | null };
+type DisplayRun = BacktestResult & { id: string; runId: string; createdAt: string; assetName: string; assetKind: string; candleHash: string; candles: MarketCandle[]; walkForward: WalkForwardResult | null; walkForwardStatus: string; costSensitivity: Array<{ label: string; feeBpsPerSide: number; slippageBpsPerSide: number; returnPct: number }>; researchRunId: string | null; providerTimestamp: number | null; sessionHours: string[]; weekendTradable: boolean | null };
 const validationSet = [
   { label: "Apple · Reality", symbol: "RAAPLUSDT", interval: "4H" as CandleInterval },
   { label: "NVIDIA · Reality", symbol: "RNVDAUSDT", interval: "4H" as CandleInterval },
@@ -31,6 +31,32 @@ const validationSet = [
 function pct(value: number | null | undefined) { return value == null ? "—" : `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`; }
 function number(value: number | null | undefined) { return value == null ? "—" : value.toFixed(2); }
 function date(value: number | string) { return new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); }
+
+function downloadRun(run: DisplayRun) {
+  const bundle = {
+    schema: "tidelight.strategy-run.v1",
+    exportedAt: new Date().toISOString(),
+    run: {
+      id: run.runId, symbol: run.symbol, assetName: run.assetName, assetKind: run.assetKind,
+      interval: run.interval, strategyKey: run.strategyKey, parameters: run.parameters,
+      researchRunId: run.researchRunId, providerTimestamp: run.providerTimestamp,
+      sessionHours: run.sessionHours, weekendTradable: run.weekendTradable,
+      dataStart: new Date(run.dataStart).toISOString(), dataEnd: new Date(run.dataEnd).toISOString(),
+      candleCount: run.candleCount,
+      candleHash: { algorithm: "SHA-256", canonicalization: "JSON.stringify(completed candles in ascending timestamp order)", value: run.candleHash },
+      train: run.train, holdout: run.test, walkForward: run.walkForward,
+      walkForwardStatus: run.walkForwardStatus, costSensitivity: run.costSensitivity,
+      assumptions: ["Signals use the prior completed candle and execute at the next candle open.", "Fee and slippage assumptions are applied on entry and exit.", "Underlying equity sessions, dividends, corporate actions, financing, order-book depth, and token-specific execution are not modeled."],
+    },
+    candles: run.candles,
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `tidelight-${run.symbol}-${run.interval}-${run.runId.slice(0, 8)}.json`;
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+}
 
 function EquityCurve({ points }: { points: Array<{ timestamp: number; equity: number }> }) {
   if (points.length < 2) return null;
@@ -103,7 +129,7 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
       {error ? <div className="strategy-error" role="alert">{error}</div> : null}
       {busy ? <div className="strategy-progress"><span/><span/><span/> Fetching Bitget candles and evaluating the fixed 20 / 50 SMA rule…</div> : null}
       {display ? <div className="strategy-result" aria-live="polite">
-        <div className="strategy-result-heading"><div><span className="eyebrow small-eyebrow">OUT-OF-SAMPLE · LAST 34%</span><h3>{display.assetName} <small>{display.symbol} · {display.interval}</small></h3></div><span className="strategy-result-status">SAVED</span></div>
+        <div className="strategy-result-heading"><div><span className="eyebrow small-eyebrow">OUT-OF-SAMPLE · LAST 34%</span><h3>{display.assetName} <small>{display.symbol} · {display.interval}</small></h3></div><div className="strategy-result-actions"><button type="button" className="strategy-export-button" onClick={() => downloadRun(display)}>Export reproducible run ↓</button><span className="strategy-result-status">SAVED</span></div></div>
         <div className="strategy-metric-grid"><MetricCard label="Holdout return" value={pct(test?.totalReturnPct)} note="After estimated costs" positive={(test?.totalReturnPct ?? 0) >= 0}/><MetricCard label="Buy & hold" value={pct(test?.buyAndHoldReturnPct)} note="Same holdout window" positive={(test?.buyAndHoldReturnPct ?? 0) >= 0}/><MetricCard label="Max drawdown" value={pct(test?.maxDrawdownPct ? -test.maxDrawdownPct : 0)} note="Marked at each candle close" positive={false}/><MetricCard label="Trades · win rate" value={`${test?.trades ?? 0} · ${test?.winRatePct == null ? "—" : `${test.winRatePct.toFixed(0)}%`}`} note="Closed positions in holdout"/></div>
         {test ? <EquityCurve points={test.equityCurve} /> : null}
         <div className="strategy-result-foot"><span>{display.candleCount} candles · {date(display.dataStart)} — {date(display.dataEnd)}</span><span title={display.candleHash}>SHA-256 {display.candleHash.slice(0, 12)}…</span></div>

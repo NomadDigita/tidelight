@@ -69,6 +69,13 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const equity = cashBalance + positionsValue;
   const realizedToday = initialOrders.filter((order) => isUtcToday(order.created_at)).reduce((sum, order) => sum + (order.realized_pnl ?? 0), 0);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!symbol) return;
+    void fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}`).then((response) => response.ok ? response.json() as Promise<{ candles?: Mark[] }> : null).then((payload) => { if (!cancelled && payload?.candles?.length) setHistory(payload.candles); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [symbol]);
+
   useEffect(() => { if (signedIn) void fetch("/api/nightwatch/preferences").then((response) => response.ok ? response.json() : null).then((data: (NightwatchPreferences & { scheduler_available?: boolean }) | null) => { if (data) { setPreferences(data); setSchedulerAvailable(Boolean(data.scheduler_available)); } }).catch(() => undefined); }, [signedIn]);
 
   async function savePreferences(next: Partial<NightwatchPreferences>) {

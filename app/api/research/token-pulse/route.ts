@@ -7,6 +7,10 @@ type SearchItem = { title: string; url: string; publisher: string; publishedAt: 
 function text(value: string) {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 }
+function rssField(item: string, name: string) {
+  const pattern = new RegExp("<" + name + "(?:\\\\s[^>]*)?>([\\\\s\\\\S]*?)</" + name + ">", "i");
+  return text(pattern.exec(item)?.[1] ?? "");
+}
 async function getNews(query: string): Promise<SearchItem[]> {
   const url = new URL("https://news.google.com/rss/search");
   url.search = new URLSearchParams({ q: query, hl: "en-US", gl: "US", ceid: "US:en" }).toString();
@@ -15,7 +19,7 @@ async function getNews(query: string): Promise<SearchItem[]> {
   const xml = await response.text();
   return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0, 8).map((match) => {
     const item = match[1];
-    const field = (name: string) => text(item.match(new RegExp("<" + name + "(?:\\s[^>]*)?>([\s\S]*?)<\/" + name + ">", "i"))?.[1] ?? "");
+    const field = (name: string) => rssField(item, name);
     const link = field("link");
     let publisher = field("source") || field("News:Source") || "News publisher";
     try { if (publisher === "News publisher") publisher = new URL(link).hostname.replace(/^www\./, ""); } catch {}
@@ -31,7 +35,7 @@ async function getBingNews(query: string): Promise<SearchItem[]> {
   const xml = await response.text();
   return [...xml.matchAll(/<item>([\\s\\S]*?)<\\/item>/gi)].slice(0, 8).map((match) => {
     const item = match[1];
-    const field = (name: string) => text(item.match(new RegExp("<" + name + "(?:\\\\s[^>]*)?>([\\\\s\\S]*?)<\\/" + name + ">", "i"))?.[1] ?? "");
+    const field = (name: string) => rssField(item, name);
     const link = field("link");
     let publisher = field("source") || field("News:Source") || "News publisher";
     try { if (publisher === "News publisher") publisher = new URL(link).hostname.replace(/^www\\./, ""); } catch {}

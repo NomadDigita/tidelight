@@ -23,8 +23,9 @@ export default function TokenPulse() {
     try {
       const response = await fetch("/api/research/token-pulse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Could not build this token pulse.");
+      if (!response.ok && !(Array.isArray(data.sources) && data.sources.length > 0 && data.analysis)) throw new Error(data.error || "Could not build this token pulse.");
       setResult(data);
+      if (!response.ok) setError(data.error || "AI synthesis is unavailable; review the gathered sources below.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not build this token pulse."); }
     finally { setBusy(false); }
   }

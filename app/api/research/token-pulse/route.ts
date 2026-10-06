@@ -8,7 +8,7 @@ function text(value: string) {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 }
 function rssField(item: string, name: string) {
-  const pattern = new RegExp("<" + name + "(?:\\\\s[^>]*)?>([\\\\s\\\\S]*?)</" + name + ">", "i");
+  const pattern = new RegExp("<" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)</" + name + ">", "i");
   return text(pattern.exec(item)?.[1] ?? "");
 }
 async function getNews(query: string): Promise<SearchItem[]> {
@@ -33,12 +33,12 @@ async function getBingNews(query: string): Promise<SearchItem[]> {
   const response = await fetch(url, { headers: { "User-Agent": "Tidelight Research/1.0", Accept: "application/rss+xml, application/xml, text/xml" }, signal: AbortSignal.timeout(9000), cache: "no-store" });
   if (!response.ok) return [];
   const xml = await response.text();
-  return [...xml.matchAll(/<item>([\\s\\S]*?)<\\/item>/gi)].slice(0, 8).map((match) => {
+  return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0, 8).map((match) => {
     const item = match[1];
     const field = (name: string) => rssField(item, name);
     const link = field("link");
     let publisher = field("source") || field("News:Source") || "News publisher";
-    try { if (publisher === "News publisher") publisher = new URL(link).hostname.replace(/^www\\./, ""); } catch {}
+    try { if (publisher === "News publisher") publisher = new URL(link).hostname.replace(/^www\./, ""); } catch {}
     const date = Date.parse(field("pubDate"));
     return { title: field("title"), url: link, publisher, publishedAt: Number.isFinite(date) ? new Date(date).toISOString() : null, snippet: field("description").slice(0, 800), channel: "News" as const };
   }).filter((item) => item.title && item.url.startsWith("https://"));

@@ -43,7 +43,7 @@ export default function TradingWorkspace({ signedIn, assets }: { signedIn: boole
   }
   const connectedMode = connection?.mode === "demo" || connection?.mode === "live";
   return <div className="tw-grid">
-    {needsMfa ? <MfaChallenge onVerified={() => { setNeedsMfa(false); void placeOrder(connection?.mode === "live" ? "PLACE LIVE ORDER" : "PLACE DEMO ORDER"); }} /> : null}
+    {needsMfa ? <MfaChallenge context="live_bitget_order" onVerified={() => { setNeedsMfa(false); void placeOrder(connection?.mode === "live" ? "PLACE LIVE ORDER" : "PLACE DEMO ORDER"); }} /> : null}
     {!signedIn ? <section className="settings-card"><h2>Sign in to connect an account</h2><p>Bitget keys are private to your Tidelight account.</p><a className="primary-link" href="/login">Sign in</a></section> : <>
       <section className="settings-card tw-card"><div className="settings-card-head"><span className="settings-icon blue">⌁</span><div><span className="eyebrow small-eyebrow">PRIVATE BITGET CONNECTION</span><h2>{connection ? "Account verified" : "Connect your Bitget account"}</h2></div></div>
         <p>Use a dedicated API key with account read and spot trade permissions. Keep withdrawals disabled in Bitget. Keys are encrypted on the server and are never returned to this page.</p>

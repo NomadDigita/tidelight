@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function MfaChallenge({ onVerified }: { onVerified: () => void }) {
+export default function MfaChallenge({ onVerified, context = "nightwatch_control" }: { onVerified: () => void; context?: string }) {
   const [code, setCode] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   async function verify() {
     if (!/^\d{6}$/.test(code)) { setError("Enter the six-digit authenticator code."); return; }
@@ -14,7 +14,7 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
     const result = await client.auth.mfa.verify({ factorId: factor.id, challengeId: challenge.data.id, code });
     if (result.error) setError(result.error.message); else {
       const { data: { user } } = await client.auth.getUser();
-      if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "mfa_verified", metadata: { factor_type: "totp", context: "nightwatch_control" } });
+      if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "mfa_verified", metadata: { factor_type: "totp", context } });
       onVerified();
     }
     setBusy(false);

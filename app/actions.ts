@@ -18,9 +18,6 @@ function qwenConfig() {
   const model = process.env.BITGET_QWEN_MODEL?.trim() || "qwen3.8-max";
   if (!/^[a-zA-Z0-9._:-]{1,80}$/.test(model)) return null;
   return { endpoint: baseUrl.origin + "/" + pathSegments.join("/") + "/chat/completions", model };
-  const model = process.env.BITGET_QWEN_MODEL?.trim() || "qwen3.8-max";
-  if (!/^[a-zA-Z0-9._:-]{1,80}$/.test(model)) return null;
-  return { endpoint: baseUrl.origin + "/v1/chat/completions", model };
 }
 
 export async function signOut() {

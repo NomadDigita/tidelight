@@ -9,7 +9,11 @@ function qwenConfig() {
   const rawBaseUrl = process.env.BITGET_QWEN_BASE_URL?.trim() || "https://hackathon.bitgetops.com/v1";
   let baseUrl: URL;
   try { baseUrl = new URL(rawBaseUrl); } catch { return null; }
-  if (baseUrl.protocol !== "https:" || baseUrl.hostname !== "hackathon.bitgetops.com" || baseUrl.username || baseUrl.password || baseUrl.search || baseUrl.hash || baseUrl.pathname.replace(/\\/+$/, "") !== "/v1") return null;
+  const pathSegments = baseUrl.pathname.split("/").filter(Boolean);
+  if (baseUrl.protocol !== "https:" || baseUrl.hostname !== "hackathon.bitgetops.com" || baseUrl.username || baseUrl.password || baseUrl.search || baseUrl.hash || pathSegments.join("/") !== "v1") return null;
+  const model = process.env.BITGET_QWEN_MODEL?.trim() || "qwen3.8-max";
+  if (!/^[a-zA-Z0-9._:-]{1,80}$/.test(model)) return null;
+  return { endpoint: baseUrl.origin + "/" + pathSegments.join("/") + "/chat/completions", model };
   const model = process.env.BITGET_QWEN_MODEL?.trim() || "qwen3.8-max";
   if (!/^[a-zA-Z0-9._:-]{1,80}$/.test(model)) return null;
   return { endpoint: baseUrl.origin + "/v1/chat/completions", model };

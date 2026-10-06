@@ -73,7 +73,7 @@
 .tp-heading h2,.tp-result-top h3 {
   color:var(--text);
   font-family:var(--display);
-  font-weight:600;
+  font-weight:520;
   letter-spacing:-.045em;
 }
 .tp-heading p,.tp-mood-note,.tp-development p,.tp-columns li,.tp-muted,

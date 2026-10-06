@@ -8,6 +8,8 @@ import { mapResearchExposure } from "@/lib/exposure-map";
 import { validateBrief } from "@/lib/evidence";
 import { fetchPublicResearchSource, validatePublicSourceUrl, type RetrievedPublicSource } from "@/lib/public-source";
 
+function qwenApiKey() { return process.env.BITGET_QWEN_API_KEY?.trim().replace(/^Bearer\s+/i, "") ?? ""; }
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
@@ -93,7 +95,7 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return { error: "Sign in to create a private evidence brief." };
-  const apiKey = process.env.BITGET_QWEN_API_KEY;
+  const apiKey = qwenApiKey();
   if (!apiKey) return { error: "Qwen is not configured yet. The brief is not generated; add the Qwen API key on the server to enable it." };
 
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -137,7 +139,7 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
         ],
       }),
     });
-    if (!response.ok) throw new Error("qwen-request-failed");
+    if (!response.ok) throw new Error("qwen-http-" + response.status);
     const payload = await response.json() as { choices?: Array<{ message?: { content?: string | null } }> };
     const content = payload.choices?.[0]?.message?.content;
     if (!content) throw new Error("qwen-empty-response");
@@ -165,8 +167,9 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
     const { error: completeError } = await supabase.from("research_runs").update({ summary, status: "complete", completed_at: new Date().toISOString() }).eq("id", run.id);
     if (completeError) throw new Error("brief-save-failed");
     return { id: run.id, brief: summary };
-  } catch {
+  } catch (cause) {
     await supabase.from("research_runs").update({ status: "failed", completed_at: new Date().toISOString() }).eq("id", run.id);
+    if (cause instanceof Error && cause.message === "qwen-http-401") return { error: "Bitget rejected Tidelight’s Qwen key (401). Check that BITGET_QWEN_API_KEY contains the active Bitget Qwen key, with no extra prefix, then redeploy." };
     return { error: input.fetchSource ? "We couldn’t read a complete source from that link. Try another public article, or switch to Pro and paste the passage." : "Tidelight could not verify and save a complete cited brief from that source. Review the excerpt and try again." };
   }
 }

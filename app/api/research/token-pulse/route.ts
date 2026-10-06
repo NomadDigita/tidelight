@@ -94,7 +94,7 @@ export async function POST(request: Request) {
         { role: "user", content: JSON.stringify({ token, collected_at: new Date().toISOString(), sources: items }) },
       ] }),
     });
-    if (!response.ok) throw new Error("ai-request-failed");
+    if (!response.ok) { console.error("token-pulse-ai-http", response.status); throw new Error("ai-http-" + response.status); }
     const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
     const raw = payload.choices?.[0]?.message?.content;
     if (!raw) throw new Error("empty-ai-response");
@@ -105,7 +105,8 @@ export async function POST(request: Request) {
       return { headline: String(value.headline ?? "").slice(0, 180), what_it_means: String(value.what_it_means ?? "").slice(0, 400), source_urls: Array.isArray(value.source_urls) ? value.source_urls.filter((url): url is string => typeof url === "string" && sourceUrls.has(url)).slice(0, 3) : [] };
     }).filter((item) => item.headline && item.source_urls.length > 0) : [];
     return NextResponse.json({ token, collectedAt: new Date().toISOString(), coverage: { news: items.filter((item) => item.channel === "News").length, community: items.filter((item) => item.channel === "Community").length }, sources: items, analysis: { overview: String(analysis.overview ?? "").slice(0, 600), mood: ["positive", "mixed", "negative", "unclear"].includes(String(analysis.mood)) ? analysis.mood : "unclear", mood_explanation: String(analysis.mood_explanation ?? "").slice(0, 300), notable_developments: developments, risks: Array.isArray(analysis.risks) ? analysis.risks.slice(0, 4).map((item) => String(item).slice(0, 260)) : [], watch_next: Array.isArray(analysis.watch_next) ? analysis.watch_next.slice(0, 3).map((item) => String(item).slice(0, 220)) : [], confidence: Math.min(items.length < 3 ? 0.3 : items.length < 5 ? 0.5 : 1, Math.max(0, Number(analysis.confidence) || 0)), limitations: String(analysis.limitations ?? "This pulse summarizes public sources and may miss relevant information.").slice(0, 300) } });
-  } catch {
+  } catch (cause) {
+    console.error("token-pulse-analysis-failed", cause instanceof Error ? cause.message : "unknown");
     return NextResponse.json({ error: "The latest items were found, but Tidelight couldn’t safely complete the analysis. Please try again." }, { status: 502 });
   }
 }

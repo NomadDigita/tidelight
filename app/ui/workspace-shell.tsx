@@ -14,6 +14,7 @@ const navigation = [
   { href: "/markets", label: "Market map", icon: "⌁" },
   { href: "/strategies", label: "Strategy lab", icon: "⌗", technical: true },
   { href: "/nightwatch", label: "Nightwatch agent", icon: "◉", technical: true },
+  { href: "/trading", label: "Bitget trading", icon: "⌁", technical: true },
   { href: "/watchlist", label: "Watchlist", icon: "⌖" },
   { href: "/briefs", label: "Saved briefs", icon: "▤", technical: true },
   { href: "/demo", label: "Product walkthrough", icon: "▷", technical: true },

@@ -19,6 +19,7 @@ type SavedRun = {
   candle_count: number;
   created_at: string;
 };
+type AlphaDraft = { strategyKey: StrategyKey; thesis: string; entryConditions: string[]; exitConditions: string[]; risks: string[]; validationFocus: string };
 type DisplayRun = BacktestResult & { id: string; runId: string; createdAt: string; assetName: string; assetKind: string; candleHash: string; candles: MarketCandle[]; walkForward: WalkForwardResult | null; walkForwardStatus: string; costSensitivity: Array<{ label: string; feeBpsPerSide: number; slippageBpsPerSide: number; returnPct: number }>; researchRunId: string | null; providerTimestamp: number | null; sessionHours: string[]; weekendTradable: boolean | null };
 const validationSet = [
   { label: "NVIDIA · rToken", symbol: "RNVDAUSDT", interval: "4H" as CandleInterval },
@@ -78,17 +79,33 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
   const [symbol, setSymbol] = useState(initialSymbol);
   const [interval, setInterval] = useState<CandleInterval>("4H");
   const [strategyKey, setStrategyKey] = useState<StrategyKey>(BACKTEST_STRATEGY);
+  const [objective, setObjective] = useState("");
+  const [hypothesis, setHypothesis] = useState<AlphaDraft | null>(null);
+  const [hypothesisBusy, setHypothesisBusy] = useState(false);
   const [run, setRun] = useState<DisplayRun | null>(null);
   const [matrix, setMatrix] = useState<DisplayRun[]>([]);
   const [busy, setBusy] = useState(false);
   const [matrixBusy, setMatrixBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function execute() {
+  async function draftStrategy() {
+    if (!signedIn) { router.push("/login"); return; }
+    const token = /^R[A-Z0-9]+USDT$/.test(symbol) ? symbol : `R${symbol.replace(/^R/, "").replace(/USDT$/, "")}USDT`;
+    setHypothesisBusy(true); setError(""); setHypothesis(null);
+    try {
+      const response = await fetch("/api/strategies/hypothesize", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ objective, symbol: token, interval }) });
+      const payload = await response.json() as { hypothesis?: AlphaDraft; error?: string };
+      if (!response.ok || !payload.hypothesis) throw new Error(payload.error ?? "Could not draft an Alpha hypothesis.");
+      setSymbol(token); setStrategyKey(payload.hypothesis.strategyKey); setHypothesis(payload.hypothesis);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Alpha hypothesis unavailable."); }
+    finally { setHypothesisBusy(false); }
+  }
+
+  async function execute(strategyOverride: StrategyKey = strategyKey) {
     if (!signedIn) { router.push("/login"); return; }
     setBusy(true); setError(""); setRun(null);
     try {
-      const response = await fetch("/api/strategies/backtest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: /^R[A-Z0-9]+USDT$/.test(symbol) ? symbol : `R${symbol.replace(/^R/, "").replace(/USDT$/, "")}USDT`, interval, researchRunId: initialResearchRunId, strategyKey }) });
+      const response = await fetch("/api/strategies/backtest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: /^R[A-Z0-9]+USDT$/.test(symbol) ? symbol : `R${symbol.replace(/^R/, "").replace(/USDT$/, "")}USDT`, interval, researchRunId: initialResearchRunId, strategyKey: strategyOverride }) });
       const payload = await response.json() as { run?: DisplayRun; error?: string };
       if (!response.ok || !payload.run) throw new Error(payload.error ?? "Could not run backtest.");
       setRun(payload.run);
@@ -125,6 +142,7 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
     <section className="strategy-spine" aria-label="Tidelight decision spine"><span>EVENT</span><i>→</i><span>EVIDENCE</span><i>→</i><span>EXPOSURE</span><i>→</i><span>SCENARIO</span><i>→</i><b>DECISION</b></section>
     <section className="strategy-workbench" aria-labelledby="strategy-workbench-title">
       <div className="strategy-workbench-head"><div><span className="eyebrow small-eyebrow">ALPHA FACTORY · REPRODUCIBLE REPLAY</span><h2 id="strategy-workbench-title">Test the rule, then test its limits.</h2></div><span className="strategy-readonly">PAPER RESEARCH ONLY</span></div>
+      <section className="alpha-hypothesis-card" aria-label="Draft an Alpha Factory hypothesis"><div className="alpha-hypothesis-intro"><span className="eyebrow small-eyebrow">ALPHA FACTORY · HYPOTHESIS STUDIO</span><h3>Start with a market idea.</h3><p>Describe the behavior you want to test. Tidelight maps it to an inspectable rule, then you can replay it against a Reality rToken with costs and a separate holdout window.</p></div><div className="alpha-hypothesis-form"><label htmlFor="alpha-objective">WHAT WOULD YOU LIKE TO TEST?</label><textarea id="alpha-objective" value={objective} onChange={(event) => setObjective(event.target.value.slice(0, 800))} placeholder="For example: test whether oversold moves in NVIDIA’s rToken tend to rebound over the next few candles." rows={3} maxLength={800}/><div><small>{objective.length}/800 · Suggestions are hypotheses, not performance claims.</small><button type="button" className="strategy-run-button" onClick={() => void draftStrategy()} disabled={hypothesisBusy || objective.trim().length < 12 || !symbol}>{hypothesisBusy ? <><span className="strategy-spinner"/> Drafting…</> : <>Draft a testable idea <span>↗</span></>}</button></div></div>{hypothesis ? <div className="alpha-hypothesis-result" aria-live="polite"><div className="alpha-hypothesis-result-head"><span>TESTABLE HYPOTHESIS</span><b>{ALPHA_STRATEGIES[hypothesis.strategyKey].label}</b></div><p>{hypothesis.thesis}</p><div className="alpha-hypothesis-conditions"><div><span>ENTRY TO TEST</span>{hypothesis.entryConditions.map((item,index) => <small key={index}>• {item}</small>)}</div><div><span>EXIT TO TEST</span>{hypothesis.exitConditions.map((item,index) => <small key={index}>• {item}</small>)}</div></div>{hypothesis.risks.length ? <div className="alpha-hypothesis-risk"><b>What could break it</b><span>{hypothesis.risks.join(" · ")}</span></div> : null}<div className="alpha-hypothesis-validate"><p><b>Validation focus</b> · {hypothesis.validationFocus}</p><button type="button" className="strategy-run-button" onClick={() => void execute(hypothesis.strategyKey)} disabled={busy}>Validate this idea <span>↗</span></button></div></div> : null}</section>
       <div className="strategy-controls"><label>ALPHA RULE<select value={strategyKey} onChange={(event) => setStrategyKey(event.target.value as StrategyKey)}>{Object.entries(ALPHA_STRATEGIES).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select><small>{ALPHA_STRATEGIES[strategyKey].description}</small></label><label>Reality rToken symbol<input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32))} placeholder="RNVDAUSDT" maxLength={32} /></label><label>Candle interval<select value={interval} onChange={(event) => setInterval(event.target.value as CandleInterval)}><option value="1H">1 hour</option><option value="4H">4 hours</option><option value="1D">1 day</option></select></label><button type="button" className="strategy-run-button" onClick={() => void execute()} disabled={busy || !symbol}>{busy ? <><span className="strategy-spinner"/> Replaying candles…</> : <>Run holdout test <span>↗</span></>}</button></div>
       <div className="validation-set"><span>REPRESENTATIVE VALIDATION SET</span>{validationSet.map((item) => <button type="button" key={item.symbol} onClick={() => { setSymbol(item.symbol); setInterval(item.interval); }}>{item.label}</button>)}<button type="button" className="validation-matrix-button" onClick={() => void executeMatrix()} disabled={matrixBusy}>{matrixBusy ? "Running matrix…" : "Run full matrix ↗"}</button></div>
       {error ? <div className="strategy-error" role="alert">{error}</div> : null}

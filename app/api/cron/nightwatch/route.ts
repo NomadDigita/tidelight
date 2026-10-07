@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       const closes = closed.map((candle) => candle.close);
       const values = evaluateSmaCrossover(closes);
       const asOfMs = current.timestamp + FOUR_HOURS;
-      marketData.set(symbol, { asset, asOfMs, close: current.close, fast: values.fastSma, slow: values.slowSma, signal: values.signal, snapshot: { provider: "Bitget public Spot candles", interval: "4H", trigger: "scheduled_opt_in", closedCandleStart: new Date(current.timestamp).toISOString(), closedCandleEnd: new Date(asOfMs).toISOString(), previousCandleStart: new Date(previous.timestamp).toISOString(), previousFastSma: values.previousFastSma, previousSlowSma: values.previousSlowSma, assetName: asset.name, underlyingTicker: asset.underlyingTicker, feeRate: 0.001, slippageRate: 0.0005, rule: "AI-led evidence and risk decision v1", candles: closed.slice(-90) } });
+      marketData.set(symbol, { asset, asOfMs, close: current.close, fast: values.fastSma, slow: values.slowSma, signal: values.signal, snapshot: { provider: "Bitget public Spot candles", interval: "4H", trigger: "scheduled_opt_in", closedCandleStart: new Date(current.timestamp).toISOString(), closedCandleEnd: new Date(asOfMs).toISOString(), previousCandleStart: new Date(previous.timestamp).toISOString(), previousFastSma: values.previousFastSma, previousSlowSma: values.previousSlowSma, assetName: asset.name, underlyingTicker: asset.underlyingTicker, feeRate: 0.001, slippageRate: 0.0005, rule: "AI-led evidence and risk decision v1" }, candles: closed.slice(-90) });
     } catch { symbolErrors.push(symbol); }
   }
 

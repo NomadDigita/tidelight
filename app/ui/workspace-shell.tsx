@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions";
 import { useExperience } from "@/app/ui/theme-provider";
 import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
@@ -25,6 +25,7 @@ const navigation = [
 
 export default function WorkspaceShell({ children, email, avatarUrl, displayName }: { children: ReactNode; email: string | null; avatarUrl: string | null; displayName: string | null }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { mode } = useExperience();
   const visibleNavigation = mode === "mini" ? navigation.filter((item) => !item.technical) : navigation;
   const profileLabel = displayName?.trim() || (email ? email.split("@")[0] : "Guest workspace");
@@ -32,6 +33,12 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
   const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
   const mobileMenuOpen = mobileMenuPath === pathname;
   const active = navigation.find((item) => item.href === pathname) ?? navigation[0];
+
+  useEffect(() => {
+    if (mode !== "mini") return;
+    const isTechnicalRoute = navigation.some((item) => item.technical && (pathname === item.href || pathname.startsWith(`${item.href}/`)));
+    if (isTechnicalRoute) router.replace("/");
+  }, [mode, pathname, router]);
 
   if (pathname.startsWith("/login") || pathname.startsWith("/auth/")) return children;
 

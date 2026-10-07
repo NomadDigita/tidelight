@@ -8,12 +8,13 @@ export async function GET(request:Request){
  const {data:blocked}=user?await db.from("community_blocks").select("blocked_id").eq("blocker_id",user.id):{data:[]};const blockedIds=(blocked??[]).map(x=>x.blocked_id);
  let query=db.from("community_posts").select(joined).order("created_at",{ascending:false}).limit(threadId?60:120);
  query=threadId?query.eq("reply_to",threadId):query.is("reply_to",null);
- const {data:rows,error}=await query;if(error)return NextResponse.json({error:"The research feed is temporarily unavailable."},{status:503});
+ const {data:rows,error}=await query;if(error){console.error("Community feed query failed",error.message);return NextResponse.json({error:"The research feed is temporarily unavailable."},{status:503});}
  const visible=(rows??[]).filter((p:any)=>!blockedIds.includes(p.author?.id)),ids=visible.map((p:any)=>p.id);
- const [{data:reactions},{data:replies},{data:mine}]=await Promise.all([
+ const [{data:reactions},{data:replies},{data:mine},{data:savedMine}]=await Promise.all([
   ids.length?db.from("community_reactions").select("post_id,kind").in("post_id",ids):Promise.resolve({data:[]}),
   ids.length?db.from("community_posts").select("reply_to").in("reply_to",ids):Promise.resolve({data:[]}),
-  user&&ids.length?db.from("community_reactions").select("post_id,kind").eq("user_id",user.id).in("post_id",ids):Promise.resolve({data:[]})
+  user&&ids.length?db.from("community_reactions").select("post_id,kind").eq("user_id",user.id).in("post_id",ids):Promise.resolve({data:[]}),
+  user&&ids.length?db.from("community_bookmarks").select("post_id").eq("user_id",user.id).in("post_id",ids):Promise.resolve({data:[]})
  ]);
  const interests=new Map<string,{score:number;reason:string}>(),add=(raw:string|null|undefined,score:number,reason:string)=>{if(!raw)return;const key=normalize(raw);if(key.length<2)return;const old=interests.get(key);if(!old||score>old.score)interests.set(key,{score,reason})};
  if(user&&!threadId){
@@ -33,7 +34,7 @@ export async function GET(request:Request){
  const posts=visible.map((post:any)=>{
   const ticker=post.symbol?normalize(post.symbol):"",interest=interests.get(ticker),engagement=(reactions??[]).filter(x=>x.post_id===post.id).length+(replies??[]).filter(x=>x.reply_to===post.id).length;
   const mediaExpired=Date.now()-Date.parse(post.created_at)>7*24*60*60*1000;
-  return {...post,media:mediaExpired?[]:(post.media??[]),mediaExpired:mediaExpired&&(post.media??[]).length>0,reason:interest?.reason??null,feedScore:(interest?.score??0)+Math.log1p(engagement)*1.5+Math.max(0,36-(Date.now()-Date.parse(post.created_at))/3600000)/12,likes:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="like").length,reposts:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="repost").length,replies:(replies??[]).filter(x=>x.reply_to===post.id).length,liked:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="like"),reposted:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="repost")};
+  return {...post,media:mediaExpired?[]:(post.media??[]),mediaExpired:mediaExpired&&(post.media??[]).length>0,reason:interest?.reason??null,feedScore:(interest?.score??0)+Math.log1p(engagement)*1.5+Math.max(0,36-(Date.now()-Date.parse(post.created_at))/3600000)/12,likes:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="like").length,reposts:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="repost").length,replies:(replies??[]).filter(x=>x.reply_to===post.id).length,liked:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="like"),reposted:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="repost"),saved:(savedMine??[]).some(x=>x.post_id===post.id)};
  });
  if(!threadId)posts.sort((a:any,b:any)=>b.feedScore-a.feedScore);
  return NextResponse.json({posts});
@@ -41,6 +42,12 @@ export async function GET(request:Request){
 export async function POST(request:Request){
  const db=await createClient();const {data:{user}}=await db.auth.getUser();if(!user)return NextResponse.json({error:"Sign in to join the Tidelight community."},{status:401});
  let body:any;try{body=await request.json()}catch{return NextResponse.json({error:"Send a valid action."},{status:400})}
+ if(body.action==="bookmark"){
+  if(typeof body.postId!=="string")return NextResponse.json({error:"Choose a post first."},{status:400});
+  const {data:existing}=await db.from("community_bookmarks").select("post_id").eq("user_id",user.id).eq("post_id",body.postId).maybeSingle();
+  if(existing){const {error}=await db.from("community_bookmarks").delete().eq("user_id",user.id).eq("post_id",body.postId);if(error)return NextResponse.json({error:"Could not remove that saved post."},{status:400});return NextResponse.json({active:false})}
+  const {error}=await db.from("community_bookmarks").insert({user_id:user.id,post_id:body.postId});if(error)return NextResponse.json({error:"Could not save that post."},{status:400});return NextResponse.json({active:true});
+ }
  if(["like","repost"].includes(body.action)){
   if(typeof body.postId!=="string")return NextResponse.json({error:"Choose a post first."},{status:400});
   const kind=body.action;const {data:existing}=await db.from("community_reactions").select("post_id").eq("user_id",user.id).eq("post_id",body.postId).eq("kind",kind).maybeSingle();

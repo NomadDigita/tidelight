@@ -5,7 +5,7 @@ import {createClient} from "@/lib/supabase/client";
 import "../community/community.css";
 type Profile={id:string;handle:string;display_name:string;avatar_url:string|null};
 type MediaItem={url:string;kind:"image"|"video"|"audio"|"pdf";name:string;mime:string;size:number};
-type Post={id:string;body:string;symbol:string|null;stance:string;source_url:string|null;media:MediaItem[];reply_to:string|null;quote_post_id:string|null;created_at:string;author:Profile;quoted?:{body:string;symbol:string|null;author:{handle:string;display_name:string}}|null;likes:number;reposts:number;replies:number;liked:boolean;reposted:boolean;reason?:string;feedScore?:number};
+type Post={id:string;body:string;symbol:string|null;stance:string;source_url:string|null;media:MediaItem[];mediaExpired?:boolean;reply_to:string|null;quote_post_id:string|null;created_at:string;author:Profile;quoted?:{body:string;symbol:string|null;author:{handle:string;display_name:string}}|null;likes:number;reposts:number;replies:number;liked:boolean;reposted:boolean;reason?:string;feedScore?:number};
 type Message={id:string;sender_id:string;body:string;created_at:string};
 export default function CommunityDesk({signedIn,userId,profile}:{signedIn:boolean;userId:string|null;profile:Profile|null}){
  const [posts,setPosts]=useState<Post[]>([]),[tab,setTab]=useState<"for-you"|"latest">("for-you"),[body,setBody]=useState(""),[symbol,setSymbol]=useState(""),[stance,setStance]=useState("watching"),[source,setSource]=useState("");

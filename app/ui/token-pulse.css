@@ -179,10 +179,14 @@
 .token-pulse .tp-heading p { font-size:14px;line-height:1.7; }
 .token-pulse .tp-overview { font-size:15px;line-height:1.7; }
 .token-pulse .tp-form button,.token-pulse .tp-exposure-handoff button { font-family:var(--font);font-weight:600; }
-.tw-grid { font-family:var(--font); }
-.tw-grid .settings-card { font-family:var(--font); }
-.tw-grid .settings-card>p,.tw-grid .tw-footnote { font:400 13px/1.7 var(--font); }
-.tw-grid .tw-form label { font:500 10px/1.4 var(--mono);letter-spacing:.08em;color:var(--muted); }
-.tw-grid .tw-form :is(input,select) { font:500 14px/1.4 var(--font);letter-spacing:normal;color:var(--text); }
-.tw-grid .tw-form :is(button,.primary-link) { font:600 13px/1.25 var(--font);letter-spacing:normal; }
-:root[data-theme="daylight"] .tw-grid .tw-form :is(input,select) { color:var(--text); }
+/* Shared brand typography for the two surfaces that must feel like one desk. */
+.token-pulse :is(h2,h3,h4){font-family:var(--display);font-weight:550;letter-spacing:-.035em}
+.token-pulse .tp-kicker,.token-pulse .tp-live-badge{font-weight:550;letter-spacing:.12em}
+.token-pulse .tp-heading p,.token-pulse .tp-helper,.token-pulse .tp-limit{font-weight:400}
+.tw-grid,.tw-grid :where(p,button,input,select,textarea,a,small,b,strong){font-family:var(--font)}
+.tw-grid .settings-card>p,.tw-grid .tw-footnote{font-size:13px;font-weight:400;line-height:1.7}
+.tw-grid .tw-form label{font:500 10px/1.4 var(--mono);letter-spacing:.08em;color:var(--muted)}
+.tw-grid .tw-form :is(input,select){font:450 14px/1.45 var(--font);letter-spacing:normal;color:var(--text)}
+.tw-grid .tw-form :is(button,.primary-link){font:600 13px/1.25 var(--font);letter-spacing:normal}
+.tw-grid .settings-card h2{font:550 20px/1.2 var(--display);letter-spacing:-.025em;color:var(--text)}
+.tw-grid .settings-card-head .eyebrow{font-family:var(--mono)}

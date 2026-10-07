@@ -7,13 +7,27 @@ const intervals = new Set<CandleInterval>(["1H", "4H", "1D"]);
 const symbolPattern = /^[A-Z0-9]{2,32}$/;
 
 export async function POST(request: Request) {
-  let body: { symbol?: unknown; interval?: unknown; researchRunId?: unknown; strategyKey?: unknown };
+  let body: { symbol?: unknown; interval?: unknown; researchRunId?: unknown; strategyKey?: unknown; hypothesis?: unknown };
   try { body = await request.json() as typeof body; } catch { return Response.json({ error: "Send a valid JSON request." }, { status: 400 }); }
   if (!body || typeof body !== "object") return Response.json({ error: "Send a valid JSON request." }, { status: 400 });
   const symbol = typeof body.symbol === "string" ? body.symbol.trim().toUpperCase() : "";
   const interval = typeof body.interval === "string" ? body.interval.toUpperCase() as CandleInterval : null;
   const researchRunId = typeof body.researchRunId === "string" ? body.researchRunId : null;
   const strategyKey = typeof body.strategyKey === "string" && Object.hasOwn(ALPHA_STRATEGIES, body.strategyKey) ? body.strategyKey as StrategyKey : "sma_trend_v1";
+  let hypothesis: { strategyKey: StrategyKey; thesis: string; entryConditions: string[]; exitConditions: string[]; risks: string[]; validationFocus: string } | null = null;
+  if (body.hypothesis != null) {
+    if (typeof body.hypothesis !== "object" || Array.isArray(body.hypothesis)) return Response.json({ error: "The Alpha hypothesis is invalid." }, { status: 400 });
+    const value = body.hypothesis as Record<string, unknown>;
+    const cleanText = (item: unknown, max: number) => typeof item === "string" ? item.trim().slice(0, max) : "";
+    const cleanList = (item: unknown) => Array.isArray(item) ? item.filter((entry): entry is string => typeof entry === "string").slice(0, 4).map((entry) => entry.trim().slice(0, 180)).filter(Boolean) : [];
+    const key = typeof value.strategyKey === "string" ? value.strategyKey as StrategyKey : null;
+    const thesis = cleanText(value.thesis, 420);
+    const validationFocus = cleanText(value.validationFocus, 300);
+    const entryConditions = cleanList(value.entryConditions);
+    const exitConditions = cleanList(value.exitConditions);
+    if (!key || key !== strategyKey || !Object.hasOwn(ALPHA_STRATEGIES, key) || thesis.length < 20 || !validationFocus || !entryConditions.length || !exitConditions.length) return Response.json({ error: "The Alpha hypothesis does not match the selected implemented rule." }, { status: 400 });
+    hypothesis = { strategyKey: key, thesis, validationFocus, entryConditions, exitConditions, risks: cleanList(value.risks) };
+  }
   if (researchRunId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(researchRunId)) return Response.json({ error: "The linked research run ID is invalid." }, { status: 400 });
   if (!symbolPattern.test(symbol) || !interval || !intervals.has(interval)) return Response.json({ error: "Choose a valid Bitget market and candle interval." }, { status: 400 });
 
@@ -39,12 +53,13 @@ export async function POST(request: Request) {
     catch (error) { walkForwardStatus = error instanceof Error ? error.message : "More completed history is required for rolling windows."; }
     const costSensitivity = runCostSensitivity(symbol, interval, candles, evaluatedAt, strategyKey);
     const candleHash = createHash("sha256").update(JSON.stringify(candles)).digest("hex");
+    const replayParameters = { ...result.parameters, ...(hypothesis ? { hypothesis } : {}) };
     const { data, error } = await supabase.from("strategy_backtest_runs").insert({
       user_id: user.id,
       symbol,
       interval,
       strategy_key: result.strategyKey,
-      parameters: { ...result.parameters, candleHash, assetName: asset.name, assetKind: asset.kind, walkForward, walkForwardStatus, costSensitivity, researchRunId },
+      parameters: { ...replayParameters, candleHash, assetName: asset.name, assetKind: asset.kind, walkForward, walkForwardStatus, costSensitivity, researchRunId },
       train_metrics: result.train,
       test_metrics: result.test,
       data_start: new Date(result.dataStart).toISOString(),
@@ -56,7 +71,7 @@ export async function POST(request: Request) {
       console.error("Backtest persistence failed", error.code);
       return Response.json({ error: "The run completed, but could not be saved. Please try again." }, { status: 503 });
     }
-    return Response.json({ run: { ...result, id: data.id, runId: data.id, createdAt: data.created_at, assetName: asset.name, assetKind: asset.kind, candleHash, candles, walkForward, walkForwardStatus, costSensitivity, researchRunId, providerTimestamp: asset.providerTimestamp, sessionHours: asset.tradingSessions, weekendTradable: asset.weekendTradable } }, { headers: { "Cache-Control": "no-store" } });
+    return Response.json({ run: { ...result, parameters: replayParameters, id: data.id, runId: data.id, createdAt: data.created_at, assetName: asset.name, assetKind: asset.kind, candleHash, candles, walkForward, walkForwardStatus, costSensitivity, researchRunId, providerTimestamp: asset.providerTimestamp, sessionHours: asset.tradingSessions, weekendTradable: asset.weekendTradable } }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Backtest unavailable.";
     const status = /At least|too short/.test(message) ? 422 : 503;

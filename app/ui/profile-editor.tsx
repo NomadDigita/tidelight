@@ -1,4 +1,5 @@
 "use client";
+import "./profile-editor.css";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 export default function ProfileEditor({userId,initialName,initialHandle,initialAvatar,profileExists,handleChangedAt}:{userId:string;initialName:string;initialHandle:string;initialAvatar:string;profileExists:boolean;handleChangedAt:string|null}) {

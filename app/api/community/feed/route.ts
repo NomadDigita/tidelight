@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {createClient} from "@/lib/supabase/server";
-const joined="id,author_id,body,symbol,stance,source_url,media,reply_to,quote_post_id,created_at,author:community_profiles!community_posts_author_id_fkey(id,handle,display_name,avatar_url),quoted:community_posts!community_posts_quote_post_id_fkey(id,body,symbol,author:community_profiles!community_posts_author_id_fkey(handle,display_name))";
+const joined="id,author_id,body,symbol,stance,source_url,media,reply_to,quote_post_id,created_at";
 function normalize(value:string){let s=value.toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/USDT$/,"");if(/^R[A-Z]{2,6}$/.test(s))s=s.slice(1);return s}
 function mentions(question:string,ticker:string){const aliases:Record<string,string[]>={NVDA:["NVIDIA"],TSLA:["TESLA"],AAPL:["APPLE"],MSFT:["MICROSOFT"],AMZN:["AMAZON"],GOOGL:["GOOGLE","ALPHABET"],META:["FACEBOOK"],SPY:["S&P 500","SP500"]};const q=question.toUpperCase();return [ticker,...(aliases[ticker]??[])].some(term=>q.includes(term))}
 export async function GET(request:Request){
@@ -9,7 +9,14 @@ export async function GET(request:Request){
  let query=db.from("community_posts").select(joined).order("created_at",{ascending:false}).limit(threadId?60:120);
  query=threadId?query.eq("reply_to",threadId):query.is("reply_to",null);
  const {data:rows,error}=await query;if(error){console.error("Community feed query failed",error.message);return NextResponse.json({error:"The research feed is temporarily unavailable.",debug:process.env.VERCEL_ENV==="preview"?{code:error.code,message:error.message}:undefined},{status:503});}
- const visible=(rows??[]).filter((p:any)=>!blockedIds.includes(p.author?.id)),ids=visible.map((p:any)=>p.id);
+ const visible=(rows??[]).filter((p:any)=>!blockedIds.includes(p.author_id)),ids=visible.map((p:any)=>p.id);
+ const quoteIds=[...new Set(visible.map((p:any)=>p.quote_post_id).filter(Boolean))];
+ const {data:quoteRows,error:quoteError}=quoteIds.length?await db.from("community_posts").select("id,body,symbol,author_id").in("id",quoteIds):{data:[],error:null};
+ const authorIds=[...new Set([...visible.map((p:any)=>p.author_id),...(quoteRows??[]).map((p:any)=>p.author_id)])];
+ const {data:authors,error:authorError}=authorIds.length?await db.from("community_profiles").select("id,handle,display_name,avatar_url").in("id",authorIds):{data:[],error:null};
+ if(quoteError||authorError){console.error("Community author lookup failed",(quoteError??authorError)?.message);return NextResponse.json({error:"The research feed is temporarily unavailable."},{status:503})}
+ const authorMap=new Map((authors??[]).map((p:any)=>[p.id,p]));
+ const quoteMap=new Map((quoteRows??[]).map((p:any)=>[p.id,{body:p.body,symbol:p.symbol,author:authorMap.get(p.author_id)}]));
  const [{data:reactions},{data:replies},{data:mine},{data:savedMine}]=await Promise.all([
   ids.length?db.from("community_reactions").select("post_id,kind").in("post_id",ids):Promise.resolve({data:[]}),
   ids.length?db.from("community_posts").select("reply_to").in("reply_to",ids):Promise.resolve({data:[]}),
@@ -34,7 +41,7 @@ export async function GET(request:Request){
  const posts=visible.map((post:any)=>{
   const ticker=post.symbol?normalize(post.symbol):"",interest=interests.get(ticker),engagement=(reactions??[]).filter(x=>x.post_id===post.id).length+(replies??[]).filter(x=>x.reply_to===post.id).length;
   const mediaExpired=Date.now()-Date.parse(post.created_at)>7*24*60*60*1000;
-  return {...post,media:mediaExpired?[]:(post.media??[]),mediaExpired:mediaExpired&&(post.media??[]).length>0,reason:interest?.reason??null,feedScore:(interest?.score??0)+Math.log1p(engagement)*1.5+Math.max(0,36-(Date.now()-Date.parse(post.created_at))/3600000)/12,likes:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="like").length,reposts:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="repost").length,replies:(replies??[]).filter(x=>x.reply_to===post.id).length,liked:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="like"),reposted:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="repost"),saved:(savedMine??[]).some(x=>x.post_id===post.id)};
+  return {...post,author:authorMap.get(post.author_id),quoted:quoteMap.get(post.quote_post_id)??null,media:mediaExpired?[]:(post.media??[]),mediaExpired:mediaExpired&&(post.media??[]).length>0,reason:interest?.reason??null,feedScore:(interest?.score??0)+Math.log1p(engagement)*1.5+Math.max(0,36-(Date.now()-Date.parse(post.created_at))/3600000)/12,likes:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="like").length,reposts:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="repost").length,replies:(replies??[]).filter(x=>x.reply_to===post.id).length,liked:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="like"),reposted:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="repost"),saved:(savedMine??[]).some(x=>x.post_id===post.id)};
  });
  if(!threadId)posts.sort((a:any,b:any)=>b.feedScore-a.feedScore);
  return NextResponse.json({posts});

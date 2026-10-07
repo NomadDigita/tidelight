@@ -26,7 +26,6 @@ export default async function NightwatchPage({ searchParams }: { searchParams: P
     supabase.from("nightwatch_alerts").select("id, kind, title, body, read_at, created_at").order("created_at", { ascending: false }).limit(20),
   ]) : [{ data: null }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
-  const account = accountResult.data as { cash_balance?: number | string; paused?: boolean } | null;
   const positions = await Promise.all((positionsResult.data ?? []).map(async (position) => {
     const asset = assets.find((item) => item.symbol === position.symbol) ?? await getBitgetAsset(position.symbol).catch(() => null);
     const ticker = asset ? ("ticker" in asset ? asset.ticker : asset.underlyingTicker) : null;
@@ -44,8 +43,8 @@ export default async function NightwatchPage({ searchParams }: { searchParams: P
     initialRuns={(runsResult.data ?? []) as never}
     initialOrders={(ordersResult.data ?? []) as never}
     positions={positions as never}
-    cashBalance={Number(account?.cash_balance ?? 10000)}
-    paused={account?.paused ?? false}
+    cashBalance={Number(accountResult.data?.cash_balance ?? 10000)}
+    paused={accountResult.data?.paused ?? false}
     initialHistory={initialHistory}
     defaultSymbol={defaultSymbol}
     researchRunId={researchRunId}

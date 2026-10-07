@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     const { data: preferences } = await supabase.from("nightwatch_preferences").select("alert_on_signal, alert_on_fill").maybeSingle();
     const alerts: Array<{ kind: "signal" | "fill"; title: string; body: string }> = [];
     if (signal !== "hold" && preferences?.alert_on_signal !== false) alerts.push({ kind: "signal", title: `${signal.toUpperCase()} signal · ${symbol}`, body: decision.rationale });
-    if (result?.outcome === "executed" && preferences?.alert_on_fill !== false) alerts.push({ kind: "fill", title: `Paper ${signal} filled · ${symbol}`, body: result.reason ?? "Nightwatch opened a paper position after the guardrails passed." });
+    if (result?.outcome === "executed" && preferences?.alert_on_fill !== false) alerts.push({ kind: "fill", title: `Paper ${signal} filled · ${symbol}`, body: decision.rationale });
     if (result?.run_id && alerts.length) {
       await supabase.from("nightwatch_alerts").upsert(alerts.map((alert) => ({ user_id: user.id, run_id: result.run_id, ...alert })), { onConflict: "run_id,kind" });
     }

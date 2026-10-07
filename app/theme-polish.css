@@ -58,3 +58,16 @@
   .mobile-utility-controls{gap:4px!important}
   .mobile-utility-controls .top-signin{padding:5px 5px!important;font-size:6px!important}
 }
+
+
+/* Make Mini/Pro state unmistakable and apply it to the mobile workspace drawer. */
+.app-shell[data-experience="mini"] .mobile-drawer-link[data-technical="true"],
+.app-shell[data-experience="mini"] .nav-link[data-technical="true"]{display:none!important}
+.app-shell[data-experience] .experience-switch button{min-height:26px;padding:5px 8px;transition:background .16s,color .16s,box-shadow .16s}
+.app-shell[data-experience] .experience-switch button.selected{background:linear-gradient(135deg,var(--brand-teal),var(--brand-aqua));color:var(--brand-ink);font-weight:750;box-shadow:0 0 0 1px color-mix(in srgb,var(--brand-aqua) 75%,transparent),0 0 14px color-mix(in srgb,var(--brand-teal) 32%,transparent)}
+.app-shell[data-experience] .experience-switch button:focus-visible{outline:2px solid var(--brand-aqua);outline-offset:2px}
+@media(max-width:780px){
+  .mobile-utility-controls .experience-switch{min-height:28px;gap:2px;padding:2px}
+  .mobile-utility-controls .experience-switch button{min-width:32px;min-height:24px;padding:5px 7px;font-size:7px;letter-spacing:.45px}
+  .mobile-utility-controls .top-signin{min-height:24px;display:inline-flex;align-items:center;justify-content:center}
+}

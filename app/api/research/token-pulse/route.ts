@@ -84,7 +84,7 @@ export async function POST(request: Request) {
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const { count } = await supabase.from("research_runs").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", hourAgo);
   if ((count ?? 0) >= 10) return NextResponse.json({ error: "You’ve reached the hourly research limit. Try again later." }, { status: 429 });
-  const normalizedToken = token.toUpperCase().replace(/^R(?=[A-Z]{1,6}(?:USDT)?$)/, "");
+  const normalizedToken = token.toUpperCase().replace(/^R(?=[A-Z]{1,6}(?:USDT)?$)/, "").replace(/USDT$/, "");
   const looksLikeEquity = /^[A-Z]{1,6}$/.test(normalizedToken) || /^R[A-Z]{1,6}USDT$/.test(token.toUpperCase()) || /\\b(stock|equity|shares|ETF)\\b/i.test(token);
   const issuerQuery = looksLikeEquity ? `"${normalizedToken}" (stock OR shares OR earnings OR company)` : `"${token}" (crypto OR token)`;
   const queries = [...new Set([token, issuerQuery, looksLikeEquity ? `${normalizedToken} tokenized stock Bitget Reality` : `${token} crypto`])];
@@ -120,6 +120,8 @@ export async function POST(request: Request) {
         const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
         raw = payload.choices?.[0]?.message?.content;
         if (!raw) throw new Error("qwen-empty-response");
+        const parsed = JSON.parse(raw) as Record<string, unknown>;
+        if (!parsed || typeof parsed.overview !== "string" || !Array.isArray(parsed.notable_developments)) { raw = undefined; throw new Error("qwen-invalid-json-shape"); }
       } catch (error) { providerErrors.push(error instanceof Error ? error.message : "qwen-failed"); }
     }
     if (!raw && geminiKey) {
@@ -129,6 +131,8 @@ export async function POST(request: Request) {
         const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
         raw = payload.choices?.[0]?.message?.content;
         if (!raw) throw new Error("gemini-empty-response");
+        const parsed = JSON.parse(raw) as Record<string, unknown>;
+        if (!parsed || typeof parsed.overview !== "string" || !Array.isArray(parsed.notable_developments)) { raw = undefined; throw new Error("gemini-invalid-json-shape"); }
       } catch (error) { providerErrors.push(error instanceof Error ? error.message : "gemini-failed"); }
     }
     if (!raw) throw new Error(providerErrors.join(",") || "no-ai-provider-available");

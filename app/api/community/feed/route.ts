@@ -8,7 +8,7 @@ export async function GET(request:Request){
  const {data:blocked}=user?await db.from("community_blocks").select("blocked_id").eq("blocker_id",user.id):{data:[]};const blockedIds=(blocked??[]).map(x=>x.blocked_id);
  let query=db.from("community_posts").select(joined).order("created_at",{ascending:false}).limit(threadId?60:120);
  query=threadId?query.eq("reply_to",threadId):query.is("reply_to",null);
- const {data:rows,error}=await query;if(error){console.error("Community feed query failed",error.message);return NextResponse.json({error:"The research feed is temporarily unavailable."},{status:503});}
+ const {data:rows,error}=await query;if(error){console.error("Community feed query failed",error.message);return NextResponse.json({error:"The research feed is temporarily unavailable.",debug:process.env.VERCEL_ENV==="preview"?{code:error.code,message:error.message}:undefined},{status:503});}
  const visible=(rows??[]).filter((p:any)=>!blockedIds.includes(p.author?.id)),ids=visible.map((p:any)=>p.id);
  const [{data:reactions},{data:replies},{data:mine},{data:savedMine}]=await Promise.all([
   ids.length?db.from("community_reactions").select("post_id,kind").in("post_id",ids):Promise.resolve({data:[]}),

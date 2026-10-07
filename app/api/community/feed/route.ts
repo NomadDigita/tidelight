@@ -32,7 +32,8 @@ export async function GET(request:Request){
  }
  const posts=visible.map((post:any)=>{
   const ticker=post.symbol?normalize(post.symbol):"",interest=interests.get(ticker),engagement=(reactions??[]).filter(x=>x.post_id===post.id).length+(replies??[]).filter(x=>x.reply_to===post.id).length;
-  return {...post,reason:interest?.reason??null,feedScore:(interest?.score??0)+Math.log1p(engagement)*1.5+Math.max(0,36-(Date.now()-Date.parse(post.created_at))/3600000)/12,likes:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="like").length,reposts:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="repost").length,replies:(replies??[]).filter(x=>x.reply_to===post.id).length,liked:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="like"),reposted:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="repost")};
+  const mediaExpired=Date.now()-Date.parse(post.created_at)>7*24*60*60*1000;
+  return {...post,media:mediaExpired?[]:(post.media??[]),mediaExpired:mediaExpired&&(post.media??[]).length>0,reason:interest?.reason??null,feedScore:(interest?.score??0)+Math.log1p(engagement)*1.5+Math.max(0,36-(Date.now()-Date.parse(post.created_at))/3600000)/12,likes:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="like").length,reposts:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="repost").length,replies:(replies??[]).filter(x=>x.reply_to===post.id).length,liked:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="like"),reposted:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="repost")};
  });
  if(!threadId)posts.sort((a:any,b:any)=>b.feedScore-a.feedScore);
  return NextResponse.json({posts});

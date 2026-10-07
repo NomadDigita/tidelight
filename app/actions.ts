@@ -153,6 +153,7 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
         const payload = await response.json() as { choices?: Array<{ message?: { content?: string | null } }> };
         content = payload.choices?.[0]?.message?.content;
         if (!content) throw new Error("qwen-empty-response");
+        if (!validateBrief(JSON.parse(content), validSources)) { content = undefined; throw new Error("qwen-invalid-evidence"); }
       } catch (cause) { providerErrors.push(cause instanceof Error ? cause.message : "qwen-failed"); }
     }
     if (!content && geminiKey) {
@@ -162,6 +163,7 @@ export async function createEvidenceBrief(input: { question: string; sourceTitle
         const payload = await response.json() as { choices?: Array<{ message?: { content?: string | null } }> };
         content = payload.choices?.[0]?.message?.content;
         if (!content) throw new Error("gemini-empty-response");
+        if (!validateBrief(JSON.parse(content), validSources)) { content = undefined; throw new Error("gemini-invalid-evidence"); }
       } catch (cause) { providerErrors.push(cause instanceof Error ? cause.message : "gemini-failed"); }
     }
     if (!content) throw new Error(providerErrors.join(",") || "no-ai-provider-available");

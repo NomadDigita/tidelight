@@ -46,6 +46,21 @@ export async function POST(request:Request){
   if(existing){await db.from("community_reactions").delete().eq("user_id",user.id).eq("post_id",body.postId).eq("kind",kind);return NextResponse.json({active:false})}
   const {error}=await db.from("community_reactions").insert({user_id:user.id,post_id:body.postId,kind});if(error)return NextResponse.json({error:"That action could not be saved. Refresh and try again."},{status:400});return NextResponse.json({active:true});
  }
+ if(body.action==="report"||body.action==="block"){
+  if(typeof body.postId!=="string")return NextResponse.json({error:"Choose a post first."},{status:400});
+  const {data:target}=await db.from("community_posts").select("author_id").eq("id",body.postId).maybeSingle();
+  if(!target)return NextResponse.json({error:"That post is no longer available."},{status:404});
+  if(body.action==="block"){
+    if(target.author_id===user.id)return NextResponse.json({error:"You cannot mute your own profile."},{status:400});
+    const {error}=await db.from("community_blocks").upsert({blocker_id:user.id,blocked_id:target.author_id},{onConflict:"blocker_id,blocked_id"});
+    if(error)return NextResponse.json({error:"Could not mute this member."},{status:400});
+    return NextResponse.json({muted:true});
+  }
+  const reason=["spam","harassment","misinformation","other"].includes(body.reason)?body.reason:"other";
+  const {error}=await db.from("community_reports").insert({reporter_id:user.id,post_id:body.postId,reported_user_id:target.author_id,reason});
+  if(error)return NextResponse.json({error:"Could not submit the report."},{status:400});
+  return NextResponse.json({reported:true});
+ }
  const text=typeof body.body==="string"?body.body.trim():"",symbol=typeof body.symbol==="string"?body.symbol.trim().toUpperCase():"",sourceUrl=typeof body.sourceUrl==="string"?body.sourceUrl.trim():"";
  if(!text||text.length>1800)return NextResponse.json({error:"Write a note between 1 and 1,800 characters."},{status:400});
  if(symbol&&!/^[A-Z0-9]{2,32}$/.test(symbol))return NextResponse.json({error:"Use an rToken pair or US stock ticker."},{status:400});

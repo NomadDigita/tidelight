@@ -74,8 +74,8 @@
 
 
 /* Prism-cut masthead with a Tidelight-lit story typewriter. */
-.main-area > .topbar{isolation:isolate;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 16px,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
-.main-area > .topbar::after{content:"";position:absolute;z-index:0;inset:0 0 0 auto;width:17px;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--brand-aqua) 34%,transparent),color-mix(in srgb,var(--brand-teal) 24%,transparent));clip-path:polygon(100% 0,100% 100%,0 calc(100% - 14px),0 14px)}
+.main-area > .topbar{isolation:isolate;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+.main-area > .topbar::after{content:"";position:absolute;z-index:0;inset:0 0 0 auto;width:17px;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--brand-aqua) 38%,transparent),color-mix(in srgb,var(--brand-teal) 28%,transparent));clip-path:polygon(100% 50%,calc(100% - 12px) 0,100% 0,100% 100%,calc(100% - 12px) 100%)}
 .main-area > .topbar>*{position:relative;z-index:1}
 .mobile-brand-story .brand-story-copy{display:block;grid-area:1/1;min-width:0;overflow:hidden;text-overflow:clip;white-space:nowrap;opacity:1!important;transform:none!important;animation:none!important;color:var(--brand-aqua);background:linear-gradient(105deg,var(--brand-teal),var(--brand-aqua));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--brand-teal) 44%,transparent))}
 .mobile-brand-story .brand-story-copy::after{content:"";display:inline-block;height:.95em;margin-left:2px;border-left:1.5px solid var(--brand-aqua);vertical-align:-.08em;animation:tidelight-type-caret .85s steps(2,end) infinite;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--brand-aqua) 70%,transparent))}
@@ -84,3 +84,8 @@
 @media(max-width:780px){.main-area>.topbar{padding-right:25px!important}.mobile-brand-story{padding-right:12px!important}}
 @media(max-width:420px){.main-area>.topbar{padding-right:21px!important}.mobile-brand-story{padding-right:10px!important}}
 @media(prefers-reduced-motion:reduce){.mobile-brand-story .brand-story-copy::after{animation:none;opacity:1}}
+
+@supports (clip-path:polygon(round 12px,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)){
+  .main-area>.topbar{clip-path:polygon(round 12px,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+  .main-area>.topbar::after{clip-path:polygon(round 5px,100% 50%,calc(100% - 12px) 0,100% 0,100% 100%,calc(100% - 12px) 100%)}
+}

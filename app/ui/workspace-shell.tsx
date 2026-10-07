@@ -23,6 +23,68 @@ const navigation = [
   { href: "/systems", label: "Research systems", icon: "◉", technical: true },
 ];
 
+const BRAND_STORIES = [
+  "Read the signal between sessions.",
+  "Trace company events into tokenized equities.",
+  "Test a market view against the record.",
+  "Keep evidence and risk in the same frame.",
+];
+
+function BrandStoryTypewriter() {
+  const [storyIndex, setStoryIndex] = useState(0);
+  const [characterCount, setCharacterCount] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPreference = () => setReduceMotion(preference.matches);
+    syncPreference();
+    preference.addEventListener("change", syncPreference);
+    return () => preference.removeEventListener("change", syncPreference);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setStoryIndex(0);
+      setCharacterCount(0);
+      setDeleting(false);
+      return;
+    }
+
+    const story = BRAND_STORIES[storyIndex];
+    let delay = 46;
+    let nextCount = characterCount;
+    let nextDeleting = deleting;
+    let nextStoryIndex = storyIndex;
+
+    if (!deleting && characterCount >= story.length) {
+      delay = 1750;
+      nextDeleting = true;
+    } else if (deleting && characterCount <= 0) {
+      delay = 260;
+      nextDeleting = false;
+      nextStoryIndex = (storyIndex + 1) % BRAND_STORIES.length;
+    } else {
+      nextCount = characterCount + (deleting ? -1 : 1);
+      if (deleting) delay = 24;
+    }
+
+    const timer = window.setTimeout(() => {
+      setCharacterCount(nextCount);
+      setDeleting(nextDeleting);
+      setStoryIndex(nextStoryIndex);
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [characterCount, deleting, reduceMotion, storyIndex]);
+
+  const visibleStory = reduceMotion ? BRAND_STORIES[0] : BRAND_STORIES[storyIndex].slice(0, characterCount);
+  return <div className="mobile-brand-story" aria-label="Tidelight product stories">
+    <span className="brand-story-copy" aria-hidden="true">{visibleStory}</span>
+    <span className="sr-only">{BRAND_STORIES[storyIndex]}</span>
+  </div>;
+}
+
 export default function WorkspaceShell({ children, email, avatarUrl, displayName }: { children: ReactNode; email: string | null; avatarUrl: string | null; displayName: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -77,7 +139,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
       </aside>
       <main className="main-area">
         <header className="topbar">
-          <Link className="mobile-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={36} height={36} priority /><span>tide<span className="brand-light">light</span></span></Link><div className="mobile-brand-story" aria-label="Tidelight product stories"><span>Read the signal between sessions.</span><span>Trace company events into tokenized equities.</span><span>Test a market view against the record.</span><span>Keep evidence and risk in the same frame.</span></div>
+          <Link className="mobile-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={36} height={36} priority /><span>tide<span className="brand-light">light</span></span></Link><BrandStoryTypewriter />
           <div className="breadcrumb">Workspace <span>/</span> {active.label}</div><div className="mobile-utility"><button type="button" className="mobile-menu-toggle" aria-label={mobileMenuOpen ? "Close workspace navigation" : "Open workspace navigation"} aria-expanded={mobileMenuOpen} aria-controls="mobile-workspace-drawer" onClick={() => setMobileMenuPath(mobileMenuOpen ? null : pathname)}><i/><i/><i/></button><b>{active.label}</b><div className="mobile-utility-controls"><ExperienceSwitch /><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div></div>
           <div className="top-actions"><span className="market-clock"><i /> AFTER HOURS <b>RESEARCH MODE</b></span><ExperienceSwitch /><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div>
         </header>

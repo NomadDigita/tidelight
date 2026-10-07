@@ -21,7 +21,6 @@ const navigation = [
   { href: "/demo", label: "Product walkthrough", icon: "▷", technical: true },
   { href: "/systems", label: "Research systems", icon: "◉", technical: true },
 ];
-const mobilePrimary = [navigation[0], navigation[1], navigation[2], navigation[4]];
 
 export default function WorkspaceShell({ children, email }: { children: ReactNode; email: string | null }) {
   const pathname = usePathname();
@@ -66,33 +65,14 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
       </aside>
       <main className="main-area">
         <header className="topbar">
-          <Link className="mobile-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={28} height={28} /> Tidelight</Link>
-          <div className="breadcrumb">Workspace <span>/</span> {active.label}</div>
+          <Link className="mobile-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={36} height={36} priority /><span>tide<span className="brand-light">light</span></span></Link><div className="mobile-brand-story" aria-label="Tidelight product stories"><span>Read the signal between sessions.</span><span>Trace company events into tokenized equities.</span><span>Test a market view against the record.</span><span>Keep evidence and risk in the same frame.</span></div>
+          <div className="breadcrumb">Workspace <span>/</span> {active.label}</div><div className="mobile-utility"><button type="button" className="mobile-menu-toggle" aria-label={mobileMenuOpen ? "Close workspace navigation" : "Open workspace navigation"} aria-expanded={mobileMenuOpen} aria-controls="mobile-workspace-drawer" onClick={() => setMobileMenuPath(mobileMenuOpen ? null : pathname)}><i/><i/><i/></button><b>{active.label}</b><div className="mobile-utility-controls"><ExperienceSwitch /><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div></div>
           <div className="top-actions"><span className="market-clock"><i /> AFTER HOURS <b>RESEARCH MODE</b></span><ExperienceSwitch /><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div>
         </header>
         <div className="route-content">{children}</div>
         <footer className="page-footer"><span>© 2026 Tidelight Research</span><span><b>Clarity when the bell is quiet.</b> <i>Built for markets that never sleep.</i></span><Link href="/settings">PRIVACY & SETTINGS <span className="footer-dot">●</span></Link></footer>
       </main>
-      <nav className="mobile-nav" aria-label="Mobile navigation">
-        {mobilePrimary.map((item) => {
-          const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-          return <Link className={`mobile-nav-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}>
-            <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span><span>{item.href === "/" ? "Overview" : item.href === "/guide" ? "Start here" : item.href === "/research" ? "Research" : item.href === "/strategies" ? "Strategy" : item.label}</span>
-          </Link>;
-        })}
-        <button className={`mobile-nav-link${mobileMenuOpen || navigation.slice(3).some((item) => pathname.startsWith(item.href)) ? " active" : ""}`} type="button" aria-expanded={mobileMenuOpen} aria-controls="mobile-more-menu" onClick={() => setMobileMenuPath(mobileMenuOpen ? null : pathname)}>
-          <span className="mobile-nav-icon" aria-hidden="true">{mobileMenuOpen ? "×" : "···"}</span><span>More</span>
-        </button>
-        {mobileMenuOpen ? <div className="mobile-more-menu" id="mobile-more-menu">
-          <div className="mobile-more-heading">YOUR WORKSPACE <button type="button" aria-label="Close navigation menu" onClick={() => setMobileMenuPath(null)}>×</button></div>
-          {navigation.filter((item) => !mobilePrimary.some((primary) => primary.href === item.href)).map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return <Link data-technical={item.technical ? "true" : undefined} className={`mobile-more-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}><span aria-hidden="true">{item.icon}</span>{item.label}<span className="mobile-more-arrow">↗</span></Link>;
-          })}
-          <Link className="mobile-more-link" href="/settings"><span aria-hidden="true">⚙</span>Settings<span className="mobile-more-arrow">↗</span></Link>
-          <Link className="mobile-more-account" href={email ? "/settings" : "/login"}>{email ? email : "Sign in to save your research"}<span>↗</span></Link>
-        </div> : null}
-      </nav>
+      {mobileMenuOpen ? <div className="mobile-drawer-backdrop" onClick={() => setMobileMenuPath(null)}><aside className="mobile-workspace-drawer" id="mobile-workspace-drawer" aria-label="Workspace navigation" onClick={(event) => event.stopPropagation()}><div className="mobile-drawer-head"><span>YOUR WORKSPACE</span><button type="button" aria-label="Close menu" onClick={() => setMobileMenuPath(null)}>×</button></div><nav className="mobile-drawer-links">{navigation.map((item) => { const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href); return <Link key={item.href} data-technical={item.technical ? "true" : undefined} className={`mobile-drawer-link${isActive ? " active" : ""}`} href={item.href} onClick={() => setMobileMenuPath(null)} aria-current={isActive ? "page" : undefined}><span>{item.icon}</span>{item.label}<i>↗</i></Link>; })}<Link className="mobile-drawer-link" href="/settings" onClick={() => setMobileMenuPath(null)}><span>⚙</span>Settings<i>↗</i></Link></nav><div className="mobile-drawer-foot"><Image src="/tidelight-mark.svg" alt="" width={28} height={28}/><span><b>{email ? email.split("@")[0] : "Your Tidelight desk"}</b><small>{email ?? "Sign in to save your research"}</small></span></div></aside></div> : null}
     </div>
   );
 }

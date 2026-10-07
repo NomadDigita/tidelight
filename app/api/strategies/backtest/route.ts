@@ -1,18 +1,19 @@
 import { createHash } from "node:crypto";
 import { getBitgetAsset, getBitgetCandles, type CandleInterval } from "@/lib/bitget-market";
-import { prepareBacktestCandles, runBacktest, runCostSensitivity, runWalkForward, type WalkForwardResult } from "@/lib/backtest";
+import { ALPHA_STRATEGIES, prepareBacktestCandles, runBacktest, runCostSensitivity, runWalkForward, type StrategyKey, type WalkForwardResult } from "@/lib/backtest";
 import { createClient } from "@/lib/supabase/server";
 
 const intervals = new Set<CandleInterval>(["1H", "4H", "1D"]);
 const symbolPattern = /^[A-Z0-9]{2,32}$/;
 
 export async function POST(request: Request) {
-  let body: { symbol?: unknown; interval?: unknown; researchRunId?: unknown };
+  let body: { symbol?: unknown; interval?: unknown; researchRunId?: unknown; strategyKey?: unknown };
   try { body = await request.json() as typeof body; } catch { return Response.json({ error: "Send a valid JSON request." }, { status: 400 }); }
   if (!body || typeof body !== "object") return Response.json({ error: "Send a valid JSON request." }, { status: 400 });
   const symbol = typeof body.symbol === "string" ? body.symbol.trim().toUpperCase() : "";
   const interval = typeof body.interval === "string" ? body.interval.toUpperCase() as CandleInterval : null;
   const researchRunId = typeof body.researchRunId === "string" ? body.researchRunId : null;
+  const strategyKey = typeof body.strategyKey === "string" && Object.hasOwn(ALPHA_STRATEGIES, body.strategyKey) ? body.strategyKey as StrategyKey : "sma_trend_v1";
   if (researchRunId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(researchRunId)) return Response.json({ error: "The linked research run ID is invalid." }, { status: 400 });
   if (!symbolPattern.test(symbol) || !interval || !intervals.has(interval)) return Response.json({ error: "Choose a valid Bitget market and candle interval." }, { status: 400 });
 
@@ -31,12 +32,12 @@ export async function POST(request: Request) {
     const fetchedCandles = await getBitgetCandles(symbol, interval, 1000);
     const evaluatedAt = Date.now();
     const candles = prepareBacktestCandles(fetchedCandles, interval, evaluatedAt);
-    const result = runBacktest(symbol, interval, candles, evaluatedAt);
+    const result = runBacktest(symbol, interval, candles, evaluatedAt, strategyKey);
     let walkForward: WalkForwardResult | null = null;
     let walkForwardStatus = "";
-    try { walkForward = runWalkForward(symbol, interval, candles, evaluatedAt); }
+    try { walkForward = runWalkForward(symbol, interval, candles, evaluatedAt, strategyKey); }
     catch (error) { walkForwardStatus = error instanceof Error ? error.message : "More completed history is required for rolling windows."; }
-    const costSensitivity = runCostSensitivity(symbol, interval, candles, evaluatedAt);
+    const costSensitivity = runCostSensitivity(symbol, interval, candles, evaluatedAt, strategyKey);
     const candleHash = createHash("sha256").update(JSON.stringify(candles)).digest("hex");
     const { data, error } = await supabase.from("strategy_backtest_runs").insert({
       user_id: user.id,

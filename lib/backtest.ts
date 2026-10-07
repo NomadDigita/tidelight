@@ -1,6 +1,9 @@
 import type { CandleInterval, MarketCandle } from "@/lib/bitget-market";
 
 export const BACKTEST_STRATEGY = "sma_trend_v1" as const;
+export type StrategyKey = "sma_trend_v1" | "rsi_reversion_v1" | "channel_breakout_v1" | "weekend_drift_v1";
+export const ALPHA_STRATEGIES: Record<StrategyKey, { label: string; description: string }> = { sma_trend_v1: { label: "Trend · SMA 20/50", description: "20-period trend above the 50-period trend." }, rsi_reversion_v1: { label: "Mean reversion · RSI 14", description: "Enter oversold and exit after rebound." }, channel_breakout_v1: { label: "Momentum · 20/10 channel", description: "Enter above prior high and exit below prior low." }, weekend_drift_v1: { label: "After-hours · weekend drift", description: "Test positive weekend continuation on 24/7 tokens." } };
+
 export const BACKTEST_PARAMETERS = {
   fastWindow: 20,
   slowWindow: 50,
@@ -30,8 +33,8 @@ export type BacktestMetrics = {
 export type BacktestResult = {
   symbol: string;
   interval: CandleInterval;
-  strategyKey: typeof BACKTEST_STRATEGY;
-  parameters: typeof BACKTEST_PARAMETERS;
+  strategyKey: StrategyKey;
+  parameters: typeof BACKTEST_PARAMETERS & { strategyLabel: string };
   train: BacktestMetrics;
   test: BacktestMetrics;
   dataStart: number;
@@ -91,11 +94,12 @@ function movingAverages(candles: MarketCandle[], window: number) {
   return values;
 }
 
+function buildSignals(candles: MarketCandle[], key: StrategyKey): boolean[] { const out=Array(candles.length).fill(false) as boolean[]; if(key==="sma_trend_v1"){const f=movingAverages(candles,20),q=movingAverages(candles,50);return candles.map((_,i)=>f[i]!==null&&q[i]!==null&&(f[i] as number)>(q[i] as number))} let held=false; for(let i=1;i<candles.length;i++){if(key==="rsi_reversion_v1"&&i>=14){let g=0,l=0;for(let j=i-13;j<=i;j++){const d=candles[j].close-candles[j-1].close;if(d>0)g+=d;else l-=d}const ag=g/14,al=l/14,rsi=al===0?100:100-100/(1+ag/al);if(rsi<=30)held=true;else if(rsi>=55)held=false}else if(key==="channel_breakout_v1"&&i>=20){const prior=candles.slice(i-20,i).map(c=>c.close);if(candles[i].close>Math.max(...prior))held=true;else if(candles[i].close<Math.min(...candles.slice(i-10,i).map(c=>c.close)))held=false}else if(key==="weekend_drift_v1"){const d=new Date(candles[i].timestamp).getUTCDay(),weekend=d===0||d===6,p=Math.max(0,i-6),r=candles[i].close/candles[p].close-1;if(weekend&&r>=0.015)held=true;else if(!weekend||r<0)held=false}out[i]=held}return out}
 function intervalBarsPerYear(interval: CandleInterval) {
   return interval === "1H" ? 8760 : interval === "4H" ? 2190 : 365;
 }
 
-function measure(candles: MarketCandle[], fast: (number | null)[], slow: (number | null)[], start: number, end: number, interval: CandleInterval, feeBps: number = BACKTEST_PARAMETERS.feeBpsPerSide, slippageBps: number = BACKTEST_PARAMETERS.slippageBpsPerSide): BacktestMetrics {
+function measure(candles: MarketCandle[], fast: (number | null)[], slow: (number | null)[], start: number, end: number, interval: CandleInterval, feeBps: number = BACKTEST_PARAMETERS.feeBpsPerSide, slippageBps: number = BACKTEST_PARAMETERS.slippageBpsPerSide, signals?: boolean[]): BacktestMetrics {
   const cost = (feeBps + slippageBps) / 10_000;
   let cash: number = BACKTEST_PARAMETERS.initialEquity;
   let quantity = 0;
@@ -113,7 +117,7 @@ function measure(candles: MarketCandle[], fast: (number | null)[], slow: (number
 
   for (let i = start; i < end; i += 1) {
     if (firstClose === null) firstClose = candles[i].close;
-    const hasSignal = i > 0 && fast[i - 1] !== null && slow[i - 1] !== null && (fast[i - 1] as number) > (slow[i - 1] as number);
+    const hasSignal = i > 0 && (signals ? signals[i - 1] === true : fast[i - 1] !== null && slow[i - 1] !== null && (fast[i - 1] as number) > (slow[i - 1] as number));
     if (quantity === 0 && hasSignal) {
       entryPrice = candles[i].open;
       entryTime = candles[i].timestamp;
@@ -178,25 +182,26 @@ function measure(candles: MarketCandle[], fast: (number | null)[], slow: (number
   };
 }
 
-export function runBacktest(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now()): BacktestResult {
+export function runBacktest(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now(), strategyKey: StrategyKey = BACKTEST_STRATEGY): BacktestResult {
   const candles = prepareBacktestCandles(input, interval, asOf);
   if (candles.length < 80) throw new Error("At least 80 Bitget candles are required to evaluate a 50-period strategy with an out-of-sample window.");
   const splitIndex = Math.floor(candles.length * BACKTEST_PARAMETERS.trainFraction);
   if (splitIndex < BACKTEST_PARAMETERS.slowWindow + 5 || candles.length - splitIndex < 20) throw new Error("This candle history is too short for a meaningful chronological holdout.");
   const fast = movingAverages(candles, BACKTEST_PARAMETERS.fastWindow);
   const slow = movingAverages(candles, BACKTEST_PARAMETERS.slowWindow);
+  const signals = buildSignals(candles, strategyKey);
   const day = 24 * 60 * 60 * 1000;
   if (candles.at(-1)!.timestamp - candles[0].timestamp < 60 * day) throw new Error("Bitget returned less than 60 days of candles. Choose a longer interval; this run cannot meet the Alpha Factory window requirement.");
   if (candles.at(-1)!.timestamp - candles[splitIndex].timestamp < 30 * day) throw new Error("The chronological holdout is shorter than 30 days. This market history is insufficient for the Alpha Factory window requirement.");
   const warmup = BACKTEST_PARAMETERS.slowWindow;
   if (candles[splitIndex - 1].timestamp - candles[warmup].timestamp < 30 * day) throw new Error("The evaluated training window is shorter than 30 days after the 50-candle warm-up. Choose a history with more data.");
-  const train = measure(candles, fast, slow, warmup, splitIndex, interval);
-  const test = measure(candles, fast, slow, splitIndex, candles.length, interval);
+  const train = measure(candles, fast, slow, warmup, splitIndex, interval, BACKTEST_PARAMETERS.feeBpsPerSide, BACKTEST_PARAMETERS.slippageBpsPerSide, signals);
+  const test = measure(candles, fast, slow, splitIndex, candles.length, interval, BACKTEST_PARAMETERS.feeBpsPerSide, BACKTEST_PARAMETERS.slippageBpsPerSide, signals);
   return {
     symbol,
     interval,
-    strategyKey: BACKTEST_STRATEGY,
-    parameters: BACKTEST_PARAMETERS,
+    strategyKey,
+    parameters: { ...BACKTEST_PARAMETERS, strategyLabel: ALPHA_STRATEGIES[strategyKey].label },
     train,
     test,
     dataStart: candles[0].timestamp,
@@ -207,10 +212,11 @@ export function runBacktest(symbol: string, interval: CandleInterval, input: Mar
 }
 
 /** Three disjoint trailing evaluation windows, each using only earlier candles to warm the rule. */
-export function runWalkForward(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now()): WalkForwardResult {
+export function runWalkForward(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now(), strategyKey: StrategyKey = BACKTEST_STRATEGY): WalkForwardResult {
   const candles = prepareBacktestCandles(input, interval, asOf);
   const fast = movingAverages(candles, BACKTEST_PARAMETERS.fastWindow);
   const slow = movingAverages(candles, BACKTEST_PARAMETERS.slowWindow);
+  const signals = buildSignals(candles, strategyKey);
   const warmup = BACKTEST_PARAMETERS.slowWindow;
   const foldSize = Math.floor((candles.length - warmup) / 4);
   if (foldSize < 60) throw new Error("Walk-forward validation needs at least 60 completed candles in each evaluation window.");
@@ -220,22 +226,23 @@ export function runWalkForward(symbol: string, interval: CandleInterval, input: 
     const testStart = firstTest + index * foldSize;
     const testEnd = index === 2 ? candles.length : testStart + foldSize;
     if (testStart - warmup < 60) throw new Error("Walk-forward validation needs at least 60 earlier candles before every evaluation window.");
-    folds.push({ index: index + 1, trainStart: candles[warmup].timestamp, testStart: candles[testStart].timestamp, testEnd: candles[testEnd - 1].timestamp, metrics: measure(candles, fast, slow, testStart, testEnd, interval) });
+    folds.push({ index: index + 1, trainStart: candles[warmup].timestamp, testStart: candles[testStart].timestamp, testEnd: candles[testEnd - 1].timestamp, metrics: measure(candles, fast, slow, testStart, testEnd, interval, BACKTEST_PARAMETERS.feeBpsPerSide, BACKTEST_PARAMETERS.slippageBpsPerSide, signals) });
   }
   const meanReturnPct = folds.reduce((sum, fold) => sum + fold.metrics.totalReturnPct, 0) / folds.length;
   return { folds, meanReturnPct, positiveFolds: folds.filter((fold) => fold.metrics.totalReturnPct > 0).length, totalFolds: folds.length, evaluationStart: folds[0].testStart, evaluationEnd: folds.at(-1)!.testEnd };
 }
 
 /** Stress the same fixed holdout under higher execution-cost assumptions. */
-export function runCostSensitivity(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now()) {
+export function runCostSensitivity(symbol: string, interval: CandleInterval, input: MarketCandle[], asOf = Date.now(), strategyKey: StrategyKey = BACKTEST_STRATEGY) {
   const candles = prepareBacktestCandles(input, interval, asOf);
   if (candles.length < 80) throw new Error("Cost sensitivity needs at least 80 completed candles.");
   const splitIndex = Math.floor(candles.length * BACKTEST_PARAMETERS.trainFraction);
   const fast = movingAverages(candles, BACKTEST_PARAMETERS.fastWindow);
   const slow = movingAverages(candles, BACKTEST_PARAMETERS.slowWindow);
+  const signals = buildSignals(candles, strategyKey);
   return [
     { label: "Base", feeBpsPerSide: 10, slippageBpsPerSide: 5 },
     { label: "Elevated", feeBpsPerSide: 15, slippageBpsPerSide: 10 },
     { label: "Stress", feeBpsPerSide: 25, slippageBpsPerSide: 25 },
-  ].map((scenario) => ({ ...scenario, returnPct: measure(candles, fast, slow, splitIndex, candles.length, interval, scenario.feeBpsPerSide, scenario.slippageBpsPerSide).totalReturnPct }));
+  ].map((scenario) => ({ ...scenario, returnPct: measure(candles, fast, slow, splitIndex, candles.length, interval, scenario.feeBpsPerSide, scenario.slippageBpsPerSide, signals).totalReturnPct }));
 }

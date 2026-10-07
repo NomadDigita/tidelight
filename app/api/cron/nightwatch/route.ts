@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBitgetAsset, getBitgetCandles } from "@/lib/bitget-market";
 import { evaluateSmaCrossover } from "@/lib/nightwatch-signal";
+import { decideNightwatch } from "@/lib/nightwatch-agent";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
   if (users.error) return NextResponse.json({ runId, error: "Could not verify paper pause controls." }, { status: 503 });
   const unpaused = new Set((users.data ?? []).filter((item) => !item.paused).map((item) => item.user_id));
   const schedules = enabled.filter((item) => unpaused.has(item.user_id) && item.monitor_symbol);
-  const marketData = new Map<string, { asset: NonNullable<Awaited<ReturnType<typeof getBitgetAsset>>>; asOfMs: number; close: number; fast: number; slow: number; signal: "buy" | "sell" | "hold"; snapshot: Record<string, unknown> }>();
+  const marketData = new Map<string, { asset: NonNullable<Awaited<ReturnType<typeof getBitgetAsset>>>; asOfMs: number; close: number; fast: number; slow: number; signal: "buy" | "sell" | "hold"; snapshot: Record<string, unknown>; candles: Awaited<ReturnType<typeof getBitgetCandles>> }>();
   const symbolErrors: string[] = [];
 
   for (const symbol of [...new Set(schedules.map((item) => item.monitor_symbol as string))]) {
@@ -55,7 +56,7 @@ export async function GET(request: Request) {
       const closes = closed.map((candle) => candle.close);
       const values = evaluateSmaCrossover(closes);
       const asOfMs = current.timestamp + FOUR_HOURS;
-      marketData.set(symbol, { asset, asOfMs, close: current.close, fast: values.fastSma, slow: values.slowSma, signal: values.signal, snapshot: { provider: "Bitget public Spot candles", interval: "4H", trigger: "scheduled_opt_in", closedCandleStart: new Date(current.timestamp).toISOString(), closedCandleEnd: new Date(asOfMs).toISOString(), previousCandleStart: new Date(previous.timestamp).toISOString(), previousFastSma: values.previousFastSma, previousSlowSma: values.previousSlowSma, assetName: asset.name, underlyingTicker: asset.underlyingTicker, feeRate: 0.001, slippageRate: 0.0005, rule: "SMA20/50 completed-candle crossover v1" } });
+      marketData.set(symbol, { asset, asOfMs, close: current.close, fast: values.fastSma, slow: values.slowSma, signal: values.signal, snapshot: { provider: "Bitget public Spot candles", interval: "4H", trigger: "scheduled_opt_in", closedCandleStart: new Date(current.timestamp).toISOString(), closedCandleEnd: new Date(asOfMs).toISOString(), previousCandleStart: new Date(previous.timestamp).toISOString(), previousFastSma: values.previousFastSma, previousSlowSma: values.previousSlowSma, assetName: asset.name, underlyingTicker: asset.underlyingTicker, feeRate: 0.001, slippageRate: 0.0005, rule: "AI-led evidence and risk decision v1", candles: closed.slice(-90) } });
     } catch { symbolErrors.push(symbol); }
   }
 
@@ -64,14 +65,37 @@ export async function GET(request: Request) {
   for (const preference of schedules) {
     const sample = marketData.get(preference.monitor_symbol as string);
     if (!sample) { failures += 1; continue; }
-    const { data, error } = await admin.rpc("nightwatch_tick_scheduled", { p_user_id: preference.user_id, p_symbol: preference.monitor_symbol, p_as_of_ms: sample.asOfMs, p_reference_price: sample.close, p_fast_sma: sample.fast, p_slow_sma: sample.slow, p_signal: sample.signal, p_snapshot: sample.snapshot, p_research_run_id: preference.research_run_id });
+    const { data: account, error: accountError } = await admin.from("nightwatch_accounts").select("id,cash_balance").eq("user_id", preference.user_id).maybeSingle();
+    if (accountError || !account) { failures += 1; continue; }
+    const today = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString();
+    const [positionResult, ordersResult] = await Promise.all([
+      admin.from("nightwatch_positions").select("quantity,average_cost").eq("account_id", account.id).eq("symbol", sample.asset.symbol).maybeSingle(),
+      admin.from("nightwatch_orders").select("realized_pnl").eq("account_id", account.id).gte("created_at", today).limit(10)
+    ]);
+    const researchResult = preference.research_run_id
+      ? await admin.from("research_runs").select("question,summary,status").eq("user_id", preference.user_id).eq("id", preference.research_run_id).maybeSingle()
+      : { data: null, error: null };
+    if (positionResult.error || ordersResult.error || researchResult.error) { failures += 1; continue; }
+    const orders = ordersResult.data ?? [];
+    let decision;
+    try {
+      decision = await decideNightwatch({
+        symbol: sample.asset.symbol, issuer: sample.asset.name, candles: sample.candles,
+        account: { cashUsd: Number(account.cash_balance), positionQuantity: Number(positionResult.data?.quantity ?? 0), averageCostUsd: positionResult.data?.average_cost == null ? null : Number(positionResult.data.average_cost), dailyRealizedPnlUsd: orders.reduce((sum, order) => sum + Number(order.realized_pnl ?? 0), 0), fillsToday: orders.length },
+        research: researchResult.data?.status === "complete" ? { question: researchResult.data.question, summary: researchResult.data.summary } : null
+      });
+    } catch { failures += 1; continue; }
+    const signal = decision.signal;
+    const rationale = signal === decision.action ? decision.rationale : decision.rationale + " Confidence was below the 0.66 execution threshold, so the agent held.";
+    const snapshot = { ...sample.snapshot, agent: { version: "nightwatch-agent-v1", action: decision.action, signal, confidence: decision.confidence, rationale, evidence: decision.evidence, risks: decision.risks, invalidation: decision.invalidation, horizon: decision.horizon }, ...(preference.research_run_id ? { researchRunId: preference.research_run_id } : {}) };
+    const { data, error } = await admin.rpc("nightwatch_tick_scheduled", { p_user_id: preference.user_id, p_symbol: preference.monitor_symbol, p_as_of_ms: sample.asOfMs, p_reference_price: sample.close, p_fast_sma: sample.fast, p_slow_sma: sample.slow, p_signal: signal, p_snapshot: snapshot, p_research_run_id: preference.research_run_id });
     if (error) { failures += 1; continue; }
     recorded += 1;
     const result = data as { run_id?: string; outcome?: string; reason?: string };
     if (!result.run_id) continue;
     const alerts = [];
-    if (sample.signal !== "hold" && preference.alert_on_signal) alerts.push({ user_id: preference.user_id, run_id: result.run_id, kind: "signal", title: `${sample.signal.toUpperCase()} signal · ${sample.asset.symbol}`, body: result.reason ?? "Scheduled Nightwatch check recorded a signal." });
-    if (result.outcome === "executed" && preference.alert_on_fill) alerts.push({ user_id: preference.user_id, run_id: result.run_id, kind: "fill", title: `Paper ${sample.signal} filled · ${sample.asset.symbol}`, body: result.reason ?? "A scheduled paper fill passed the guardrails." });
+    if (signal !== "hold" && preference.alert_on_signal) alerts.push({ user_id: preference.user_id, run_id: result.run_id, kind: "signal", title: `${signal.toUpperCase()} signal · ${sample.asset.symbol}`, body: rationale });
+    if (result.outcome === "executed" && preference.alert_on_fill) alerts.push({ user_id: preference.user_id, run_id: result.run_id, kind: "fill", title: `Paper ${signal} filled · ${sample.asset.symbol}`, body: rationale });
     if (alerts.length) await admin.from("nightwatch_alerts").upsert(alerts, { onConflict: "run_id,kind" });
   }
 

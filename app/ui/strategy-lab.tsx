@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { BacktestMetrics, BacktestResult, WalkForwardResult } from "@/lib/backtest";
+import { ALPHA_STRATEGIES, BACKTEST_STRATEGY, type StrategyKey, type BacktestMetrics, type BacktestResult, type WalkForwardResult } from "@/lib/backtest";
 import type { CandleInterval, MarketCandle } from "@/lib/bitget-market";
 
 type SavedRun = {
@@ -77,6 +77,7 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
   const router = useRouter();
   const [symbol, setSymbol] = useState(initialSymbol);
   const [interval, setInterval] = useState<CandleInterval>("4H");
+  const [strategyKey, setStrategyKey] = useState<StrategyKey>(BACKTEST_STRATEGY);
   const [run, setRun] = useState<DisplayRun | null>(null);
   const [matrix, setMatrix] = useState<DisplayRun[]>([]);
   const [busy, setBusy] = useState(false);
@@ -87,7 +88,7 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
     if (!signedIn) { router.push("/login"); return; }
     setBusy(true); setError(""); setRun(null);
     try {
-      const response = await fetch("/api/strategies/backtest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: /^R[A-Z0-9]+USDT$/.test(symbol) ? symbol : `R${symbol.replace(/^R/, "").replace(/USDT$/, "")}USDT`, interval, researchRunId: initialResearchRunId }) });
+      const response = await fetch("/api/strategies/backtest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: /^R[A-Z0-9]+USDT$/.test(symbol) ? symbol : `R${symbol.replace(/^R/, "").replace(/USDT$/, "")}USDT`, interval, researchRunId: initialResearchRunId, strategyKey }) });
       const payload = await response.json() as { run?: DisplayRun; error?: string };
       if (!response.ok || !payload.run) throw new Error(payload.error ?? "Could not run backtest.");
       setRun(payload.run);
@@ -102,7 +103,7 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
     try {
       const results: DisplayRun[] = [];
       for (const item of validationSet) {
-        const response = await fetch("/api/strategies/backtest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: item.symbol, interval: item.interval }) });
+        const response = await fetch("/api/strategies/backtest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: item.symbol, interval: item.interval, strategyKey }) });
         const payload = await response.json() as { run?: DisplayRun; error?: string };
         if (payload.run) results.push(payload.run);
         else if (!response.ok) throw new Error(`${item.label}: ${payload.error ?? "validation failed"}`);
@@ -123,13 +124,13 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
   return <>
     <section className="strategy-spine" aria-label="Tidelight decision spine"><span>EVENT</span><i>→</i><span>EVIDENCE</span><i>→</i><span>EXPOSURE</span><i>→</i><span>SCENARIO</span><i>→</i><b>DECISION</b></section>
     <section className="strategy-workbench" aria-labelledby="strategy-workbench-title">
-      <div className="strategy-workbench-head"><div><span className="eyebrow small-eyebrow">REPLAY A PUBLIC MARKET</span><h2 id="strategy-workbench-title">Build a baseline</h2></div><span className="strategy-readonly">PAPER RESEARCH ONLY</span></div>
-      <div className="strategy-controls"><label>Reality rToken symbol<input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32))} placeholder="RNVDAUSDT" maxLength={32} /></label><label>Candle interval<select value={interval} onChange={(event) => setInterval(event.target.value as CandleInterval)}><option value="1H">1 hour</option><option value="4H">4 hours</option><option value="1D">1 day</option></select></label><button type="button" className="strategy-run-button" onClick={() => void execute()} disabled={busy || !symbol}>{busy ? <><span className="strategy-spinner"/> Replaying candles…</> : <>Run holdout test <span>↗</span></>}</button></div>
+      <div className="strategy-workbench-head"><div><span className="eyebrow small-eyebrow">ALPHA FACTORY · REPRODUCIBLE REPLAY</span><h2 id="strategy-workbench-title">Test the rule, then test its limits.</h2></div><span className="strategy-readonly">PAPER RESEARCH ONLY</span></div>
+      <div className="strategy-controls"><label>ALPHA RULE<select value={strategyKey} onChange={(event) => setStrategyKey(event.target.value as StrategyKey)}>{Object.entries(ALPHA_STRATEGIES).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select><small>{ALPHA_STRATEGIES[strategyKey].description}</small></label><label>Reality rToken symbol<input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32))} placeholder="RNVDAUSDT" maxLength={32} /></label><label>Candle interval<select value={interval} onChange={(event) => setInterval(event.target.value as CandleInterval)}><option value="1H">1 hour</option><option value="4H">4 hours</option><option value="1D">1 day</option></select></label><button type="button" className="strategy-run-button" onClick={() => void execute()} disabled={busy || !symbol}>{busy ? <><span className="strategy-spinner"/> Replaying candles…</> : <>Run holdout test <span>↗</span></>}</button></div>
       <div className="validation-set"><span>REPRESENTATIVE VALIDATION SET</span>{validationSet.map((item) => <button type="button" key={item.symbol} onClick={() => { setSymbol(item.symbol); setInterval(item.interval); }}>{item.label}</button>)}<button type="button" className="validation-matrix-button" onClick={() => void executeMatrix()} disabled={matrixBusy}>{matrixBusy ? "Running matrix…" : "Run full matrix ↗"}</button></div>
       {error ? <div className="strategy-error" role="alert">{error}</div> : null}
-      {busy ? <div className="strategy-progress"><span/><span/><span/> Fetching Bitget candles and evaluating the fixed 20 / 50 SMA rule…</div> : null}
+      {busy ? <div className="strategy-progress"><span/><span/><span/> Fetching Bitget candles and evaluating {ALPHA_STRATEGIES[strategyKey].label}…</div> : null}
       {display ? <div className="strategy-result" aria-live="polite">
-        <div className="strategy-result-heading"><div><span className="eyebrow small-eyebrow">OUT-OF-SAMPLE · LAST 34%</span><h3>{display.assetName} <small>{display.symbol} · {display.interval}</small></h3></div><div className="strategy-result-actions"><button type="button" className="strategy-export-button" onClick={() => downloadRun(display)}>Export reproducible run ↓</button><span className="strategy-result-status">SAVED</span></div></div>
+        <div className="strategy-result-heading"><div><span className="eyebrow small-eyebrow">{display.parameters.strategyLabel} · OUT-OF-SAMPLE</span><h3>{display.assetName} <small>{display.symbol} · {display.interval}</small></h3></div><div className="strategy-result-actions"><button type="button" className="strategy-export-button" onClick={() => downloadRun(display)}>Export reproducible run ↓</button><span className="strategy-result-status">SAVED</span></div></div>
         <div className="strategy-metric-grid"><MetricCard label="Holdout return" value={pct(test?.totalReturnPct)} note="After estimated costs" positive={(test?.totalReturnPct ?? 0) >= 0}/><MetricCard label="Buy & hold" value={pct(test?.buyAndHoldReturnPct)} note="Same holdout window" positive={(test?.buyAndHoldReturnPct ?? 0) >= 0}/><MetricCard label="Max drawdown" value={pct(test?.maxDrawdownPct ? -test.maxDrawdownPct : 0)} note="Marked at each candle close" positive={false}/><MetricCard label="Trades · win rate" value={`${test?.trades ?? 0} · ${test?.winRatePct == null ? "—" : `${test.winRatePct.toFixed(0)}%`}`} note="Closed positions in holdout"/></div>
         {test ? <EquityCurve points={test.equityCurve} /> : null}
         <div className="strategy-result-foot"><span>{display.candleCount} candles · {date(display.dataStart)} — {date(display.dataEnd)}</span><span title={display.candleHash}>SHA-256 {display.candleHash.slice(0, 12)}…</span></div>

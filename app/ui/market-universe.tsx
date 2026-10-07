@@ -71,7 +71,7 @@ export default function MarketUniverse() {
 
   const sessionLabel = payload?.session?.schedule.length
     ? `US sessions · ${payload.session.daylightType === "dst" ? "Daylight saving" : "Standard time"}`
-    : payload?.marketSessionStatus === "unavailable" ? "Session feed unavailable" : payload?.marketSessionStatus === "empty" ? "No session data returned" : "US session calendar warming up";
+    : payload?.marketSessionStatus === "unavailable" ? "Session schedule temporarily unavailable" : payload?.marketSessionStatus === "empty" ? "Session schedule not published" : "US session calendar warming up";
 
   return <section className="universe-section" aria-labelledby="universe-title">
     <div className="universe-heading">

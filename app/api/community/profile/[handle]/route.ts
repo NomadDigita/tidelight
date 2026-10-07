@@ -1,8 +1,8 @@
 import {NextResponse} from "next/server";
 import {createClient} from "@/lib/supabase/server";
-const joined="id,author_id,body,symbol,stance,source_url,media,reply_to,quote_post_id,created_at,author:community_profiles!community_posts_author_id_fkey(id,handle,display_name,avatar_url),quoted:community_posts!community_posts_quote_post_id_fkey(id,body,symbol,author:community_profiles!community_posts_author_id_fkey(handle,display_name))";
+const joined="id,author_id,body,symbol,stance,source_url,media,reply_to,quote_post_id,created_at";
 function fresh(rows:any[]){return rows.map(post=>{const expired=Date.now()-Date.parse(post.created_at)>7*24*60*60*1000;return {...post,media:expired?[]:(post.media??[]),mediaExpired:expired&&(post.media??[]).length>0}})}
-async function fetchPosts(db:any,ids:string[]){if(!ids.length)return[];const {data,error}=await db.from("community_posts").select(joined).in("id",ids);if(error)throw error;const byId=new Map((data??[]).map((row:any)=>[row.id,row]));return fresh(ids.map(id=>byId.get(id)).filter(Boolean))}
+async function fetchPosts(db:any,ids:string[]){if(!ids.length)return[];const {data,error}=await db.from("community_posts").select(joined).in("id",ids);if(error)throw error;const byId=new Map((data??[]).map((row:any)=>[row.id,row]));const authorIds=[...new Set((data??[]).map((row:any)=>row.author_id))];const {data:authors,error:authorError}=authorIds.length?await db.from("community_profiles").select("id,handle,display_name,avatar_url").in("id",authorIds):{data:[],error:null};if(authorError)throw authorError;const byAuthor=new Map((authors??[]).map((row:any)=>[row.id,row]));return fresh(ids.map(id=>byId.get(id)).filter(Boolean).map((row:any)=>({...row,author:byAuthor.get(row.author_id)})))}
 export async function GET(_request:Request,{params}:{params:Promise<{handle:string}>}){
  const {handle:raw}=await params,handle=decodeURIComponent(raw).replace(/^@/,"").toLowerCase();
  if(!/^[a-z0-9]{4,8}$/.test(handle))return NextResponse.json({error:"That username is not valid."},{status:400});

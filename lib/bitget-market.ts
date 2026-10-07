@@ -172,6 +172,7 @@ export async function getBitgetMarketUniverse() {
   ]);
   if (instrumentsResult.status === "rejected") throw instrumentsResult.reason;
   if (tickersResult.status === "rejected") throw tickersResult.reason;
+  if (sessionsResult.status === "rejected") console.warn("bitget-market-session-fetch-failed", sessionsResult.reason instanceof Error ? sessionsResult.reason.message : "unknown");
   const instruments = instrumentsResult.value.data;
   const tickers = tickersResult.value.data;
   const stocks = stockInfoResult.status === "fulfilled" ? stockInfoResult.value.data : [];

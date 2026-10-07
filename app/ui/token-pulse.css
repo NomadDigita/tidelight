@@ -171,3 +171,18 @@
 @media(prefers-reduced-motion:reduce) {
   .token-pulse *, .token-pulse *::before, .token-pulse *::after { animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important; }
 }
+
+/* Keep Token Pulse on the same type scale and font tokens as every other desk. */
+.token-pulse,.token-pulse :where(p,li,a,button,input,small,span,strong,b,label,summary) { font-family:var(--font); }
+.token-pulse :where(h2,h3,h4) { font-family:var(--display); }
+.token-pulse .tp-kicker,.token-pulse .tp-live-badge,.token-pulse .tp-coverage span,.token-pulse .tp-sources li span { font-family:var(--mono); }
+.token-pulse .tp-heading p { font-size:14px;line-height:1.7; }
+.token-pulse .tp-overview { font-size:15px;line-height:1.7; }
+.token-pulse .tp-form button,.token-pulse .tp-exposure-handoff button { font-family:var(--font);font-weight:600; }
+.tw-grid { font-family:var(--font); }
+.tw-grid .settings-card { font-family:var(--font); }
+.tw-grid .settings-card>p,.tw-grid .tw-footnote { font:400 13px/1.7 var(--font); }
+.tw-grid .tw-form label { font:500 10px/1.4 var(--mono);letter-spacing:.08em;color:var(--muted); }
+.tw-grid .tw-form :is(input,select) { font:500 14px/1.4 var(--font);letter-spacing:normal;color:var(--text); }
+.tw-grid .tw-form :is(button,.primary-link) { font:600 13px/1.25 var(--font);letter-spacing:normal; }
+:root[data-theme="daylight"] .tw-grid .tw-form :is(input,select) { color:var(--text); }

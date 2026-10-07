@@ -168,10 +168,11 @@ export async function getBitgetMarketUniverse() {
     fetchBitget<BitgetInstrument[]>("/market/instruments?category=SPOT", 1800),
     fetchBitget<BitgetTicker[]>("/market/tickers?category=SPOT", 12),
     fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500),
-    fetchBitget<Array<{ market: string; daylightType?: string; stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> }>>("/reality/market/states", 30, 2000),
+    fetchBitget<Array<{ market: string; daylightType?: string; stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> }>>("/reality/market/states", 60, 5000),
   ]);
   if (instrumentsResult.status === "rejected") throw instrumentsResult.reason;
   if (tickersResult.status === "rejected") throw tickersResult.reason;
+  if (sessionsResult.status === "rejected") console.warn("bitget-market-session-fetch-failed", sessionsResult.reason instanceof Error ? sessionsResult.reason.message : "unknown");
   const instruments = instrumentsResult.value.data;
   const tickers = tickersResult.value.data;
   const stocks = stockInfoResult.status === "fulfilled" ? stockInfoResult.value.data : [];

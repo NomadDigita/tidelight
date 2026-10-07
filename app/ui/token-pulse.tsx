@@ -36,7 +36,7 @@ export default function TokenPulse() {
   }
   return <section className="token-pulse" aria-labelledby="token-pulse-title">
     <div className="tp-heading"><div><span className="tp-kicker"><i /> TIDELIGHT / TOKEN PULSE</span><h2 id="token-pulse-title">A quick read on any token.</h2><p>Type a name or ticker. Tidelight gathers recent headlines and public community posts, then tells you what’s worth checking next.</p></div><span className="tp-live-badge">NEWS + COMMUNITY</span></div>
-    <form className="tp-form" onSubmit={research}><label className="sr-only" htmlFor="tp-token">Token name or symbol</label><span className="tp-search-mark">⌕</span><input id="tp-token" maxLength={80} value={token} onChange={(event) => setToken(event.target.value)} placeholder="Try Bitcoin, Ethereum, SOL…" autoComplete="off"/><button type="submit" disabled={busy}>{busy ? <><i className="tp-spinner"/> Gathering sources</> : "Build token pulse"}</button></form>
+    <form className="tp-form" onSubmit={research}><label className="sr-only" htmlFor="tp-token">Token name or symbol</label><span className="tp-search-mark">⌕</span><input id="tp-token" maxLength={80} value={token} onChange={(event) => setToken(event.target.value)} placeholder="Try rNVDA, NVIDIA, rTSLA…" autoComplete="off"/><button type="submit" disabled={busy}>{busy ? <><i className="tp-spinner"/> Gathering sources</> : "Build token pulse"}</button></form>
     <p className="tp-helper">A snapshot of public information. Community posts can be wrong or coordinated; this is a research aid, not a trade signal.</p>
     {error ? <p className="tp-error" role="alert">{error}</p> : null}
     {result ? <div className="tp-result" aria-live="polite">

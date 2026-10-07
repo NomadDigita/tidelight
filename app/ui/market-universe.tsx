@@ -28,6 +28,18 @@ function price(value: number | null, maximumDecimals = 6) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: digits, minimumFractionDigits: minimumDigits }).format(value);
 }
 
+function easternSessionReference(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
+  const part = (type: string) => parts.find((entry) => entry.type === type)?.value ?? "";
+  const weekday = part("weekday");
+  const minutes = Number(part("hour")) * 60 + Number(part("minute"));
+  if (weekday === "Sat" || weekday === "Sun") return "Weekend";
+  if (minutes >= 240 && minutes < 570) return "Pre-market";
+  if (minutes >= 570 && minutes < 960) return "Regular hours";
+  if (minutes >= 960 && minutes < 1200) return "After-hours";
+  return "Overnight";
+}
+
 function freshness(timestamp: number | null, staleAfterMs: number) {
   if (!timestamp) return { label: "Timestamp unavailable", fresh: false };
   const age = Math.max(0, Date.now() - timestamp);
@@ -71,7 +83,7 @@ export default function MarketUniverse() {
 
   const sessionLabel = payload?.session?.schedule.length
     ? `US sessions · ${payload.session.daylightType === "dst" ? "Daylight saving" : "Standard time"}`
-    : payload?.marketSessionStatus === "unavailable" ? "Session feed unavailable" : payload?.marketSessionStatus === "empty" ? "No session data returned" : "US session calendar warming up";
+    : payload?.marketSessionStatus === "unavailable" ? `Hours reference · ${easternSessionReference()}` : payload?.marketSessionStatus === "empty" ? "Session schedule not published" : "US session calendar warming up";
 
   return <section className="universe-section" aria-labelledby="universe-title">
     <div className="universe-heading">
@@ -82,7 +94,7 @@ export default function MarketUniverse() {
       <div><span>REALITY rTOKENS</span><b>{payload?.coverage.rTokens ?? "—"}</b><small>Bitget classified</small></div>
       <div><span>RWA SPOT PAIRS</span><b>{payload?.coverage.rwa ?? "—"}</b><small>Flagged by instrument metadata</small></div>
       <div><span>CRYPTO SPOT PAIRS</span><b>{payload?.coverage.crypto ?? "—"}</b><small>USDT quoted</small></div>
-      <div><span>SESSION REFERENCE</span><b className="session-value">{sessionLabel}</b><small>Bitget Reality market states</small></div>
+      <div><span>SESSION REFERENCE</span><b className="session-value">{sessionLabel}</b><small>{payload?.marketSessionStatus === "unavailable" ? "Estimated by Eastern Time · live status not returned" : "Bitget Reality market states"}</small></div>
     </div>
     <div className="universe-controls">
       <label className="universe-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setVisibleCount(18); }} placeholder="Search ticker, token, or company" aria-label="Search market assets" /></label>

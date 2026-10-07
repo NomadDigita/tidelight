@@ -60,7 +60,7 @@ export default function LoginPage() {
           : isSignUp
             ? (await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
             : await supabase.auth.signInWithPassword({ email, password });
-      const authError = "error" in authResult ? authResult.error : null;
+      const authError = authResult && typeof authResult === "object" && "error" in authResult ? authResult.error : authResult;
       if (authError) throw authError;
       if (method === "code") setCodeSent(true);
       else if (method === "link" || isSignUp) setSent(true);

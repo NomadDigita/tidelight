@@ -9,7 +9,7 @@ function sectorFor(ticker: string | null) {
   };
   return ticker ? groups[ticker] ?? "US listed equities" : "Tokenized US market";
 }
-function context(ticker:string|null, name:string) {
+function context(ticker:string|null) {
  const sector=sectorFor(ticker);
  const isTech=/AI|Semiconductor|Cloud|software|advertising|technology/i.test(sector);
  return {sector,catalysts:isTech?["Issuer guidance and earnings","Product demand, margins, and industry events"]:["Issuer filings and earnings","Sector demand, policy, and market conditions"],risks:["Underlying equity volatility","Token liquidity, tracking, and trading-session differences"]};
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in to resolve exposure." }, { status: 401 });
   let query="";
-  try { const body=await request.json() as {token?:unknown}; query=typeof body.token==="string"?body.token.trim().replace(/\\s+/g," ").slice(0,80):""; } catch {}
+  try { const body=await request.json() as {token?:unknown}; query=typeof body.token==="string"?body.token.trim().replace(/\s+/g," ").slice(0,80):""; } catch {}
   if (!query) return NextResponse.json({ error: "Enter a token or issuer name." }, { status: 400 });
   const normalized=query.toUpperCase().replace(/[^A-Z0-9]/g,"");
   try {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       return rank(a)-rank(b);
     }).slice(0,5);
     const matches=exact.map(asset=>{
-      const ticker=asset.underlyingTicker?.toUpperCase()??null, details=context(ticker,asset.name);
+      const ticker=asset.underlyingTicker?.toUpperCase()??null, details=context(ticker);
       return {symbol:asset.symbol,name:asset.name,instrument:"rtoken",issuer:asset.name,underlying:ticker??asset.name,sector:details.sector,catalysts:details.catalysts,risks:details.risks};
     });
     if (matches.length) return NextResponse.json({query,matches,disclaimer:"Reality rToken exposure mapped to its underlying US issuer. Token and underlying prices, liquidity, trading hours, and legal rights can differ; this is research context, not a recommendation."});

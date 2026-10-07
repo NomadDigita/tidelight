@@ -22,8 +22,10 @@ const navigation = [
   { href: "/systems", label: "Research systems", icon: "◉", technical: true },
 ];
 
-export default function WorkspaceShell({ children, email }: { children: ReactNode; email: string | null }) {
+export default function WorkspaceShell({ children, email, avatarUrl, displayName }: { children: ReactNode; email: string | null; avatarUrl: string | null; displayName: string | null }) {
   const pathname = usePathname();
+  const profileLabel = displayName?.trim() || (email ? email.split("@")[0] : "Guest workspace");
+  const profileInitial = profileLabel.slice(0, 1).toUpperCase() || "T";
   const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
   const mobileMenuOpen = mobileMenuPath === pathname;
   const active = navigation.find((item) => item.href === pathname) ?? navigation[0];
@@ -57,8 +59,8 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
             <span className="status-dot" /><span><b>Research systems</b><small>Source-first · Qwen assisted</small></span><span className="status-arrow">↗</span>
           </Link>
           <div className="user-profile">
-            <div className="avatar">{email ? email.slice(0, 1).toUpperCase() : "↗"}</div>
-            <div className="user-profile-copy"><b>{email ? email.split("@")[0] : "Guest workspace"}</b><small>{email ?? "Sign in to save research"}</small></div>
+            <div className="avatar">{avatarUrl ? <img src={avatarUrl} alt={profileLabel + " profile photo"} /> : profileInitial}</div>
+            <div className="user-profile-copy"><b>{profileLabel}</b><small>{email ?? "Sign in to save research"}</small></div>
             {email ? <form action={signOut}><button className="more" aria-label="Sign out" title="Sign out">↪</button></form> : <Link className="profile-link" href="/login">Sign in</Link>}
           </div>
         </div>
@@ -72,7 +74,7 @@ export default function WorkspaceShell({ children, email }: { children: ReactNod
         <div className="route-content">{children}</div>
         <footer className="page-footer"><span>© 2026 Tidelight Research</span><span><b>Clarity when the bell is quiet.</b> <i>Built for markets that never sleep.</i></span><Link href="/settings">PRIVACY & SETTINGS <span className="footer-dot">●</span></Link></footer>
       </main>
-      {mobileMenuOpen ? <div className="mobile-drawer-backdrop" onClick={() => setMobileMenuPath(null)}><aside className="mobile-workspace-drawer" id="mobile-workspace-drawer" aria-label="Workspace navigation" onClick={(event) => event.stopPropagation()}><div className="mobile-drawer-head"><span>YOUR WORKSPACE</span><button type="button" aria-label="Close menu" onClick={() => setMobileMenuPath(null)}>×</button></div><nav className="mobile-drawer-links">{navigation.map((item) => { const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href); return <Link key={item.href} data-technical={item.technical ? "true" : undefined} className={`mobile-drawer-link${isActive ? " active" : ""}`} href={item.href} onClick={() => setMobileMenuPath(null)} aria-current={isActive ? "page" : undefined}><span>{item.icon}</span>{item.label}<i>↗</i></Link>; })}<Link className="mobile-drawer-link" href="/settings" onClick={() => setMobileMenuPath(null)}><span>⚙</span>Settings<i>↗</i></Link></nav><div className="mobile-drawer-foot"><Image src="/tidelight-mark.svg" alt="" width={28} height={28}/><span><b>{email ? email.split("@")[0] : "Your Tidelight desk"}</b><small>{email ?? "Sign in to save your research"}</small></span></div></aside></div> : null}
+      {mobileMenuOpen ? <div className="mobile-drawer-backdrop" onClick={() => setMobileMenuPath(null)}><aside className="mobile-workspace-drawer" id="mobile-workspace-drawer" aria-label="Workspace navigation" onClick={(event) => event.stopPropagation()}><div className="mobile-drawer-head"><span>YOUR WORKSPACE</span><button type="button" aria-label="Close menu" onClick={() => setMobileMenuPath(null)}>×</button></div><nav className="mobile-drawer-links">{navigation.map((item) => { const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href); return <Link key={item.href} data-technical={item.technical ? "true" : undefined} className={`mobile-drawer-link${isActive ? " active" : ""}`} href={item.href} onClick={() => setMobileMenuPath(null)} aria-current={isActive ? "page" : undefined}><span>{item.icon}</span>{item.label}<i>↗</i></Link>; })}<Link className="mobile-drawer-link" href="/settings" onClick={() => setMobileMenuPath(null)}><span>⚙</span>Settings<i>↗</i></Link></nav><div className="mobile-drawer-foot"><div className="mobile-profile-avatar">{avatarUrl ? <img src={avatarUrl} alt={profileLabel + " profile photo"} /> : <span>{profileInitial}</span>}</div><span><b>{email ? profileLabel : "Your Tidelight desk"}</b><small>{email ?? "Sign in to save your research"}</small></span></div></aside></div> : null}
     </div>
   );
 }

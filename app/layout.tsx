@@ -28,5 +28,17 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><WorkspaceShell email={user?.email ?? null}>{children}</WorkspaceShell></ThemeProvider></body></html>;
+  const { data: profile } = user
+    ? await supabase.from("community_profiles").select("display_name,avatar_url").eq("id", user.id).maybeSingle()
+    : { data: null };
+  const metadata = user?.user_metadata ?? {};
+  const metadataAvatar = typeof metadata.avatar_url === "string"
+    ? metadata.avatar_url
+    : typeof metadata.picture === "string" ? metadata.picture : null;
+  const displayName = profile?.display_name?.trim()
+    || (typeof metadata.full_name === "string" ? metadata.full_name : null)
+    || user?.email?.split("@")[0]
+    || null;
+
+  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell></ThemeProvider></body></html>;
 }

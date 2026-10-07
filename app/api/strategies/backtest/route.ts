@@ -26,7 +26,8 @@ export async function POST(request: Request) {
 
   try {
     const asset = await getBitgetAsset(symbol);
-    if (!asset) return Response.json({ error: "That symbol is not an active Bitget spot market." }, { status: 404 });
+    if (!asset) return Response.json({ error: "That symbol is not an active Bitget market. Choose a Reality rToken such as RNVDAUSDT." }, { status: 404 });
+    if (!asset.isReality) return Response.json({ error: "Strategy Lab is for tokenized US equities and Reality rTokens. Choose an rToken symbol, for example RNVDAUSDT." }, { status: 422 });
     const fetchedCandles = await getBitgetCandles(symbol, interval, 1000);
     const evaluatedAt = Date.now();
     const candles = prepareBacktestCandles(fetchedCandles, interval, evaluatedAt);
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Backtest unavailable.";
     const status = /At least|too short/.test(message) ? 422 : 503;
-    return Response.json({ error: status === 422 ? message : "Bitget candle history is temporarily unavailable. No result was stored." }, { status, headers: { "Cache-Control": "no-store" } });
+    console.error("Strategy backtest failed", { symbol, interval, message: message.slice(0, 180) });
+    return Response.json({ error: status === 422 ? message : "Bitget could not return enough usable Reality rToken candles for this test. Retry shortly; no result was stored." }, { status, headers: { "Cache-Control": "no-store" } });
   }
 }

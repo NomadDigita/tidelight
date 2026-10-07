@@ -1,39 +1,46 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getBitgetMarketUniverse } from "@/lib/bitget-market";
+import { mapResearchExposure } from "@/lib/exposure-map";
 
-type Exposure = {
-  symbol: string;
-  name: string;
-  instrument: "crypto" | "rtoken" | "tokenized_equity" | "unknown";
-  issuer: string;
-  underlying: string;
-  sector: string;
-  catalysts: string[];
-  risks: string[];
-};
-
-const catalog: Exposure[] = [
-  { symbol: "BTC", name: "Bitcoin", instrument: "crypto", issuer: "Bitcoin network", underlying: "BTC", sector: "Digital assets", catalysts: ["Network activity", "Liquidity and macro regime"], risks: ["Volatility", "Custody and regulatory risk"] },
-  { symbol: "ETH", name: "Ethereum", instrument: "crypto", issuer: "Ethereum network", underlying: "ETH", sector: "Digital assets", catalysts: ["Network usage", "Protocol upgrades"], risks: ["Volatility", "Smart-contract and regulatory risk"] },
-  { symbol: "TSLA", name: "Tesla", instrument: "tokenized_equity", issuer: "Bitget/Reality ecosystem", underlying: "Tesla Inc.", sector: "Automotive and technology", catalysts: ["Vehicle deliveries", "Margins and autonomy updates"], risks: ["Equity volatility", "Trading-hours and liquidity differences"] },
-  { symbol: "AAPL", name: "Apple", instrument: "tokenized_equity", issuer: "Bitget/Reality ecosystem", underlying: "Apple Inc.", sector: "Technology", catalysts: ["Product cycle", "Services growth"], risks: ["Valuation", "Supply-chain and regulatory risk"] },
-  { symbol: "NVDA", name: "NVIDIA", instrument: "tokenized_equity", issuer: "Bitget/Reality ecosystem", underlying: "NVIDIA Corporation", sector: "Semiconductors and AI", catalysts: ["Data-center demand", "AI infrastructure spending"], risks: ["Valuation", "Export controls and concentration"] },
-  { symbol: "MSFT", name: "Microsoft", instrument: "tokenized_equity", issuer: "Bitget/Reality ecosystem", underlying: "Microsoft Corporation", sector: "Technology and cloud", catalysts: ["Cloud growth", "Enterprise AI adoption"], risks: ["Valuation", "Competition and regulation"] },
-  { symbol: "SPY", name: "S&P 500 exposure", instrument: "rtoken", issuer: "Reality ecosystem", underlying: "S&P 500", sector: "Broad US equities", catalysts: ["Macro liquidity", "Earnings breadth"], risks: ["Market drawdown", "Underlying-market tracking difference"] }
-];
-
+function sectorFor(ticker: string | null) {
+  const groups: Record<string,string> = {
+    NVDA:"Semiconductors & AI", AMD:"Semiconductors & AI", AVGO:"Semiconductors & AI", MSFT:"Cloud & software", GOOGL:"Cloud & advertising", AMZN:"Commerce & cloud", META:"Platforms & advertising", TSLA:"Automotive & autonomy", AAPL:"Consumer technology", JPM:"Financials", WMT:"Consumer staples", SPY:"Broad US equities"
+  };
+  return ticker ? groups[ticker] ?? "US listed equities" : "Tokenized US market";
+}
+function context(ticker:string|null) {
+ const sector=sectorFor(ticker);
+ const isTech=/AI|Semiconductor|Cloud|software|advertising|technology/i.test(sector);
+ return {sector,catalysts:isTech?["Issuer guidance and earnings","Product demand, margins, and industry events"]:["Issuer filings and earnings","Sector demand, policy, and market conditions"],risks:["Underlying equity volatility","Token liquidity, tracking, and trading-session differences"]};
+}
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in to resolve exposure." }, { status: 401 });
-  let query = "";
-  try { const body = await request.json() as { token?: unknown }; query = typeof body.token === "string" ? body.token.trim().slice(0, 80) : ""; } catch {}
-  if (!query) return NextResponse.json({ error: "Enter a token or symbol." }, { status: 400 });
-  const normalized = query.toUpperCase();
-  const matches = catalog.filter((item) => item.symbol === normalized || item.name.toUpperCase().includes(normalized) || item.underlying.toUpperCase().includes(normalized));
-  return NextResponse.json({
-    query,
-    matches,
-    disclaimer: "This is an exposure map, not a recommendation. Verify the current instrument, issuer, liquidity, fees, and tracking terms before trading."
-  });
+  let query="";
+  try { const body=await request.json() as {token?:unknown}; query=typeof body.token==="string"?body.token.trim().replace(/\s+/g," ").slice(0,80):""; } catch {}
+  if (!query) return NextResponse.json({ error: "Enter a token or issuer name." }, { status: 400 });
+  const normalized=query.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  try {
+    const {assets}=await getBitgetMarketUniverse();
+    const equityAssets=assets.filter(asset=>asset.isReality);
+    const exact=equityAssets.filter(asset=>{
+      const symbol=asset.symbol.toUpperCase(), base=asset.baseCoin.toUpperCase(), underlying=asset.underlyingTicker?.toUpperCase()??"";
+      const issuer=asset.name.toUpperCase().replace(/[^A-Z0-9]/g,"");
+      return symbol===normalized || base===normalized || underlying===normalized || issuer===normalized ||
+        (normalized.length>=3 && (issuer.includes(normalized) || normalized.includes(underlying) && underlying.length>=2));
+    }).sort((a,b)=>{
+      const rank=(x:typeof a)=>x.symbol.toUpperCase()===normalized?0:x.baseCoin.toUpperCase()===normalized?1:x.underlyingTicker?.toUpperCase()===normalized?2:3;
+      return rank(a)-rank(b);
+    }).slice(0,5);
+    const matches=exact.map(asset=>{
+      const ticker=asset.underlyingTicker?.toUpperCase()??null, details=context(ticker);
+      return {symbol:asset.symbol,name:asset.name,instrument:"rtoken",issuer:asset.name,underlying:ticker??asset.name,sector:details.sector,catalysts:details.catalysts,risks:details.risks};
+    });
+    if (matches.length) return NextResponse.json({query,matches,disclaimer:"Reality rToken exposure mapped to its underlying US issuer. Token and underlying prices, liquidity, trading hours, and legal rights can differ; this is research context, not a recommendation."});
+  } catch {}
+  const fallback=mapResearchExposure(query);
+  const matches=fallback.map(item=>({symbol:item.realityPair,name:item.issuer,instrument:"rtoken",issuer:item.issuer,underlying:item.ticker,sector:item.sector,catalysts:[item.scenarios.upside],risks:[item.scenarios.downside,item.scenarios.invalidation]}));
+  return NextResponse.json({query,matches,disclaimer:"Exposure mapping covers supported Reality rTokens and their US issuers. A missing match means the live market catalog did not confirm an instrument."});
 }

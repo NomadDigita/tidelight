@@ -43,25 +43,28 @@ export default function LoginPage() {
     try {
       const supabase = createClient();
       if (method === "code" && codeSent) {
-        const { error: verifyError } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
+        const { data: verified, error: verifyError } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
         if (verifyError) throw verifyError;
-        router.replace("/");
+        const isNew = verified.user?.created_at && Date.now() - Date.parse(verified.user.created_at) < 10 * 60 * 1000;
+        router.replace(isNew ? "/settings?setup=username#profile" : "/");
         router.refresh();
         return;
       }
       // Numeric email OTP verification stays on this page. Supplying a redirect URL
       // here makes Supabase validate it against the Auth redirect allow-list even
       // though the user never follows a magic link, which can reject code requests.
-      const authError = method === "code"
+      const authResult = method === "code"
         ? (await supabase.auth.signInWithOtp({ email })).error
         : method === "link"
           ? (await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
           : isSignUp
             ? (await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
-            : (await supabase.auth.signInWithPassword({ email, password })).error;
+            : await supabase.auth.signInWithPassword({ email, password });
+      const authError = authResult && typeof authResult === "object" && "error" in authResult ? authResult.error : authResult;
       if (authError) throw authError;
       if (method === "code") setCodeSent(true);
       else if (method === "link" || isSignUp) setSent(true);
+      else { router.replace("/"); router.refresh(); }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "";
       const normalized = message.toLowerCase();

@@ -17,6 +17,8 @@ const rules: Record<StrategyKey, { entry: string; exit: string }> = {
   rsi_reversion_v1: { entry: "After the 14-period simple RSI reaches 30 or lower.", exit: "After the 14-period simple RSI reaches 55 or higher." },
   channel_breakout_v1: { entry: "After a completed close breaks above the prior 20 candle closes.", exit: "After a completed close breaks below the prior 10 candle closes." },
   weekend_drift_v1: { entry: "During a Saturday or Sunday candle when the 6-candle return is at least 1.5%.", exit: "At the next weekday candle or when the 6-candle return turns negative." },
+  trend_pullback_v1: { entry: "After a completed bullish candle holds above the rising EMA50, the EMA20 is above EMA50, price tests the EMA20, RSI turns upward within 45–65, and volume remains at least 70% of its prior 20-candle average.", exit: "After a completed candle closes below EMA20 or the 14-period RSI falls below 40." },
+  semi_breakout_v1: { entry: "After a completed close breaks the prior 20-candle high while EMA20 is above EMA50, volume is at least 1.15× its prior 20-candle average, candle body is at least 60% of its range, and RSI is 50–72.", exit: "After a completed candle closes below EMA20." },
 };
 
 function credential(value: string | undefined) {
@@ -56,7 +58,7 @@ export async function draftAlphaHypothesis(input: { objective: string; symbol: s
   if (geminiKey && modelId.test(geminiModel)) providers.push({ key: geminiKey, model: geminiModel, endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" });
   if (!providers.length) throw new Error("AI strategy drafting is not configured on this deployment.");
 
-  const system = "You are an Alpha Factory research assistant for Bitget Reality tokenized US equities. Choose exactly one of these implemented strategy keys: sma_trend_v1, rsi_reversion_v1, channel_breakout_v1, weekend_drift_v1. Do not invent code, indicators, prices, market facts, or claim performance. Return JSON only with strategyKey, thesis, risks (array), and validationFocus. Do not write entry or exit conditions; the application supplies exact implemented rule definitions. State that historical validation is required and results can fail after costs. Treat the user objective as a request for a testable hypothesis, not an order.";
+  const system = "You are an Alpha Factory research assistant for Bitget Reality tokenized US equities. Choose exactly one implemented strategy key from the supplied list. Do not invent code, indicators, prices, market facts, or claim performance. These rules test one rToken at a time; do not claim cross-asset ranking or sector rotation. Return JSON only with strategyKey, thesis, risks (array), and validationFocus. Do not write entry or exit conditions; the application supplies exact implemented rule definitions. State that historical validation is required and results can fail after costs. Treat the user objective as a testable hypothesis, not an order.";
   const user = JSON.stringify({ objective: input.objective, market: { symbol: input.symbol, issuer: input.issuer, interval: input.interval }, availableRules: ALPHA_STRATEGIES });
   for (const provider of providers) {
     try {

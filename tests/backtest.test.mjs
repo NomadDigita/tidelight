@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runBacktest, runCostSensitivity, runWalkForward } from "../lib/backtest.ts";
+import { buildSignals, runBacktest, runCostSensitivity, runWalkForward } from "../lib/backtest.ts";
 
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
 const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -122,4 +122,24 @@ test("cost stress uses identical candles and shows increasing assumed friction",
   assert.ok(scenarios[1].slippageBpsPerSide < scenarios[2].slippageBpsPerSide);
   assert.ok(scenarios.every((item) => Number.isFinite(item.returnPct)));
   assert.ok(scenarios[2].returnPct <= scenarios[0].returnPct);
+});
+
+test("trend pullback and semiconductor breakout are deterministic, boolean, causal rules", () => {
+  const candles = fixture();
+  for (const strategy of ["trend_pullback_v1", "semi_breakout_v1"]) {
+    const signals = buildSignals(candles, strategy);
+    assert.equal(signals.length, candles.length);
+    assert.ok(signals.every((signal) => typeof signal === "boolean"));
+    assert.deepEqual(signals, buildSignals(candles, strategy));
+
+    const changed = [...candles];
+    const changedAt = 800;
+    changed[changedAt] = { ...changed[changedAt], open: 125, high: 150, low: 120, close: 149, volume: 1_000_000 };
+    assert.deepEqual(buildSignals(changed, strategy).slice(0, changedAt), signals.slice(0, changedAt));
+  }
+});
+
+test("the volume-confirmed semiconductor rule stays flat when volume is unavailable", () => {
+  const candles = fixture().map((candle) => ({ ...candle, volume: null }));
+  assert.ok(buildSignals(candles, "semi_breakout_v1").every((signal) => signal === false));
 });

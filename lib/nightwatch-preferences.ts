@@ -1,3 +1,6 @@
+const PLAYBOOK_KEYS = new Set(["sma_trend_v1", "rsi_reversion_v1", "channel_breakout_v1", "weekend_drift_v1", "trend_pullback_v1", "semi_breakout_v1"]);
+type NightwatchPlaybookKey = "sma_trend_v1" | "rsi_reversion_v1" | "channel_breakout_v1" | "weekend_drift_v1" | "trend_pullback_v1" | "semi_breakout_v1";
+
 export type NightwatchPreferences = {
   trigger_mode: "manual" | "every_check";
   alert_on_signal: boolean;
@@ -5,6 +8,7 @@ export type NightwatchPreferences = {
   daily_summary: boolean;
   monitor_symbol: string | null;
   research_run_id: string | null;
+  playbook_key: NightwatchPlaybookKey;
 };
 
 export function normalizeNightwatchPreferences(input: Record<string, unknown>): NightwatchPreferences {
@@ -16,5 +20,6 @@ export function normalizeNightwatchPreferences(input: Record<string, unknown>): 
     daily_summary: input.daily_summary !== false,
     monitor_symbol: symbol,
     research_run_id: typeof input.research_run_id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.research_run_id) ? input.research_run_id : null,
+    playbook_key: typeof input.playbook_key === "string" && PLAYBOOK_KEYS.has(input.playbook_key) ? input.playbook_key as NightwatchPlaybookKey : "sma_trend_v1",
   };
 }

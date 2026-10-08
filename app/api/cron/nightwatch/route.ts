@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getBitgetAsset, getBitgetCandles } from "@/lib/bitget-market";
 import { evaluateSmaCrossover } from "@/lib/nightwatch-signal";
 import { decideNightwatch } from "@/lib/nightwatch-agent";
+import { ALPHA_STRATEGIES, BACKTEST_STRATEGY, type StrategyKey } from "@/lib/backtest";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
   const count = countResult.count ?? 0;
   const batchCount = Math.max(1, Math.ceil(count / BATCH_SIZE));
   const offset = count > BATCH_SIZE ? (Math.floor(Date.now() / DAY_MS) % batchCount) * BATCH_SIZE : 0;
-  const { data: enabled, error: preferenceError } = await admin.from("nightwatch_preferences").select("user_id, monitor_symbol, research_run_id, alert_on_signal, alert_on_fill").eq("trigger_mode", "every_check").not("monitor_symbol", "is", null).order("updated_at", { ascending: true }).range(offset, offset + BATCH_SIZE - 1);
+  const { data: enabled, error: preferenceError } = await admin.from("nightwatch_preferences").select("user_id, monitor_symbol, research_run_id, alert_on_signal, alert_on_fill, playbook_key").eq("trigger_mode", "every_check").not("monitor_symbol", "is", null).order("updated_at", { ascending: true }).range(offset, offset + BATCH_SIZE - 1);
   if (preferenceError) return NextResponse.json({ runId, error: "Could not load opted-in paper schedules." }, { status: 503 });
   if (!enabled?.length) return NextResponse.json({ runId, state: "idle", checked: 0, message: "No active scheduled paper checks are opted in." }, { headers: { "Cache-Control": "no-store" } });
 
@@ -81,13 +82,15 @@ export async function GET(request: Request) {
     try {
       decision = await decideNightwatch({
         symbol: sample.asset.symbol, issuer: sample.asset.name, candles: sample.candles,
+        playbookKey: typeof preference.playbook_key === "string" && Object.hasOwn(ALPHA_STRATEGIES, preference.playbook_key) ? preference.playbook_key as StrategyKey : BACKTEST_STRATEGY,
         account: { cashUsd: Number(account.cash_balance), positionQuantity: Number(positionResult.data?.quantity ?? 0), averageCostUsd: positionResult.data?.average_cost == null ? null : Number(positionResult.data.average_cost), dailyRealizedPnlUsd: orders.reduce((sum, order) => sum + Number(order.realized_pnl ?? 0), 0), fillsToday: orders.length },
         research: researchResult.data?.status === "complete" ? { question: researchResult.data.question, summary: researchResult.data.summary } : null
       });
     } catch { failures += 1; continue; }
     const signal = decision.signal;
     const rationale = signal === decision.action ? decision.rationale : decision.rationale + " Confidence was below the 0.66 execution threshold, so the agent held.";
-    const snapshot = { ...sample.snapshot, agent: { version: "nightwatch-agent-v1", action: decision.action, signal, confidence: decision.confidence, rationale, evidence: decision.evidence, risks: decision.risks, invalidation: decision.invalidation, horizon: decision.horizon }, ...(preference.research_run_id ? { researchRunId: preference.research_run_id } : {}) };
+    const playbookKey = typeof preference.playbook_key === "string" && Object.hasOwn(ALPHA_STRATEGIES, preference.playbook_key) ? preference.playbook_key as StrategyKey : BACKTEST_STRATEGY;
+    const snapshot = { ...sample.snapshot, playbook: { key: playbookKey, label: ALPHA_STRATEGIES[playbookKey].label }, agent: { version: "nightwatch-agent-v1", action: decision.action, signal, confidence: decision.confidence, rationale, evidence: decision.evidence, risks: decision.risks, invalidation: decision.invalidation, horizon: decision.horizon }, ...(preference.research_run_id ? { researchRunId: preference.research_run_id } : {}) };
     const { data, error } = await admin.rpc("nightwatch_tick_scheduled", { p_user_id: preference.user_id, p_symbol: preference.monitor_symbol, p_as_of_ms: sample.asOfMs, p_reference_price: sample.close, p_fast_sma: sample.fast, p_slow_sma: sample.slow, p_signal: signal, p_snapshot: snapshot, p_research_run_id: preference.research_run_id });
     if (error) { failures += 1; continue; }
     recorded += 1;

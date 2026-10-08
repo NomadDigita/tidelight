@@ -9,6 +9,7 @@ export type BitgetInstrument = {
   isRwa?: string;
   isReality?: string;
   symbolType?: string;
+  type?: string;
   pricePrecision?: string;
   quantityPrecision?: string;
 };
@@ -57,6 +58,8 @@ export type MarketAsset = {
 };
 
 export type CandleInterval = "1H" | "4H" | "1D";
+export type AlphaMarketCategory = "SPOT" | "USDT-FUTURES";
+export const STOCK_PERP_UNIVERSE = ["NVDAUSDT", "AMDUSDT", "MSFTUSDT", "AAPLUSDT", "METAUSDT", "AMZNUSDT", "GOOGLUSDT", "TSLAUSDT", "INTCUSDT", "ASMLUSDT", "QCOMUSDT", "MUUSDT"] as const;
 export type MarketCandle = {
   timestamp: number;
   open: number;
@@ -268,9 +271,33 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
   };
 }
 
-export async function getBitgetCandles(symbol: string, interval: CandleInterval, limit = 240): Promise<MarketCandle[]> {
+/** Futures are a separate verified US-stock contract universe, never inferred from an rToken prefix. */
+export async function getBitgetStockPerp(symbol: string): Promise<MarketAsset | null> {
+  if (!(STOCK_PERP_UNIVERSE as readonly string[]).includes(symbol)) return null;
+  const query = new URLSearchParams({ category: "USDT-FUTURES", symbol });
+  const [instruments, tickers] = await Promise.all([
+    fetchBitget<BitgetInstrument[]>(`/market/instruments?${query}`, 1800),
+    fetchBitget<BitgetTicker[]>(`/market/tickers?${query}`, 12),
+  ]);
+  const instrument = instruments.data.find(item => item.symbol.toUpperCase() === symbol && item.category.toUpperCase() === "USDT-FUTURES" && item.status?.toLowerCase() === "online" && item.type?.toLowerCase() === "perpetual");
+  const ticker = tickers.data.find(item => item.symbol.toUpperCase() === symbol);
+  const price = ticker ? numberOrNull(ticker.lastPrice) : null;
+  if (!instrument || !ticker || price === null || price <= 0 || instrument.quoteCoin !== "USDT") return null;
+  const underlying = symbol.slice(0, -4);
+  return {
+    symbol, baseCoin: instrument.baseCoin, quoteCoin: "USDT", name: issuerNames[underlying] ?? underlying,
+    underlyingTicker: underlying, kind: "rtoken", isReality: false, isRwa: false,
+    weekendTradable: null, tradingSessions: [], lastPrice: price,
+    change24h: numberOrNull(ticker.price24hPcnt), high24h: numberOrNull(ticker.highPrice24h),
+    low24h: numberOrNull(ticker.lowPrice24h), volume24h: numberOrNull(ticker.volume24h),
+    turnover24h: numberOrNull(ticker.turnover24h), providerTimestamp: numberOrNull(ticker.ts),
+    logoUrl: getLogo(underlying, underlying, true),
+  };
+}
+
+export async function getBitgetCandles(symbol: string, interval: CandleInterval, limit = 240, category: AlphaMarketCategory = "SPOT"): Promise<MarketCandle[]> {
   const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit)));
-  const query = new URLSearchParams({ category: "SPOT", symbol, interval, type: "market", limit: String(safeLimit) });
+  const query = new URLSearchParams({ category, symbol, interval, type: "market", limit: String(safeLimit) });
   const response = await fetchBitget<string[][]>(`/market/candles?${query.toString()}`, interval === "1H" ? 30 : 120);
   return response.data.flatMap((row): MarketCandle[] => {
     if (row.length < 5) return [];

@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import MfaChallenge from "@/app/ui/mfa-challenge";
+import "./trading-brand.css";
 
 type Asset = { symbol: string; name: string; lastPrice: number };
 type Connection = { label: string; mode: "paper" | "demo" | "live"; live_enabled: boolean; last_validated_at: string } | null;
-export default function TradingWorkspace({ signedIn, assets }: { signedIn: boolean; assets: Asset[] }) {
+export default function TradingWorkspace({ signedIn, assets, initialSymbol }: { signedIn: boolean; assets: Asset[]; initialSymbol?: string }) {
   const [connection, setConnection] = useState<Connection>(null);
   const [mode, setMode] = useState<"demo" | "live">("demo");
   const [apiKey, setApiKey] = useState(""); const [apiSecret, setApiSecret] = useState(""); const [passphrase, setPassphrase] = useState("");
   const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  const [symbol, setSymbol] = useState(assets[0]?.symbol ?? ""); const [side, setSide] = useState<"buy" | "sell">("buy");
+  const [symbol, setSymbol] = useState(initialSymbol ?? assets[0]?.symbol ?? ""); const [side, setSide] = useState<"buy" | "sell">("buy");
   const [orderType, setOrderType] = useState<"market" | "limit">("market"); const [quantity, setQuantity] = useState(""); const [limitPrice, setLimitPrice] = useState("");
   const [confirming, setConfirming] = useState(false); const [needsMfa, setNeedsMfa] = useState(false);
   const selected = assets.find((asset) => asset.symbol === symbol);
@@ -46,9 +47,9 @@ export default function TradingWorkspace({ signedIn, assets }: { signedIn: boole
     {needsMfa ? <MfaChallenge context="live_bitget_order" onVerified={() => { setNeedsMfa(false); void placeOrder(connection?.mode === "live" ? "PLACE LIVE ORDER" : "PLACE DEMO ORDER"); }} /> : null}
     {!signedIn ? <section className="settings-card"><h2>Sign in to connect an account</h2><p>Bitget keys are private to your Tidelight account.</p><a className="primary-link" href="/login">Sign in</a></section> : <>
       <section className="settings-card tw-card"><div className="settings-card-head"><span className="settings-icon mint">⌁</span><div><span className="eyebrow small-eyebrow">PRIVATE BITGET CONNECTION</span><h2>{connection ? "Account verified" : "Connect your Bitget account"}</h2></div></div>
-        <p>Use a dedicated API key with account read and spot trade permissions. Keep withdrawals disabled in Bitget. Keys are encrypted on the server and are never returned to this page.</p>
+        <p>Use a dedicated {mode} API key with spot trade read and write permissions. Tidelight verifies trade read access without placing an order; Bitget checks write access when you confirm an order. Keep withdrawals disabled. Keys are encrypted on the server and never returned to this page.</p>
         {connection ? <div className="tw-connected"><span><i/> {connection.label}</span><b>{connection.mode.toUpperCase()} · VERIFIED</b><small>Checked {new Date(connection.last_validated_at).toLocaleString()}</small><button type="button" className="nw-secondary-button" onClick={() => void disconnect()} disabled={busy}>Remove keys</button></div> : null}
-        <form className="tw-form" onSubmit={connect}><label>ACCOUNT MODE<select value={mode} onChange={(event) => setMode(event.target.value as "demo" | "live")}><option value="demo">Bitget demo · virtual funds</option><option value="live">Bitget live · real funds</option></select></label><label>API KEY<input autoComplete="off" value={apiKey} onChange={(event) => setApiKey(event.target.value)} required/></label><label>API SECRET<input type="password" autoComplete="new-password" value={apiSecret} onChange={(event) => setApiSecret(event.target.value)} required/></label><label>API PASSPHRASE<input type="password" autoComplete="new-password" value={passphrase} onChange={(event) => setPassphrase(event.target.value)} required/></label><button type="submit" className="primary-link" disabled={busy}>{busy ? "Verifying securely…" : `Verify ${mode} key`}</button></form>
+        <form className="tw-form" onSubmit={connect}><label>ACCOUNT MODE<select value={mode} onChange={(event) => setMode(event.target.value as "demo" | "live")}><option value="demo">Bitget demo · virtual funds</option><option value="live">Bitget live · real funds</option></select></label><label>API KEY<input type="password" autoComplete="off" value={apiKey} onChange={(event) => setApiKey(event.target.value)} required/></label><label>API SECRET<input type="password" autoComplete="new-password" value={apiSecret} onChange={(event) => setApiSecret(event.target.value)} required/></label><label>API PASSPHRASE<input type="password" autoComplete="new-password" value={passphrase} onChange={(event) => setPassphrase(event.target.value)} required/></label><button type="submit" className="primary-link" disabled={busy}>{busy ? "Verifying securely…" : `Verify ${mode} key`}</button></form>
         <p className="tw-footnote">The Bitget API key must match the selected account mode. Tidelight can’t recover your secret; remove it here and replace it in Bitget if compromised.</p>
       </section>
       <section className="settings-card tw-card"><div className="settings-card-head"><span className="settings-icon mint">◉</span><div><span className="eyebrow small-eyebrow">CONFIRM BEFORE SENDING</span><h2>Place a spot order.</h2></div></div>

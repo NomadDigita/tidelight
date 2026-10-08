@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { bitgetPrivateRequest, encryptSecret, type Mode } from "@/lib/bitget-private";
+import { BitgetRequestError, bitgetPrivateRequest, encryptSecret, type Mode } from "@/lib/bitget-private";
 
 export const runtime = "nodejs";
 export async function GET() {
@@ -34,7 +34,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Secure key storage is not configured for this deployment. No credentials were saved." }, { status: 503 });
   }
   try {
-    await bitgetPrivateRequest({ apiKey, apiSecret, passphrase, mode }, "GET", "/api/v3/account/assets");
+    // This endpoint requires trade READ, the permission relevant to the spot desk.
+    // The account-assets endpoint requires a separate management permission and
+    // rejects otherwise usable dedicated trading keys.
+    await bitgetPrivateRequest({ apiKey, apiSecret, passphrase, mode }, "GET", "/api/v3/trade/unfilled-orders?category=SPOT");
     const admin = createAdminClient();
     const record = {
       user_id: user.id, label: mode === "demo" ? "Bitget demo account" : "Bitget live account",
@@ -49,7 +52,12 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : "";
     if (message === "credential-encryption-not-configured") return NextResponse.json({ error: "Secure key storage is not configured. No credentials were saved." }, { status: 503 });
     if (message === "connection-save-failed") return NextResponse.json({ error: "Bitget verified the key, but Tidelight could not save it securely." }, { status: 500 });
-    return NextResponse.json({ error: mode === "demo" ? "Bitget did not verify this demo key. Check that it is a demo-mode key with read permission." : "Bitget did not verify this key. Check its permissions and passphrase." }, { status: 422 });
+    if (error instanceof BitgetRequestError) {
+      console.warn("Bitget connection verification rejected", { code: error.code, status: error.status, mode });
+      return NextResponse.json({ error: `Bitget rejected the read-only spot order check (code ${error.code}). Check that this is a ${mode} key with trade read permission, the correct passphrase, and an allowed IP.`, providerCode: error.code }, { status: 422 });
+    }
+    console.warn("Bitget connection verification unavailable", error instanceof Error ? error.name : "unknown");
+    return NextResponse.json({ error: "Could not reach Bitget to verify this key. No credentials were saved. Please retry shortly." }, { status: 503 });
   }
 }
 export async function DELETE() {

@@ -16,16 +16,23 @@ export default function TokenPulse() {
   const [busy, setBusy] = useState(false);
   const [exposure, setExposure] = useState<Exposure[] | null>(null);
   const [exposureBusy, setExposureBusy] = useState(false);
+  const [reviewSymbol, setReviewSymbol] = useState<string | null>(null);
   async function research(event: React.FormEvent) {
     event.preventDefault();
     if (!token.trim()) { setError("Enter a token name or symbol."); return; }
-    setBusy(true); setError(""); setResult(null); setExposure(null);
+    setBusy(true); setError(""); setResult(null); setExposure(null); setReviewSymbol(null);
     try {
       const response = await fetch("/api/research/token-pulse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
       const data = await response.json();
       if (!response.ok && !(Array.isArray(data.sources) && data.sources.length > 0 && data.analysis)) throw new Error(data.error || "Could not build this token pulse.");
       setResult(data);
       if (!response.ok) setError(data.error || "AI synthesis is unavailable; review the gathered sources below.");
+      if (response.ok && ["positive", "negative"].includes(data.analysis?.mood) && data.analysis.confidence >= 0.85 && data.coverage.news >= 5) {
+        const cited = new Set<string>((data.analysis.notable_developments ?? []).flatMap((item: { source_urls: string[] }) => item.source_urls).map((url: string) => { try { return new URL(url).hostname; } catch { return ""; } }).filter(Boolean));
+        if (cited.size >= 2) {
+          fetch("/api/research/exposure", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: data.token }) }).then((res) => res.ok ? res.json() : null).then((mapped) => { if (mapped?.matches?.[0]?.symbol) setReviewSymbol(mapped.matches[0].symbol); }).catch(() => {});
+        }
+      }
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not build this token pulse."); }
     finally { setBusy(false); }
   }
@@ -48,5 +55,6 @@ export default function TokenPulse() {
       <div className="tp-exposure-handoff"><div><span className="tp-kicker">NEXT LAYER · EXPOSURE MAP</span><b>Connect this token to its market context.</b><small>Issuer, underlying, sector, catalysts and risk context.</small></div><button type="button" onClick={() => void resolveExposure()} disabled={exposureBusy}>{exposureBusy ? "Mapping…" : "Map exposure ↗"}</button></div>{exposure ? <div className="tp-exposure-grid">{exposure.length ? exposure.map((item) => <article key={item.symbol}><b>{item.name} · {item.symbol}</b><span>{item.instrument} · {item.issuer}</span><small>{item.sector} · underlying: {item.underlying}</small><p><strong>Catalyst:</strong> {item.catalysts[0]}</p><p><strong>Risk:</strong> {item.risks[0]}</p></article>) : <p className="tp-muted">No supported exposure match yet. Try a ticker or full asset name.</p>}</div> : null}
       <p className="tp-limit">{result.analysis.limitations}</p>
     </div> : null}
+    {reviewSymbol ? <aside className="tp-review-toast" role="status"><button type="button" className="tp-review-close" aria-label="Dismiss market review" onClick={() => setReviewSymbol(null)}>×</button><span className="tp-kicker">RESEARCH → MARKET REVIEW</span><b>Sources point to a clear story. Check the market before acting.</b><p>This is a news read, not an order signal. Confirm the instrument, price, risk, and account mode yourself.</p><a href={`/trading?symbol=${encodeURIComponent(reviewSymbol)}`}>Inspect {reviewSymbol} at the trading desk ↗</a></aside> : null}
   </section>;
 }

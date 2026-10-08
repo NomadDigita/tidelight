@@ -40,14 +40,17 @@ export async function gatherIssuerEvidence(ticker: string, issuer: string): Prom
     for (const item of result.value) {
       // Search is discovery, not evidence of the article content. Pass only the
       // supplied headline/snippet to the model and retain the original link.
-      const relevant = new RegExp(`(^|[^a-z0-9])${ticker}([^a-z0-9]|$)`, "i").test(item.title) ||
-        (name.length >= 4 && item.title.toLowerCase().includes(name.toLowerCase()));
+      const headline = `${item.title} ${item.snippet}`;
+      const relevant = new RegExp(`(^|[^a-z0-9])${ticker}([^a-z0-9]|$)`, "i").test(headline) ||
+        (name.length >= 4 && headline.toLowerCase().includes(name.toLowerCase()));
       if (!relevant) continue;
       const key = item.title.toLowerCase().replace(/\s+-\s+[^-]+$/, "").replace(/[^a-z0-9]/g, "");
       if (!unique.has(key)) unique.set(key, item);
     }
   }
   return [...unique.values()].sort((a, b) => Date.parse(b.publishedAt ?? "") - Date.parse(a.publishedAt ?? ""))
-    .filter(item => item.publishedAt && Date.now() - Date.parse(item.publishedAt) <= 7 * 86_400_000)
+    // Older links can still help a reader understand a quiet ticker. The
+    // trading gate independently requires cited coverage from the last 7 days.
+    .filter(item => item.publishedAt && Date.now() - Date.parse(item.publishedAt) <= 30 * 86_400_000)
     .slice(0, 12);
 }

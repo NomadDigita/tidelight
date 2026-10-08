@@ -4,6 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 type Mode = "demo" | "live";
 type Secrets = { apiKey: string; apiSecret: string; passphrase: string; mode: Mode };
+export class BitgetRequestError extends Error {
+  constructor(public readonly code: string, public readonly status: number) { super("bitget-request-rejected"); }
+}
 const VERSION = "aes-256-gcm-v1";
 function key() {
   const configured = process.env.BITGET_CREDENTIALS_ENCRYPTION_KEY;
@@ -44,7 +47,7 @@ export async function bitgetPrivateRequest(credentials: Secrets, method: "GET" |
   const url = "https://api.bitget.com" + path;
   const response = await fetch(url, { method, headers: bitgetHeaders(credentials, method, path, body), ...(payload ? { body } : {}), signal: AbortSignal.timeout(12000), cache: "no-store" });
   const result = await response.json() as { code?: string; msg?: string; data?: unknown };
-  if (!response.ok || result.code !== "00000") throw new Error("bitget-request-rejected");
+  if (!response.ok || result.code !== "00000") throw new BitgetRequestError(/^\d{1,12}$/.test(String(result.code)) ? String(result.code) : "unknown", response.status);
   return result;
 }
 export type { Mode };

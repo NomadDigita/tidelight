@@ -83,7 +83,8 @@ export async function POST(request: Request) {
     if (error) { console.error("Futures paper persistence failed", error.code); return NextResponse.json({ error: "Could not save the futures paper decision." }, { status: 503 }); }
     return NextResponse.json({ result: data, decision, market: { symbol, name: asset.name, price: mark, asOf: new Date(asOfMs).toISOString() } }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error("Futures paper check failed", error instanceof Error ? error.message : "unknown");
-    return NextResponse.json({ error: "The futures paper check could not finish. No exchange order was placed." }, { status: 502 });
+    const reason = error instanceof Error ? error.message : "unknown";
+    console.error("Futures paper check failed", reason);
+    return NextResponse.json({ error: "The AI or market check is temporarily unavailable. No paper decision was recorded; retry this candle later. No exchange order was placed." }, { status: 503 });
   }
 }

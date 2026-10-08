@@ -20,8 +20,10 @@ export default async function Home() {
   return <div className="content-wrap dashboard-page">
     <section className="welcome-row dashboard-welcome">
       <div><div className="eyebrow"><span className="eyebrow-line" /> {today.toUpperCase()} <span className="eyebrow-divider">/</span> YOUR MARKET BRIEF</div><h1>{user ? "Welcome back" : "See what moves"}<span className="mint-dot">.</span></h1><p className="welcome-copy">The bell may be quiet. The market isn’t.</p></div>
-      <div className="dashboard-welcome-actions"><Link className="date-button" href="/research">Start a research note <span>↗</span></Link><Link className="welcome-guide-link" href="/guide">New here? Follow the quick guide <span>→</span></Link></div>
+      <div className="dashboard-welcome-actions"><Link className="date-button" href="/flow">Ask the agent team <span>↗</span></Link><Link className="welcome-guide-link" href="/guide">New here? Follow the quick guide <span>→</span></Link></div>
     </section>
+
+    <section className="agent-flow-entry" aria-label="Guided stock research"><div><span className="eyebrow small-eyebrow">EVENT → EVIDENCE → MARKET → RISK</span><h2>What do you think about NVDA and TSLA?</h2><p>Ask in plain language. Follow the agent handoffs and inspect the sources before a paper, demo, or live trade review is offered.</p></div><Link href="/flow?question=What%20do%20you%20think%20about%20NVDA%20and%20TSLA%3F">Follow this question <span>↗</span></Link></section>
 
     <ResearchWorkspace qwenAvailable={Boolean(process.env.BITGET_QWEN_API_KEY)} />
 

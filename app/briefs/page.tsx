@@ -6,7 +6,7 @@ export default async function BriefsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data } = user
-    ? await supabase.from("research_runs").select("id, question, status, summary, model_name, created_at").order("created_at", { ascending: false }).limit(50)
+    ? await supabase.from("research_runs").select("id, question, status, summary, model_name, event_type, created_at").order("created_at", { ascending: false }).limit(50)
     : { data: [] };
 
   return <div className="content-wrap inner-page briefs-page">

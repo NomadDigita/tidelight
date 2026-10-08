@@ -12,6 +12,7 @@ const navigation = [
   { href: "/", label: "Overview", icon: "◫" },
   { href: "/guide", label: "Start here", icon: "◎" },
   { href: "/research", label: "Research desk", icon: "⌕" },
+  { href: "/flow", label: "Agent flow", icon: "✦" },
   { href: "/community", label: "Research community", icon: "✳" },
   { href: "/markets", label: "Market map", icon: "⌁" },
   { href: "/strategies", label: "Strategy lab", icon: "⌗", technical: true },

@@ -12,11 +12,11 @@ type Fill = { id: string; symbol: string; action: string; direction: string; qua
 const usd = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 const when = (value: string) => new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value));
 
-export default function FuturesPaperDesk({ signedIn, cash, paused, position, mark, markAsOf, decisions, fills }: {
-  signedIn: boolean; cash: number; paused: boolean; position: PaperPosition | null; mark: number | null; markAsOf: number | null; decisions: Decision[]; fills: Fill[];
+export default function FuturesPaperDesk({ signedIn, initialSymbol, researchRunId, cash, paused, position, mark, markAsOf, decisions, fills }: {
+  signedIn: boolean; initialSymbol?: string; researchRunId?: string; cash: number; paused: boolean; position: PaperPosition | null; mark: number | null; markAsOf: number | null; decisions: Decision[]; fills: Fill[];
 }) {
   const router = useRouter();
-  const [symbol, setSymbol] = useState<string>(position?.symbol ?? "NVDAUSDT");
+  const [symbol, setSymbol] = useState<string>(initialSymbol ?? position?.symbol ?? "NVDAUSDT");
   const [playbookKey, setPlaybookKey] = useState<StrategyKey>(BACKTEST_STRATEGY);
   const [busy, setBusy] = useState(false);
   const [isPaused, setIsPaused] = useState(paused);
@@ -29,7 +29,7 @@ export default function FuturesPaperDesk({ signedIn, cash, paused, position, mar
     if (!signedIn) { router.push("/login"); return; }
     setBusy(true); setError(""); setLatest(null);
     try {
-      const response = await fetch("/api/futures/paper", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: mode === "close" ? position?.symbol : symbol, playbookKey, mode }) });
+      const response = await fetch("/api/futures/paper", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ symbol: mode === "close" ? position?.symbol : symbol, playbookKey, mode, researchRunId: mode === "check" ? researchRunId : undefined }) });
       const payload = await response.json() as { result?: { action?: string; outcome: string; reason: string; idempotent?: boolean }; error?: string };
       if (!response.ok || !payload.result) throw new Error(payload.error ?? "Paper check could not finish.");
       setLatest(payload.result); router.refresh();

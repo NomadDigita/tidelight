@@ -13,6 +13,8 @@ Tidelight currently has two separate market paths:
 
 The futures replay models unlevered price changes with fee and slippage assumptions. It does **not** model funding, margin, liquidation, contract sizing, session-specific liquidity or order-book impact. Its return is not futures account P&L. The current basket comparison selects a single training leader, then reports that market's separate holdout. It is not a continuously rotating portfolio and is not evidence of alpha by itself.
 
+Basket averages and leader selection are suppressed if any market's training period overlaps the common holdout or if the markets have different holdout candle timestamps. Individual replay results remain visible with an explanation. This prevents a late training window in one market from leaking into another market's test period.
+
 ## Playbook research
 
 The public GetAgent Studio leaderboard and strategy pages were reviewed on October 8. The user's **US Stock Relative Strength Pullback** is a long-only eight-stock USDT perpetual playbook: it ranks medium-term strength, waits for a cooled EMA/RSI pullback, and exits using ATR levels. The public **Tech Semiconductor Rotation** covers an eight-market semiconductor universe with explicit paper trades, drawdown, win rate and code provenance. Its reported paper return is a historical observation, not a result reproduced in Tidelight. The stock-perpetual universe and semiconductor basket in this build draw on the *market and validation concepts*, not a copy of that source code. The user's **Wide Alt Sweep** is a crypto playbook and is deliberately outside this US-equities strategy experiment.

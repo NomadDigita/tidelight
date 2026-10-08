@@ -16,6 +16,7 @@ const navigation = [
   { href: "/markets", label: "Market map", icon: "⌁" },
   { href: "/strategies", label: "Strategy lab", icon: "⌗", technical: true },
   { href: "/nightwatch", label: "Nightwatch agent", icon: "◉", technical: true },
+  { href: "/futures", label: "Futures paper desk", icon: "↗", technical: true },
   { href: "/trading", label: "Bitget trading", icon: "⌁", technical: true },
   { href: "/watchlist", label: "Watchlist", icon: "⌖" },
   { href: "/briefs", label: "Saved briefs", icon: "▤", technical: true },
@@ -45,12 +46,7 @@ function BrandStoryTypewriter() {
   }, []);
 
   useEffect(() => {
-    if (reduceMotion) {
-      setStoryIndex(0);
-      setCharacterCount(0);
-      setDeleting(false);
-      return;
-    }
+    if (reduceMotion) return;
 
     const story = BRAND_STORIES[storyIndex];
     let delay = 46;
@@ -81,7 +77,7 @@ function BrandStoryTypewriter() {
   const visibleStory = reduceMotion ? BRAND_STORIES[0] : BRAND_STORIES[storyIndex].slice(0, characterCount);
   return <div className="mobile-brand-story" aria-label="Tidelight product stories">
     <span className="brand-story-copy" aria-hidden="true">{visibleStory}</span>
-    <span className="sr-only">{BRAND_STORIES[storyIndex]}</span>
+    <span className="sr-only">{BRAND_STORIES[reduceMotion ? 0 : storyIndex]}</span>
   </div>;
 }
 

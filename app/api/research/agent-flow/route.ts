@@ -13,6 +13,14 @@ type Stage = { id: string; agent: string; status: "running" | "complete" | "bloc
 type MarketSnapshot = { ticker: string; issuer: string; sources: FlowEvidence[]; perp: Awaited<ReturnType<typeof getBitgetStockPerp>>; spot: Awaited<ReturnType<typeof getBitgetAsset>>; candles: Awaited<ReturnType<typeof getBitgetCandles>> };
 const HOLD: FlowAssessment = { summary: "The available source headlines do not support a reliable directional assessment. Review the linked items and the issuer's original filings.", stance: "unclear", confidence: 0, citedUrls: [], risks: ["Source headlines may omit material context."], nextCheck: "Review original issuer filings and fresh completed candles." };
 
+function sourceOnlyRead(snap: MarketSnapshot): FlowAssessment {
+  const publishers = new Set(snap.sources.map(source => source.publisher.trim().toLowerCase()).filter(Boolean));
+  const latest = snap.sources[0];
+  if (!latest) return { ...HOLD, summary: `No attributable public headlines were reached for ${snap.ticker}. Check the issuer's original filings and retry later.` };
+  const date = latest.publishedAt ? new Date(latest.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "date unavailable";
+  return { ...HOLD, summary: `Collected ${snap.sources.length} public headlines across ${publishers.size} publishers. Most recent listed headline: “${latest.title.slice(0, 170)}” (${latest.publisher}, ${date}). AI synthesis is unavailable, so review the linked items directly. No directional trade assessment was made.` };
+}
+
 function event(type: "stage" | "result" | "error", payload: unknown) {
   return `event: ${type}\ndata: ${JSON.stringify(payload)}\n\n`;
 }
@@ -97,20 +105,21 @@ export async function POST(request: Request) {
 
         const now = Date.now();
         const assets = snapshots.map(snap => {
-          const assessment = assessments[snap.ticker] ?? HOLD;
+          const assessment = assessments[snap.ticker] ?? sourceOnlyRead(snap);
           const completed = snap.candles.filter(candle => candle.timestamp + 4 * 3_600_000 <= now);
           const signals = completed.length >= 60 ? buildSignals(completed, "sma_trend_v1") : [];
           const latestEnd = completed.length ? completed.at(-1)!.timestamp + 4 * 3_600_000 : null;
           const gate = gateFlowTrade({ assessment, sources: snap.sources, marketVerified: Boolean(snap.perp), marketTimestamp: snap.perp?.providerTimestamp ?? null,
             lastCompletedCandleEnd: latestEnd, completedCandles: completed.length, currentSignal: Boolean(signals.at(-1)), previousSignal: Boolean(signals.at(-2)), now });
+          const gateReasons = assessments[snap.ticker] ? gate.reasons : ["No verified AI assessment was returned; headlines alone cannot unlock trade review.", ...gate.reasons];
           const destinations = gate.tradeable ? [
             { mode: "paper_futures" as const, label: "Review a paper futures check", href: `/futures?symbol=${encodeURIComponent(snap.ticker + "USDT")}&researchRunId=${encodeURIComponent(run.id)}` },
             ...(gate.direction === "long" && snap.spot ? [{ mode: "live_spot" as const, label: "Review a live rToken spot order", href: `/trading?symbol=${encodeURIComponent(snap.spot.symbol)}` }] : []),
           ] : [];
           stage("Alpha Factory", signals.length ? "complete" : "blocked", `${snap.ticker}: completed-candle rule`, signals.length ? `SMA 20/50 checked on ${completed.length} completed 4H bars; ${signals.at(-1) !== signals.at(-2) ? "fresh transition" : "no fresh transition"}.` : "Too few completed candles to test the fixed rule.", snap.ticker);
-          stage("Trading agent", gate.tradeable ? "complete" : "blocked", `${snap.ticker}: ${gate.tradeable ? "eligible for order review" : "research only"}`, gate.tradeable ? "Source coverage, market freshness, confidence, and the fixed Alpha rule align. You must still choose and confirm any action." : gate.reasons.join(" "), snap.ticker);
+          stage("Trading agent", gate.tradeable ? "complete" : "blocked", `${snap.ticker}: ${gate.tradeable ? "eligible for order review" : "research only"}`, gate.tradeable ? "Source coverage, market freshness, confidence, and the fixed Alpha rule align. You must still choose and confirm any action." : gateReasons.join(" "), snap.ticker);
           return { ticker: snap.ticker, issuer: snap.issuer, summary: assessment.summary, stance: assessment.stance, confidence: assessment.confidence,
-            tradeable: gate.tradeable, gateReasons: gate.reasons, sources: snap.sources.map(({ title, url, publisher, publishedAt }): FlowSource => ({ title, url, publisher, publishedAt })),
+            tradeable: gate.tradeable, gateReasons, sources: snap.sources.map(({ title, url, publisher, publishedAt }): FlowSource => ({ title, url, publisher, publishedAt })),
             market: { perpSymbol: snap.perp?.symbol ?? null, spotSymbol: snap.spot?.symbol ?? null, lastPrice: snap.perp?.lastPrice ?? null },
             handoff: gate.tradeable ? { destinations, reason: "Eligible for a separate, user-confirmed order review. Paper futures and live rToken spot use different instruments and accounts." } : null,
             risks: assessment.risks, nextCheck: assessment.nextCheck };

@@ -4,6 +4,9 @@ import { aiJsonWithFallback, configuredAiProviders } from "@/lib/ai-fallback";
 
 export const maxDuration = 60;
 type SearchItem = { title: string; url: string; publisher: string; publishedAt: string | null; snippet: string; channel: "News" | "Community" };
+const issuerAliases: Record<string, string[]> = {
+  NVDA: ["nvidia"], TSLA: ["tesla"], AAPL: ["apple"], MSFT: ["microsoft"], AMD: ["advanced micro devices"], AMZN: ["amazon"], META: ["meta platforms"], GOOGL: ["alphabet", "google"], GOOG: ["alphabet", "google"], AVGO: ["broadcom"], WBD: ["warner bros"], MU: ["micron"], SPY: ["s&p 500", "spdr"], COIN: ["coinbase"], PLTR: ["palantir"], TSM: ["taiwan semiconductor", "tsmc"], SOXL: ["semiconductor bull"], NFLX: ["netflix"], JPM: ["jpmorgan"], WMT: ["walmart"], LLY: ["eli lilly"], ORCL: ["oracle"], INTC: ["intel"], MSTR: ["strategy inc", "microstrategy"],
+};
 
 function text(value: string) {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
@@ -86,6 +89,11 @@ export async function POST(request: Request) {
   }
   const items = [...unique.values()]
     .filter((item) => !item.publishedAt || Date.now() - Date.parse(item.publishedAt) < 14 * 86400000)
+    .filter((item) => {
+      if (!looksLikeEquity) return true;
+      const title = item.title.toLowerCase();
+      return new RegExp(`(^|[^a-z0-9])${normalizedToken.toLowerCase()}([^a-z0-9]|$)`).test(title) || (issuerAliases[normalizedToken] ?? []).some((name) => title.includes(name)) || title.includes(token.toLowerCase());
+    })
     .sort((a, b) => (Date.parse(b.publishedAt ?? "") || 0) - (Date.parse(a.publishedAt ?? "") || 0))
     .slice(0, 24);
   if (!items.length) return NextResponse.json({ error: "No recent public news or community items could be reached for that search. Try a shorter asset name or its ticker, then retry." }, { status: 422 });
@@ -103,7 +111,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ token, collectedAt: new Date().toISOString(), coverage: { news: items.filter((item) => item.channel === "News").length, community: items.filter((item) => item.channel === "Community").length }, sources: items, analysis: { overview: String(analysis.overview ?? "").slice(0, 600), mood: ["positive", "mixed", "negative", "unclear"].includes(String(analysis.mood)) ? analysis.mood : "unclear", mood_explanation: String(analysis.mood_explanation ?? "").slice(0, 300), notable_developments: developments, risks: Array.isArray(analysis.risks) ? analysis.risks.slice(0, 4).map((item) => String(item).slice(0, 260)) : [], watch_next: Array.isArray(analysis.watch_next) ? analysis.watch_next.slice(0, 3).map((item) => String(item).slice(0, 220)) : [], confidence: Math.min(items.length < 3 ? 0.3 : items.length < 5 ? 0.5 : 1, Math.max(0, Number(analysis.confidence) || 0)), limitations: String(analysis.limitations ?? "This pulse summarizes public sources and may miss relevant information.").slice(0, 300) } });
   } catch (cause) {
     console.error("token-pulse-analysis-failed", cause instanceof Error ? cause.message : "unknown");
-    const error = "The latest items were found, but both analysis providers are temporarily unavailable. Review the linked sources or retry shortly.";
-    return NextResponse.json({ token, collectedAt: new Date().toISOString(), coverage: { news: items.filter((item) => item.channel === "News").length, community: items.filter((item) => item.channel === "Community").length }, sources: items, analysis: { overview: "Public coverage was collected, but the AI summary could not be generated. Review the linked items below.", mood: "unclear", mood_explanation: "No AI interpretation is available for this run.", notable_developments: [], risks: [], watch_next: [], confidence: 0, limitations: "AI synthesis is unavailable. Read the gathered links directly; no summary or trade signal was generated.", unavailable: true }, error }, { status: 503 });
+    return NextResponse.json({ token, collectedAt: new Date().toISOString(), coverage: { news: items.filter((item) => item.channel === "News").length, community: items.filter((item) => item.channel === "Community").length }, sources: items, analysis: {
+      overview: `Recent public coverage for ${token} was collected. The analysis providers are unavailable, so this is a source-only reading list. Open the original items before drawing conclusions.`,
+      mood: "unclear", mood_explanation: "No AI interpretation or directional view was generated.",
+      notable_developments: items.slice(0, 4).map((item) => ({ headline: item.title, what_it_means: "Headline only. Read the linked source for its evidence and full context.", source_urls: [item.url] })),
+      risks: ["Headlines can be incomplete, duplicated, or unrelated to the token market."],
+      watch_next: ["Check the issuer’s latest filing or release.", "Compare the token’s live price and liquidity with the underlying stock."],
+      confidence: 0, limitations: "Source-only mode: no AI synthesis or trade signal was generated. Try again later for an interpreted pulse.", sourceOnly: true,
+    } }, { headers: { "Cache-Control": "no-store" } });
   }
 }

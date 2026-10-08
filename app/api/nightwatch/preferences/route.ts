@@ -9,7 +9,7 @@ export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in to manage Nightwatch preferences." }, { status: 401 });
-  const { data, error } = await supabase.from("nightwatch_preferences").select("trigger_mode, monitor_symbol, research_run_id, alert_on_signal, alert_on_fill, daily_summary").maybeSingle();
+  const { data, error } = await supabase.from("nightwatch_preferences").select("trigger_mode, monitor_symbol, research_run_id, alert_on_signal, alert_on_fill, daily_summary, playbook_key").maybeSingle();
   if (error) return NextResponse.json({ error: "Could not load Nightwatch preferences." }, { status: 503 });
   const schedulerAvailable = Boolean(process.env.CRON_SECRET && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
   return NextResponse.json({ ...(data ?? defaults), scheduler_available: schedulerAvailable });

@@ -2,11 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getBitgetAsset, getBitgetCandles, getBitgetMarketUniverse } from "@/lib/bitget-market";
 import { issuerLogoUrl } from "@/lib/issuer-logo";
 import NightwatchDesk from "@/app/ui/nightwatch-desk";
+import { ALPHA_STRATEGIES, type StrategyKey } from "@/lib/backtest";
 
 export const revalidate = 60;
 
-export default async function NightwatchPage({ searchParams }: { searchParams: Promise<{ symbol?: string; researchRunId?: string }> }) {
-  const { symbol: requestedSymbol, researchRunId: requestedResearchRunId } = await searchParams;
+export default async function NightwatchPage({ searchParams }: { searchParams: Promise<{ symbol?: string; researchRunId?: string; playbook?: string }> }) {
+  const { symbol: requestedSymbol, researchRunId: requestedResearchRunId, playbook: requestedPlaybook } = await searchParams;
+  const initialPlaybookKey = requestedPlaybook && Object.hasOwn(ALPHA_STRATEGIES, requestedPlaybook) ? requestedPlaybook as StrategyKey : null;
   const researchRunId = requestedResearchRunId?.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)?.[0] ?? null;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -50,5 +52,6 @@ export default async function NightwatchPage({ searchParams }: { searchParams: P
     defaultSymbol={defaultSymbol}
     researchRunId={researchRunId}
     initialAlerts={(alertsResult.data ?? []) as never}
+    initialPlaybookKey={initialPlaybookKey}
   />;
 }

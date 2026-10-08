@@ -1,8 +1,15 @@
 import type { CandleInterval, MarketCandle } from "@/lib/bitget-market";
 
 export const BACKTEST_STRATEGY = "sma_trend_v1" as const;
-export type StrategyKey = "sma_trend_v1" | "rsi_reversion_v1" | "channel_breakout_v1" | "weekend_drift_v1";
-export const ALPHA_STRATEGIES: Record<StrategyKey, { label: string; description: string }> = { sma_trend_v1: { label: "Trend · SMA 20/50", description: "20-period trend above the 50-period trend." }, rsi_reversion_v1: { label: "Mean reversion · RSI 14", description: "Enter oversold and exit after rebound." }, channel_breakout_v1: { label: "Momentum · 20/10 channel", description: "Enter above prior high and exit below prior low." }, weekend_drift_v1: { label: "After-hours · weekend drift", description: "Test positive weekend continuation on 24/7 tokens." } };
+export type StrategyKey = "sma_trend_v1" | "rsi_reversion_v1" | "channel_breakout_v1" | "weekend_drift_v1" | "trend_pullback_v1" | "semi_breakout_v1";
+export const ALPHA_STRATEGIES: Record<StrategyKey, { label: string; description: string }> = {
+  sma_trend_v1: { label: "Trend · SMA 20/50", description: "20-period trend above the 50-period trend." },
+  rsi_reversion_v1: { label: "Mean reversion · RSI 14", description: "Enter oversold and exit after rebound." },
+  channel_breakout_v1: { label: "Momentum · 20/10 channel", description: "Enter above prior high and exit below prior low." },
+  weekend_drift_v1: { label: "After-hours · weekend drift", description: "Test positive weekend continuation on 24/7 tokens." },
+  trend_pullback_v1: { label: "Trend pullback · EMA / RSI", description: "Test a cooled pullback inside a rising trend, confirmed by a completed bullish candle." },
+  semi_breakout_v1: { label: "Semiconductor · volume breakout", description: "Test a long-only channel break with trend, participation, candle-quality, and momentum filters." },
+};
 
 export const BACKTEST_PARAMETERS = {
   fastWindow: 20,
@@ -94,7 +101,95 @@ function movingAverages(candles: MarketCandle[], window: number) {
   return values;
 }
 
-function buildSignals(candles: MarketCandle[], key: StrategyKey): boolean[] { const out=Array(candles.length).fill(false) as boolean[]; if(key==="sma_trend_v1"){const f=movingAverages(candles,20),q=movingAverages(candles,50);return candles.map((_,i)=>f[i]!==null&&q[i]!==null&&(f[i] as number)>(q[i] as number))} let held=false; for(let i=1;i<candles.length;i++){if(key==="rsi_reversion_v1"&&i>=14){let g=0,l=0;for(let j=i-13;j<=i;j++){const d=candles[j].close-candles[j-1].close;if(d>0)g+=d;else l-=d}const ag=g/14,al=l/14,rsi=al===0?100:100-100/(1+ag/al);if(rsi<=30)held=true;else if(rsi>=55)held=false}else if(key==="channel_breakout_v1"&&i>=20){const prior=candles.slice(i-20,i).map(c=>c.close);if(candles[i].close>Math.max(...prior))held=true;else if(candles[i].close<Math.min(...candles.slice(i-10,i).map(c=>c.close)))held=false}else if(key==="weekend_drift_v1"){const d=new Date(candles[i].timestamp).getUTCDay(),weekend=d===0||d===6,p=Math.max(0,i-6),r=candles[i].close/candles[p].close-1;if(weekend&&r>=0.015)held=true;else if(!weekend||r<0)held=false}out[i]=held}return out}
+function exponentialAverages(candles: MarketCandle[], window: number) {
+  const values: (number | null)[] = Array(candles.length).fill(null);
+  if (candles.length < window) return values;
+  let average = candles.slice(0, window).reduce((sum, candle) => sum + candle.close, 0) / window;
+  values[window - 1] = average;
+  const alpha = 2 / (window + 1);
+  for (let i = window; i < candles.length; i += 1) {
+    average = alpha * candles[i].close + (1 - alpha) * average;
+    values[i] = average;
+  }
+  return values;
+}
+
+function relativeStrengthIndex(candles: MarketCandle[], index: number, window = 14) {
+  if (index < window) return null;
+  let gains = 0;
+  let losses = 0;
+  for (let i = index - window + 1; i <= index; i += 1) {
+    const change = candles[i].close - candles[i - 1].close;
+    if (change > 0) gains += change;
+    else losses -= change;
+  }
+  const averageGain = gains / window;
+  const averageLoss = losses / window;
+  return averageLoss === 0 ? 100 : 100 - 100 / (1 + averageGain / averageLoss);
+}
+
+function averageVolume(candles: MarketCandle[], end: number, window: number) {
+  const values = candles.slice(Math.max(0, end - window), end).map((candle) => candle.volume).filter((value): value is number => value !== null && Number.isFinite(value));
+  return values.length === window ? values.reduce((sum, value) => sum + value, 0) / window : null;
+}
+
+/** Signals are decided from completed candles only and become effective on the next bar. */
+export function buildSignals(candles: MarketCandle[], key: StrategyKey): boolean[] {
+  const out = Array(candles.length).fill(false) as boolean[];
+  if (key === "sma_trend_v1") {
+    const fast = movingAverages(candles, 20);
+    const slow = movingAverages(candles, 50);
+    return candles.map((_, index) => fast[index] !== null && slow[index] !== null && (fast[index] as number) > (slow[index] as number));
+  }
+
+  const ema20 = key === "trend_pullback_v1" || key === "semi_breakout_v1" ? exponentialAverages(candles, 20) : [];
+  const ema50 = key === "trend_pullback_v1" || key === "semi_breakout_v1" ? exponentialAverages(candles, 50) : [];
+  let held = false;
+  for (let i = 1; i < candles.length; i += 1) {
+    const candle = candles[i];
+    if (key === "rsi_reversion_v1" && i >= 14) {
+      const rsi = relativeStrengthIndex(candles, i);
+      if (rsi !== null && rsi <= 30) held = true;
+      else if (rsi !== null && rsi >= 55) held = false;
+    } else if (key === "channel_breakout_v1" && i >= 20) {
+      const priorHigh = Math.max(...candles.slice(i - 20, i).map((item) => item.high));
+      const priorLow = Math.min(...candles.slice(i - 10, i).map((item) => item.low));
+      if (candle.close > priorHigh) held = true;
+      else if (candle.close < priorLow) held = false;
+    } else if (key === "weekend_drift_v1") {
+      const day = new Date(candle.timestamp).getUTCDay();
+      const weekend = day === 0 || day === 6;
+      const start = Math.max(0, i - 6);
+      const return6 = candle.close / candles[start].close - 1;
+      if (weekend && return6 >= 0.015) held = true;
+      else if (!weekend || return6 < 0) held = false;
+    } else if (key === "trend_pullback_v1" && i >= 51) {
+      const currentRsi = relativeStrengthIndex(candles, i);
+      const priorRsi = relativeStrengthIndex(candles, i - 1);
+      const volumeMean = averageVolume(candles, i, 20);
+      const trendUp = ema20[i] !== null && ema50[i] !== null && ema20[i]! > ema50[i]! && ema50[i]! > ema50[i - 1]!;
+      const pullbackHeld = ema20[i] !== null && candle.low <= ema20[i]! * 1.01 && candle.close >= ema50[i]!;
+      const cooledAndTurned = currentRsi !== null && priorRsi !== null && priorRsi <= 58 && currentRsi > priorRsi && currentRsi >= 45 && currentRsi <= 65;
+      const participation = volumeMean !== null && candle.volume !== null && candle.volume >= volumeMean * 0.7;
+      const bullishClose = candle.close > candle.open;
+      if (!held && trendUp && pullbackHeld && cooledAndTurned && participation && bullishClose) held = true;
+      else if (held && (ema20[i] === null || candle.close < ema20[i]! || (currentRsi !== null && currentRsi < 40))) held = false;
+    } else if (key === "semi_breakout_v1" && i >= 51) {
+      const currentRsi = relativeStrengthIndex(candles, i);
+      const volumeMean = averageVolume(candles, i, 20);
+      const priorHigh = Math.max(...candles.slice(i - 20, i).map((item) => item.high));
+      const range = candle.high - candle.low;
+      const bodyQuality = range > 0 ? (candle.close - candle.open) / range : 0;
+      const trendUp = ema20[i] !== null && ema50[i] !== null && ema20[i]! > ema50[i]! && candle.close > ema50[i]!;
+      const volumeConfirm = volumeMean !== null && candle.volume !== null && candle.volume >= volumeMean * 1.15;
+      const momentumInRange = currentRsi !== null && currentRsi >= 50 && currentRsi <= 72;
+      if (!held && trendUp && candle.close > priorHigh && volumeConfirm && bodyQuality >= 0.6 && momentumInRange) held = true;
+      else if (held && (ema20[i] === null || candle.close < ema20[i]!)) held = false;
+    }
+    out[i] = held;
+  }
+  return out;
+}
 function intervalBarsPerYear(interval: CandleInterval) {
   return interval === "1H" ? 8760 : interval === "4H" ? 2190 : 365;
 }

@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getBitgetAsset, getBitgetCandles } from "@/lib/bitget-market";
 import { evaluateSmaCrossover } from "@/lib/nightwatch-signal";
 import { decideNightwatch } from "@/lib/nightwatch-agent";
+import { normalizeNightwatchPreferences } from "@/lib/nightwatch-preferences";
+import { ALPHA_STRATEGIES } from "@/lib/backtest";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -57,7 +59,9 @@ export async function POST(request: Request) {
     if (accountResult.error || positionResult.error || ordersResult.error) return NextResponse.json({ error: "Could not load your private paper account context." }, { status: 503 });
     const dailyOrders = ordersResult.data ?? [];
     const account = { cashUsd: Number(accountResult.data?.cash_balance ?? 10000), positionQuantity: Number(positionResult.data?.quantity ?? 0), averageCostUsd: positionResult.data?.average_cost == null ? null : Number(positionResult.data.average_cost), dailyRealizedPnlUsd: dailyOrders.reduce((sum, order) => sum + Number(order.realized_pnl ?? 0), 0), fillsToday: dailyOrders.length };
-    const aiDecision = await decideNightwatch({ symbol, issuer: asset.name, candles: closed.slice(-90), account, research: linkedResearch?.status === "complete" ? { question: linkedResearch.question, summary: linkedResearch.summary } : null });
+    const { data: savedPreferences } = await supabase.from("nightwatch_preferences").select("playbook_key").maybeSingle();
+    const selectedPreferences = normalizeNightwatchPreferences(savedPreferences ?? {});
+    const aiDecision = await decideNightwatch({ symbol, issuer: asset.name, candles: closed.slice(-90), account, playbookKey: selectedPreferences.playbook_key, research: linkedResearch?.status === "complete" ? { question: linkedResearch.question, summary: linkedResearch.summary } : null });
     const signal = aiDecision.signal;
     const decision = signal === aiDecision.action ? aiDecision : { ...aiDecision, rationale: aiDecision.rationale + " Confidence was below the 0.66 execution threshold, so the agent held." };
     const { data, error } = await supabase.rpc("nightwatch_tick", {
@@ -82,6 +86,7 @@ export async function POST(request: Request) {
         feeRate: 0.001,
         slippageRate: 0.0005,
         indicators: { sma20: fast, sma50: slow, previousSma20: previousFast, previousSma50: previousSlow },
+        playbook: { key: selectedPreferences.playbook_key, label: ALPHA_STRATEGIES[selectedPreferences.playbook_key].label },
         rule: "AI-led evidence and risk decision v1",
       },
     });

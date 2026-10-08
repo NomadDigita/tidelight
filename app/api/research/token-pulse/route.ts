@@ -84,7 +84,10 @@ export async function POST(request: Request) {
   ];
   const unique = new Map<string, SearchItem>();
   for (const item of gathered) {
-    const key = item.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const lower = item.title.toLowerCase();
+    const publisherSuffix = ` - ${item.publisher.toLowerCase()}`;
+    const headline = lower.endsWith(publisherSuffix) ? lower.slice(0, -publisherSuffix.length) : lower;
+    const key = headline.replace(/[^a-z0-9]+/g, " ").trim();
     if (key && !unique.has(key)) unique.set(key, item);
   }
   const items = [...unique.values()]

@@ -25,12 +25,13 @@ export async function POST(request: Request) {
   try {
     const {assets}=await getBitgetMarketUniverse();
     const equityAssets=assets.filter(asset=>asset.isReality);
-    const exact=equityAssets.filter(asset=>{
+    const direct=equityAssets.filter(asset=>asset.symbol.toUpperCase()===normalized || asset.baseCoin.toUpperCase()===normalized || asset.underlyingTicker?.toUpperCase()===normalized);
+    const exact=(direct.length ? direct : equityAssets.filter(asset=>{
       const symbol=asset.symbol.toUpperCase(), base=asset.baseCoin.toUpperCase(), underlying=asset.underlyingTicker?.toUpperCase()??"";
       const issuer=asset.name.toUpperCase().replace(/[^A-Z0-9]/g,"");
       return symbol===normalized || base===normalized || underlying===normalized || issuer===normalized ||
-        (normalized.length>=3 && (issuer.includes(normalized) || normalized.includes(underlying) && underlying.length>=2));
-    }).sort((a,b)=>{
+        (normalized.length>=4 && issuer.includes(normalized));
+    })).sort((a,b)=>{
       const rank=(x:typeof a)=>x.symbol.toUpperCase()===normalized?0:x.baseCoin.toUpperCase()===normalized?1:x.underlyingTicker?.toUpperCase()===normalized?2:3;
       return rank(a)-rank(b);
     }).slice(0,5);

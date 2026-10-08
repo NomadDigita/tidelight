@@ -89,7 +89,8 @@ export async function POST(request: Request) {
               }
             }
             stage("Research analyst", "complete", "Source-bound reading ready", "Each assessment retains links to retrieved sources; uncertain coverage remains a research-only result.");
-          } catch {
+          } catch (cause) {
+            console.error("agent-flow-ai-unavailable", cause instanceof Error ? cause.message : "unknown");
             stage("Research analyst", "blocked", "AI synthesis unavailable", "The provider did not return a valid source-bound reading. Market data and source links remain available; no trade handoff will be offered.");
           }
         } else stage("Research analyst", "blocked", "AI synthesis unavailable", "No configured provider or recent source coverage. No directional trade handoff will be offered.");

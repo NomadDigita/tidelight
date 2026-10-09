@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getBitgetAsset, getBitgetCandles } from "@/lib/bitget-market";
 import { evaluateSmaCrossover } from "@/lib/nightwatch-signal";
 import { decideNightwatch } from "@/lib/nightwatch-agent";
-import { nightwatchAnalysisBudget, NIGHTWATCH_RUN_BUDGET_MS, readBeforeNightwatchDeadline } from "@/lib/nightwatch-budget";
+import { nightwatchAnalysisBudget, readBeforeNightwatchDeadline, rotateNightwatchSchedules } from "@/lib/nightwatch-budget";
 import { ALPHA_STRATEGIES, BACKTEST_STRATEGY, prepareBacktestCandles, type StrategyKey } from "@/lib/backtest";
 
 export const dynamic = "force-dynamic";
@@ -33,20 +33,19 @@ export async function GET(request: Request) {
   const admin = createAdminClient();
   const analysisDeadline = nightwatchAnalysisBudget(startedAt).deadlineAt;
   const readSignal = AbortSignal.timeout(Math.max(1, analysisDeadline - Date.now()));
-  const commitSignal = AbortSignal.timeout(Math.max(1, startedAt + NIGHTWATCH_RUN_BUDGET_MS - Date.now()));
   const countResult = await admin.from("nightwatch_preferences").select("user_id", { count: "exact", head: true }).eq("trigger_mode", "every_check").not("monitor_symbol", "is", null).abortSignal(readSignal);
   if (countResult.error) return NextResponse.json({ runId, error: "Could not count opted-in paper schedules." }, { status: 503 });
   const count = countResult.count ?? 0;
   const batchCount = Math.max(1, Math.ceil(count / BATCH_SIZE));
   const offset = count > BATCH_SIZE ? (Math.floor(Date.now() / DAY_MS) % batchCount) * BATCH_SIZE : 0;
-  const { data: enabled, error: preferenceError } = await admin.from("nightwatch_preferences").select("user_id, monitor_symbol, research_run_id, alert_on_signal, alert_on_fill, playbook_key").eq("trigger_mode", "every_check").not("monitor_symbol", "is", null).order("updated_at", { ascending: true }).range(offset, offset + BATCH_SIZE - 1).abortSignal(readSignal);
+  const { data: enabled, error: preferenceError } = await admin.from("nightwatch_preferences").select("user_id, monitor_symbol, research_run_id, alert_on_signal, alert_on_fill, playbook_key").eq("trigger_mode", "every_check").not("monitor_symbol", "is", null).order("updated_at", { ascending: true }).order("user_id", { ascending: true }).range(offset, offset + BATCH_SIZE - 1).abortSignal(readSignal);
   if (preferenceError) return NextResponse.json({ runId, error: "Could not load opted-in paper schedules." }, { status: 503 });
   if (!enabled?.length) return NextResponse.json({ runId, state: "idle", checked: 0, message: "No active scheduled paper checks are opted in." }, { headers: { "Cache-Control": "no-store" } });
 
   const users = await admin.from("nightwatch_accounts").select("user_id, paused").in("user_id", enabled.map((item) => item.user_id)).abortSignal(readSignal);
   if (users.error) return NextResponse.json({ runId, error: "Could not verify paper pause controls." }, { status: 503 });
   const unpaused = new Set((users.data ?? []).filter((item) => !item.paused).map((item) => item.user_id));
-  const schedules = enabled.filter((item) => unpaused.has(item.user_id) && item.monitor_symbol);
+  const schedules = rotateNightwatchSchedules(enabled.filter((item) => unpaused.has(item.user_id) && item.monitor_symbol), startedAt, batchCount);
   const marketData = new Map<string, { asset: NonNullable<Awaited<ReturnType<typeof getBitgetAsset>>>; asOfMs: number; close: number; fast: number; slow: number; signal: "buy" | "sell" | "hold"; snapshot: Record<string, unknown>; candles: Awaited<ReturnType<typeof getBitgetCandles>> }>();
   const symbolErrors: string[] = [];
 
@@ -113,7 +112,9 @@ export async function GET(request: Request) {
     const rationale = signal === decision.action ? decision.rationale : decision.rationale + " Confidence was below the 0.66 execution threshold, so the agent held.";
     const playbookKey = typeof preference.playbook_key === "string" && Object.hasOwn(ALPHA_STRATEGIES, preference.playbook_key) ? preference.playbook_key as StrategyKey : BACKTEST_STRATEGY;
     const snapshot = { ...sample.snapshot, playbook: { key: playbookKey, label: ALPHA_STRATEGIES[playbookKey].label }, agent: { version: "nightwatch-agent-v1", action: decision.action, signal, confidence: decision.confidence, rationale, evidence: decision.evidence, risks: decision.risks, invalidation: decision.invalidation, horizon: decision.horizon }, ...(preference.research_run_id ? { researchRunId: preference.research_run_id } : {}) };
-    const { data, error } = await admin.rpc("nightwatch_tick_scheduled", { p_user_id: preference.user_id, p_symbol: preference.monitor_symbol, p_as_of_ms: sample.asOfMs, p_reference_price: sample.close, p_fast_sma: sample.fast, p_slow_sma: sample.slow, p_signal: signal, p_snapshot: snapshot, p_research_run_id: preference.research_run_id }).abortSignal(commitSignal);
+    // Await ledger writes to completion: aborting the HTTP request cannot undo
+    // a committed paper fill and could prevent its alert from being recorded.
+    const { data, error } = await admin.rpc("nightwatch_tick_scheduled", { p_user_id: preference.user_id, p_symbol: preference.monitor_symbol, p_as_of_ms: sample.asOfMs, p_reference_price: sample.close, p_fast_sma: sample.fast, p_slow_sma: sample.slow, p_signal: signal, p_snapshot: snapshot, p_research_run_id: preference.research_run_id });
     if (error) { failures += 1; continue; }
     recorded += 1;
     const result = data as { run_id?: string; outcome?: string; reason?: string };
@@ -122,7 +123,7 @@ export async function GET(request: Request) {
     if (signal !== "hold" && preference.alert_on_signal) alerts.push({ user_id: preference.user_id, run_id: result.run_id, kind: "signal", title: `${signal.toUpperCase()} signal · ${sample.asset.symbol}`, body: rationale });
     if (result.outcome === "executed" && preference.alert_on_fill) alerts.push({ user_id: preference.user_id, run_id: result.run_id, kind: "fill", title: `Paper ${signal} filled · ${sample.asset.symbol}`, body: rationale });
     if (alerts.length) {
-      const alertResult = await admin.from("nightwatch_alerts").upsert(alerts, { onConflict: "run_id,kind" }).abortSignal(commitSignal);
+      const alertResult = await admin.from("nightwatch_alerts").upsert(alerts, { onConflict: "run_id,kind" });
       if (alertResult.error) failures += 1;
     }
   }

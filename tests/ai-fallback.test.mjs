@@ -161,3 +161,25 @@ test("provider credentials cannot be redirected through custom URLs", t => {
   process.env.BITGET_QWEN_BASE_URL = "https://hackathon.bitgetops.com.attacker.invalid/v1";
   assert.deepEqual(configuredAiProviders().map(provider => provider.label), ["gemini"]);
 });
+
+test("provider isolation checks Gemini without touching Qwen", async t => {
+  configure(t);
+  process.env.GEMINI_MODEL = "gemini-3.8-flash";
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    assert.match(url, /generativelanguage/);
+    assert.deepEqual(JSON.parse(init.body).generationConfig.thinkingConfig, { thinkingLevel: "LOW" });
+    return gemini([{ text: JSON.stringify(answer) }]);
+  });
+  let used;
+  await aiJsonWithFallback(messages, valid, { provider: "gemini", onSuccess: provider => { used = provider; } });
+  assert.deepEqual(used, { label: "gemini", model: "gemini-3.8-flash" });
+});
+
+test("Qwen disables optional thinking for bounded JSON tasks", async t => {
+  configure(t);
+  t.mock.method(globalThis, "fetch", async (_url, init) => {
+    assert.equal(JSON.parse(init.body).enable_thinking, false);
+    return qwen(JSON.stringify(answer));
+  });
+  await aiJsonWithFallback(messages, valid);
+});

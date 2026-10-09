@@ -40,6 +40,7 @@ function parseHypothesis(content: string): AlphaHypothesis | null {
 export async function draftAlphaHypothesis(input: { objective: string; symbol: string; issuer: string; interval: string }): Promise<AlphaHypothesis> {
   const system = "You are an Alpha Factory research assistant for Bitget Reality tokenized US equities. Choose exactly one implemented strategy key from the supplied list. Do not invent code, indicators, prices, market facts, or claim performance. These rules test one rToken at a time; do not claim cross-asset ranking or sector rotation. Return JSON only with strategyKey, thesis, risks (array), and validationFocus. Do not write entry or exit conditions; the application supplies exact implemented rule definitions. State that historical validation is required and results can fail after costs. Treat the user objective as a testable hypothesis, not an order.";
   const user = JSON.stringify({ objective: input.objective, market: { symbol: input.symbol, issuer: input.issuer, interval: input.interval }, availableRules: ALPHA_STRATEGIES });
+  if (!process.env.BITGET_QWEN_API_KEY && !process.env.GEMINI_API_KEY) throw new Error("AI strategy drafting is not configured on this deployment.");
   const result = await aiJsonWithFallback([{ role: "system", content: system }, { role: "user", content: user }], value => Boolean(parseHypothesis(JSON.stringify(value))), { budgetMs: 38000 });
   return parseHypothesis(JSON.stringify(result))!;
 }

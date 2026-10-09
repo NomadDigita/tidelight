@@ -26,6 +26,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const deadlineAt = Date.now() + 48000;
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: "Sign in to use the private futures paper account." }, { status: 401 });
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
       symbol, issuer: asset.name, candles: closed.slice(-90), position: position?.direction === "long" || position?.direction === "short" ? position.direction : null,
       cashUsd: Number(accountResult.data?.cash_balance ?? 10000), playbookKey: actualPlaybook,
       research: researchResult.data?.status === "complete" ? { question: researchResult.data.question, summary: researchResult.data.summary } : null,
-    }) : { proposedAction: "close", action: "close", confidence: 1, rationale: "Account owner requested a paper exit.", evidence: [`${symbol} verified Bitget market`], risks: ["Paper mark can differ from a live exchange fill"], invalidation: "Position closed" };
+    }, { budgetMs: 38000, deadlineAt }) : { proposedAction: "close", action: "close", confidence: 1, rationale: "Account owner requested a paper exit.", evidence: [`${symbol} verified Bitget market`], risks: ["Paper mark can differ from a live exchange fill"], invalidation: "Position closed" };
     // Manual exits use a current verified ticker mark and a distinct UTC timestamp.
     // They can close a position after a check on the same completed candle.
     if (mode === "close" && (!asset.providerTimestamp || now - asset.providerTimestamp > 60_000 || asset.providerTimestamp > now + 60_000)) return NextResponse.json({ error: "The live Bitget mark is stale; manual paper exit was not recorded." }, { status: 422 });

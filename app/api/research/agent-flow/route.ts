@@ -125,7 +125,7 @@ export async function POST(request: Request) {
         const { error: saveError } = await supabase.from("research_runs").update({ status: "complete", completed_at: new Date().toISOString(), summary: result }).eq("id", run.id);
         if (saveError) {
           stage("Coordinator", "blocked", "Private trace could not be saved", "No trade handoff was offered because the research record was not committed.");
-          push("error", { error: "Could not save the private research trace. Retry this question." });
+          throw new Error(`research-save-failed:${saveError.code}`);
         } else push("result", result);
       } catch (cause) {
         console.error("agent-flow-failed", cause instanceof Error ? cause.message : "unknown");

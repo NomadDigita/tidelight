@@ -15,11 +15,17 @@
 --violet:#c0a0f3;
 --font:Inter,"Avenir Next",system-ui,sans-serif;
 --display:Inter,"Avenir Next",system-ui,sans-serif;
---mono:"SFMono-Regular",Consolas,monospace
+--mono:"SFMono-Regular",Consolas,monospace;
+--weight-heading:520;
+--weight-emphasis:600;
+--radius-card:14px
 }
 * {
   box-sizing:border-box
 }
+button,input,select,textarea { font-family:var(--font); }
+h1,h2,h3,h4 { font-family:var(--display); font-weight:var(--weight-heading); }
+b,strong { font-weight:var(--weight-emphasis); }
 html {
   scroll-behavior:smooth
 }
@@ -29,7 +35,8 @@ background:var(--bg);
 color:var(--text);
 font-family:var(--font);
 font-size:14px;
--webkit-font-smoothing:antialiased
+-webkit-font-smoothing:antialiased;
+font-synthesis:none
 }
 .app-shell {
   min-height:100vh
@@ -1350,7 +1357,7 @@ cursor:wait
 @media(max-width:520px){.auth-card{padding:30px 22px}.auth-brand{margin-bottom:44px}}
 
 /* Multi-page workspace */
-:root{--bg:#080f11;--panel:#0c1618;--panel-2:#111e20;--line:#203032;--line-soft:#182729;--text:#edf5f1;--muted:#91a19c;--faint:#607470;--mint:#a8ebc8;--mint-2:#69d4a8;--amber:#ebbd78;--font:Inter,"Avenir Next",system-ui,sans-serif;--display:"Avenir Next",Inter,system-ui,sans-serif}
+:root{--bg:#080f11;--panel:#0c1618;--panel-2:#111e20;--line:#203032;--line-soft:#182729;--text:#edf5f1;--muted:#91a19c;--faint:#607470;--mint:#a8ebc8;--mint-2:#69d4a8;--amber:#ebbd78;--font:Inter,"Avenir Next",system-ui,sans-serif;--display:var(--font)}
 body{background:radial-gradient(ellipse at 78% -30%,#142b2929,transparent 42%),var(--bg)}
 a{transition:color .18s ease,border-color .18s ease,background .18s ease,transform .18s ease}
 .app-shell{min-height:100vh}

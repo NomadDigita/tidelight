@@ -10,7 +10,7 @@ const hooks = registerHooks({
     return nextResolve(specifier, context);
   },
 });
-const { aiJsonWithFallback, configuredAiProviders } = await import("../lib/ai-fallback.ts");
+const { aiJsonWithFallback, configuredAiProviders, safeProviderError } = await import("../lib/ai-fallback.ts");
 hooks.deregister();
 
 const messages = [{ role: "system", content: "Return JSON" }, { role: "user", content: "Assess supplied facts" }];
@@ -182,4 +182,12 @@ test("Qwen disables optional thinking for bounded JSON tasks", async t => {
     return qwen(JSON.stringify(answer));
   });
   await aiJsonWithFallback(messages, valid);
+});
+
+
+test("provider diagnostics redact secrets and discard non-JSON errors", () => {
+  assert.equal(safeProviderError("<html>secret-key</html>", "secret-key"), "Provider returned a non-JSON error.");
+  const detail = safeProviderError(JSON.stringify({error:{status:"UNAVAILABLE",message:"secret-key at https://example.com?key=secret-key Bearer abcdef"}}), "secret-key");
+  assert.match(detail, /UNAVAILABLE/);
+  assert.doesNotMatch(detail, /secret-key|https:|abcdef/);
 });

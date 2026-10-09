@@ -9,14 +9,14 @@ export async function GET(request:Request){
  let query=db.from("community_posts").select(joined).order("created_at",{ascending:false}).limit(threadId?60:120);
  query=threadId?query.eq("reply_to",threadId):query.is("reply_to",null);
  const {data:rows,error}=await query;if(error){console.error("Community feed query failed",error.message);return NextResponse.json({error:"The research feed is temporarily unavailable."},{status:503});}
- const visible=(rows??[]).filter((p:any)=>!blockedIds.includes(p.author_id)),ids=visible.map((p:any)=>p.id);
- const quoteIds=[...new Set(visible.map((p:any)=>p.quote_post_id).filter(Boolean))];
+ const visible=(rows??[]).filter((p)=>!blockedIds.includes(p.author_id)),ids=visible.map((p)=>p.id);
+ const quoteIds=[...new Set(visible.map((p)=>p.quote_post_id).filter(Boolean))];
  const {data:quoteRows,error:quoteError}=quoteIds.length?await db.from("community_posts").select("id,body,symbol,author_id").in("id",quoteIds):{data:[],error:null};
- const authorIds=[...new Set([...visible.map((p:any)=>p.author_id),...(quoteRows??[]).map((p:any)=>p.author_id)])];
+ const authorIds=[...new Set([...visible.map((p)=>p.author_id),...(quoteRows??[]).map((p)=>p.author_id)])];
  const {data:authors,error:authorError}=authorIds.length?await db.from("community_profiles").select("id,handle,display_name,avatar_url").in("id",authorIds):{data:[],error:null};
  if(quoteError||authorError){console.error("Community author lookup failed",(quoteError??authorError)?.message);return NextResponse.json({error:"The research feed is temporarily unavailable."},{status:503})}
- const authorMap=new Map((authors??[]).map((p:any)=>[p.id,p]));
- const quoteMap=new Map((quoteRows??[]).map((p:any)=>[p.id,{body:p.body,symbol:p.symbol,author:authorMap.get(p.author_id)}]));
+ const authorMap=new Map((authors??[]).map((p)=>[p.id,p]));
+ const quoteMap=new Map((quoteRows??[]).map((p)=>[p.id,{body:p.body,symbol:p.symbol,author:authorMap.get(p.author_id)}]));
  const [{data:reactions},{data:replies},{data:mine},{data:savedMine}]=await Promise.all([
   ids.length?db.from("community_reactions").select("post_id,kind").in("post_id",ids):Promise.resolve({data:[]}),
   ids.length?db.from("community_posts").select("reply_to").in("reply_to",ids):Promise.resolve({data:[]}),
@@ -38,27 +38,27 @@ export async function GET(request:Request){
   const reactionIds=(recentReactions.data??[]).map(x=>x.post_id);
   if(reactionIds.length){const {data:reactedPosts}=await db.from("community_posts").select("symbol").in("id",reactionIds);for(const row of reactedPosts??[])add(row.symbol,6,"Related to posts you recently liked or reposted")}
  }
- const posts=visible.map((post:any)=>{
+ const posts=visible.map((post)=>{
   const ticker=post.symbol?normalize(post.symbol):"",interest=interests.get(ticker),engagement=(reactions??[]).filter(x=>x.post_id===post.id).length+(replies??[]).filter(x=>x.reply_to===post.id).length;
   const mediaExpired=Date.now()-Date.parse(post.created_at)>7*24*60*60*1000;
   return {...post,author:authorMap.get(post.author_id),quoted:quoteMap.get(post.quote_post_id)??null,media:mediaExpired?[]:(post.media??[]),mediaExpired:mediaExpired&&(post.media??[]).length>0,reason:interest?.reason??null,feedScore:(interest?.score??0)+Math.log1p(engagement)*1.5+Math.max(0,36-(Date.now()-Date.parse(post.created_at))/3600000)/12,likes:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="like").length,reposts:(reactions??[]).filter(x=>x.post_id===post.id&&x.kind==="repost").length,replies:(replies??[]).filter(x=>x.reply_to===post.id).length,liked:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="like"),reposted:(mine??[]).some(x=>x.post_id===post.id&&x.kind==="repost"),saved:(savedMine??[]).some(x=>x.post_id===post.id)};
  });
- if(!threadId)posts.sort((a:any,b:any)=>b.feedScore-a.feedScore);
+ if(!threadId)posts.sort((a,b)=>b.feedScore-a.feedScore);
  return NextResponse.json({posts});
 }
 export async function POST(request:Request){
  const db=await createClient();const {data:{user}}=await db.auth.getUser();if(!user)return NextResponse.json({error:"Sign in to join the Tidelight community."},{status:401});
- let body:any;try{body=await request.json()}catch{return NextResponse.json({error:"Send a valid action."},{status:400})}
+ let body:Record<string,unknown>;try{const value:unknown=await request.json();if(!value||typeof value!=="object"||Array.isArray(value))throw Error();body=value as Record<string,unknown>}catch{return NextResponse.json({error:"Send a valid action."},{status:400})}
  if(body.action==="bookmark"){
   if(typeof body.postId!=="string")return NextResponse.json({error:"Choose a post first."},{status:400});
   const {data:existing}=await db.from("community_bookmarks").select("post_id").eq("user_id",user.id).eq("post_id",body.postId).maybeSingle();
   if(existing){const {error}=await db.from("community_bookmarks").delete().eq("user_id",user.id).eq("post_id",body.postId);if(error)return NextResponse.json({error:"Could not remove that saved post."},{status:400});return NextResponse.json({active:false})}
   const {error}=await db.from("community_bookmarks").insert({user_id:user.id,post_id:body.postId});if(error)return NextResponse.json({error:"Could not save that post."},{status:400});return NextResponse.json({active:true});
  }
- if(["like","repost"].includes(body.action)){
+ if((body.action==="like"||body.action==="repost")){
   if(typeof body.postId!=="string")return NextResponse.json({error:"Choose a post first."},{status:400});
   const kind=body.action;const {data:existing}=await db.from("community_reactions").select("post_id").eq("user_id",user.id).eq("post_id",body.postId).eq("kind",kind).maybeSingle();
-  if(existing){await db.from("community_reactions").delete().eq("user_id",user.id).eq("post_id",body.postId).eq("kind",kind);return NextResponse.json({active:false})}
+  if(existing){const {error}=await db.from("community_reactions").delete().eq("user_id",user.id).eq("post_id",body.postId).eq("kind",kind);if(error)return NextResponse.json({error:"That action could not be saved. Refresh and try again."},{status:400});return NextResponse.json({active:false})}
   const {error}=await db.from("community_reactions").insert({user_id:user.id,post_id:body.postId,kind});if(error)return NextResponse.json({error:"That action could not be saved. Refresh and try again."},{status:400});return NextResponse.json({active:true});
  }
  if(body.action==="report"||body.action==="block"){
@@ -71,7 +71,7 @@ export async function POST(request:Request){
     if(error)return NextResponse.json({error:"Could not mute this member."},{status:400});
     return NextResponse.json({muted:true});
   }
-  const reason=["spam","harassment","misinformation","other"].includes(body.reason)?body.reason:"other";
+  const reason=["spam","harassment","misinformation","other"].includes(typeof body.reason==="string"?body.reason:"")?body.reason:"other";
   const {error}=await db.from("community_reports").insert({reporter_id:user.id,post_id:body.postId,reported_user_id:target.author_id,reason});
   if(error)return NextResponse.json({error:"Could not submit the report."},{status:400});
   return NextResponse.json({reported:true});
@@ -81,7 +81,7 @@ export async function POST(request:Request){
  if(symbol&&!/^[A-Z0-9]{2,32}$/.test(symbol))return NextResponse.json({error:"Use an rToken pair or US stock ticker."},{status:400});
  if(sourceUrl){try{const u=new URL(sourceUrl);if(u.protocol!=="https:")throw Error()}catch{return NextResponse.json({error:"Evidence links must use HTTPS."},{status:400})}}
  const {data:profile}=await db.from("community_profiles").select("id").eq("id",user.id).maybeSingle();if(!profile)return NextResponse.json({error:"Complete your username and profile in Settings before posting."},{status:409});
- const media=Array.isArray(body.media)?body.media:[];if(media.length>4)return NextResponse.json({error:"Attach no more than four files."},{status:400});const mediaTotal=media.reduce((total:number,item:any)=>total+(Number(item?.size)||0),0);if(mediaTotal>60*1024*1024)return NextResponse.json({error:"Attachments must total 60 MB or less."},{status:400});const allowedMime=new Set(["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","application/pdf","audio/mpeg","audio/mp4","audio/wav","audio/ogg","audio/webm","audio/x-m4a"]);for(const item of media){try{const u=new URL(item.url),supabaseOrigin=process.env.NEXT_PUBLIC_SUPABASE_URL?new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin:"";if(u.protocol!=="https:"||!supabaseOrigin||u.origin!==supabaseOrigin||!u.pathname.includes("/storage/v1/object/public/community-media/"+user.id+"/")||!allowedMime.has(item.mime)||!["image","video","audio","pdf"].includes(item.kind)||!Number.isSafeInteger(item.size)||item.size<1||item.size>25*1024*1024)throw Error()}catch{return NextResponse.json({error:"One of the uploads is invalid. Reattach it and try again."},{status:400})}}
- const insert={author_id:user.id,body:text,media,symbol:symbol||null,stance:["watching","bullish","bearish","question","neutral"].includes(body.stance)?body.stance:"watching",source_url:sourceUrl||null,reply_to:typeof body.replyTo==="string"?body.replyTo:null,quote_post_id:typeof body.quotePostId==="string"?body.quotePostId:null};
+ const media:Record<string,unknown>[]=Array.isArray(body.media)?body.media.filter((item):item is Record<string,unknown>=>!!item&&typeof item==="object"&&!Array.isArray(item)):[];if(Array.isArray(body.media)&&media.length!==body.media.length)return NextResponse.json({error:"One of the uploads is invalid."},{status:400});if(media.length>4)return NextResponse.json({error:"Attach no more than four files."},{status:400});const mediaTotal=media.reduce((total:number,item)=>total+(Number(item?.size)||0),0);if(mediaTotal>60*1024*1024)return NextResponse.json({error:"Attachments must total 60 MB or less."},{status:400});const allowedMime=new Set(["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","application/pdf","audio/mpeg","audio/mp4","audio/wav","audio/ogg","audio/webm","audio/x-m4a"]);for(const item of media){try{const u=new URL(typeof item.url==="string"?item.url:""),supabaseOrigin=process.env.NEXT_PUBLIC_SUPABASE_URL?new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin:"";if(u.protocol!=="https:"||!supabaseOrigin||u.origin!==supabaseOrigin||!u.pathname.includes("/storage/v1/object/public/community-media/"+user.id+"/")||!allowedMime.has(typeof item.mime==="string"?item.mime:"")||!["image","video","audio","pdf"].includes(typeof item.kind==="string"?item.kind:"")||typeof item.size!=="number"||!Number.isSafeInteger(item.size)||item.size<1||item.size>25*1024*1024)throw Error()}catch{return NextResponse.json({error:"One of the uploads is invalid. Reattach it and try again."},{status:400})}}
+ const insert={author_id:user.id,body:text,media,symbol:symbol||null,stance:["watching","bullish","bearish","question","neutral"].includes(typeof body.stance==="string"?body.stance:"")?body.stance:"watching",source_url:sourceUrl||null,reply_to:typeof body.replyTo==="string"?body.replyTo:null,quote_post_id:typeof body.quotePostId==="string"?body.quotePostId:null};
  const {data:post,error}=await db.from("community_posts").insert(insert).select(joined).single();if(error)return NextResponse.json({error:"The note could not be published. Check the asset and try again."},{status:400});return NextResponse.json({post},{status:201});
 }

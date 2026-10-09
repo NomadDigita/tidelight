@@ -14,8 +14,8 @@ function field(xml: string, tag: string) {
 }
 
 async function rss(url: URL): Promise<FlowEvidence[]> {
-  const response = await fetch(url, { headers: { Accept: "application/rss+xml, application/xml, text/xml", "User-Agent": "Tidelight Research/1.0" }, signal: AbortSignal.timeout(7000), cache: "no-store" });
-  if (!response.ok) throw new Error("source-unavailable");
+  const response = await fetch(url, { headers: { Accept: "application/rss+xml, application/xml, text/xml", "User-Agent": "Tidelight Research/1.0" }, signal: AbortSignal.timeout(9000), cache: "no-store" });
+  if (!response.ok) throw new Error(`http-${response.status}`);
   const xml = await response.text();
   return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0, 12).flatMap(match => {
     const item = match[1], title = field(item, "title"), link = field(item, "link");
@@ -34,6 +34,9 @@ export async function gatherIssuerEvidence(ticker: string, issuer: string): Prom
   const bing = new URL("https://www.bing.com/news/search");
   bing.search = new URLSearchParams({ q: `${name} ${ticker} stock`, format: "rss" }).toString();
   const results = await Promise.allSettled([rss(google), rss(bing)]);
+  results.forEach((result, index) => {
+    if (result.status === "rejected") console.warn("agent-flow-source-feed", ticker, index === 0 ? "google" : "bing", result.reason instanceof Error ? result.reason.message : "unavailable");
+  });
   const unique = new Map<string, FlowEvidence>();
   for (const result of results) {
     if (result.status !== "fulfilled") continue;
@@ -48,6 +51,7 @@ export async function gatherIssuerEvidence(ticker: string, issuer: string): Prom
       if (!unique.has(key)) unique.set(key, item);
     }
   }
+  if (!unique.size && results.some(result => result.status === "fulfilled")) console.warn("agent-flow-source-empty", ticker, results.map(result => result.status === "fulfilled" ? result.value.length : "failed"));
   return [...unique.values()].sort((a, b) => Date.parse(b.publishedAt ?? "") - Date.parse(a.publishedAt ?? ""))
     // Older links can still help a reader understand a quiet ticker. The
     // trading gate independently requires cited coverage from the last 7 days.

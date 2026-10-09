@@ -10,12 +10,23 @@ type AssetRead = {
   ticker: string; issuer: string; summary: string; stance: "bullish" | "bearish" | "mixed" | "unclear";
   confidence: number; tradeable: boolean; gateReasons: string[];
   sources: Array<{ title: string; url: string; publisher: string; publishedAt: string | null }>;
-  market: { perpSymbol: string | null; spotSymbol: string | null; lastPrice: number | null };
+  market: { perpSymbol: string | null; spotSymbol: string | null; lastPrice: number | null; providerTimestamp?: number | null };
   handoff: { destinations: Destination[]; reason: string } | null;
 };
 type FlowResult = { question: string; assets: AssetRead[]; tradeable: boolean; handoff?: unknown; trace: StageEvent[] };
 
 const EXAMPLES = ["What do you think about NVDA and TSLA?", "Compare Apple and Microsoft after the latest news", "Is the rNVDA market worth reviewing?"];
+
+function QuoteFreshness({ market, now }: { market: AssetRead["market"]; now: number }) {
+  const timestamp = market.providerTimestamp;
+  const known = typeof timestamp === "number" && Number.isFinite(timestamp) && timestamp > 0 && timestamp <= now + 60_000;
+  const fresh = known && now - timestamp <= 120_000;
+  return <div className={`flow-quote ${fresh ? "flow-quote-fresh" : "flow-quote-stale"}`}>
+    <b>{fresh ? "Within the 2-minute quote window" : known ? "Quote outside the 2-minute window" : "Quote freshness unverified"}</b>
+    {known ? <span>Provider quote as of <time dateTime={new Date(timestamp).toISOString()}>{new Date(timestamp).toLocaleString([], { dateStyle: "medium", timeStyle: "medium" })}</time> (your local time)</span> : <span>No usable provider timestamp was returned.</span>}
+    <span>{market.perpSymbol || market.spotSymbol || "Market reference"} · Snapshot from this research run; prices do not update here.</span>
+  </div>;
+}
 
 function safeDeskLink(destination: Destination) {
   try {
@@ -34,11 +45,17 @@ export default function AgentFlowDesk({ initialQuestion }: { initialQuestion: st
   const [result, setResult] = useState<FlowResult | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [quoteNow, setQuoteNow] = useState(0);
   const controller = useRef<AbortController | null>(null);
   const handoffRef = useRef<HTMLDivElement>(null);
   const tradeableAssets = result?.assets.filter((asset) => asset.tradeable && asset.handoff?.destinations.length) ?? [];
 
   useEffect(() => () => controller.current?.abort(), []);
+  useEffect(() => {
+    if (!result) return;
+    const timer = window.setInterval(() => setQuoteNow(Date.now()), 1_000);
+    return () => window.clearInterval(timer);
+  }, [result]);
   useEffect(() => {
     if (!result || !tradeableAssets.length) return;
     const timer = window.setTimeout(() => {
@@ -84,6 +101,7 @@ export default function AgentFlowDesk({ initialQuestion }: { initialQuestion: st
           });
         } else if (kind === "result") {
           completed = true;
+          setQuoteNow(Date.now());
           setResult(data as FlowResult);
         } else if (kind === "error") {
           throw new Error(data.error || "The research flow stopped before completion.");
@@ -123,13 +141,13 @@ export default function AgentFlowDesk({ initialQuestion }: { initialQuestion: st
     </section>
 
     {(busy || stages.length > 0) ? <section className="flow-glass" aria-label="Agent activity"><div className="flow-section-head"><div><span className="flow-kicker">THE VISIBLE WORKFLOW</span><h2>What the agents are checking.</h2><p>Operational checkpoints appear as the work runs. Private model reasoning and unverified claims are not displayed.</p></div><span className={`flow-state ${busy ? "flow-state-live" : ""}`}>{busy ? "● IN PROGRESS" : error ? "PAUSED" : "COMPLETE"}</span></div>
-      <div className="flow-trace" aria-live="polite" aria-relevant="additions text">{stages.map((stage, index) => <article className={`flow-stage flow-stage-${stage.status === "running" && !busy ? "complete" : stage.status}`} key={stage.id}><div className="flow-stage-rail"><span>{String(index + 1).padStart(2, "0")}</span><i /></div><div className="flow-stage-body"><div><span>{stage.agent}{stage.asset ? ` · ${stage.asset}` : ""}</span><small>{stage.at ? new Date(stage.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</small></div><h3>{stage.title}</h3><p>{stage.detail}</p></div><span className="flow-stage-status">{stage.status === "running" ? busy ? "Checking" : "Called" : stage.status === "blocked" ? "Paused" : "Checked"}</span></article>)}{busy && stages.length === 0 ? <div className="flow-wait"><i /> Connecting the research agents…</div> : null}</div>
+      <div className="flow-trace" aria-live="polite" aria-relevant="additions text">{stages.map((stage, index) => <article className={`flow-stage flow-stage-${stage.status === "running" && !busy ? error ? "blocked" : "complete" : stage.status}`} key={stage.id}><div className="flow-stage-rail"><span>{String(index + 1).padStart(2, "0")}</span><i /></div><div className="flow-stage-body"><div><span>{stage.agent}{stage.asset ? ` · ${stage.asset}` : ""}</span><small>{stage.at ? new Date(stage.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</small></div><h3>{stage.title}</h3><p>{stage.detail}</p></div><span className="flow-stage-status">{stage.status === "running" ? busy ? "Checking" : error ? "Paused" : "Called" : stage.status === "blocked" ? "Paused" : "Checked"}</span></article>)}{busy && stages.length === 0 ? <div className="flow-wait"><i /> Connecting the research agents…</div> : null}</div>
     </section> : null}
 
     {error ? <div className="flow-error" role="alert"><b>Research paused</b><span>{error}</span>{error.toLowerCase().includes("sign in") ? <Link href="/login">Sign in ↗</Link> : <button type="button" onClick={() => void runFlow()} disabled={busy}>Try again ↗</button>}</div> : null}
 
-    {result ? <section className="flow-results" aria-label="Research findings"><div className="flow-section-head"><div><span className="flow-kicker">RESEARCH / {result.assets.length} {result.assets.length === 1 ? "COMPANY" : "COMPANIES"}</span><h2>One question. Separate decisions.</h2><p>Each company has its own evidence and market gate. A favorable read does not place an order.</p></div></div>
-      <div className="flow-asset-grid">{result.assets.map((asset) => <article key={asset.ticker} className="flow-asset-card"><header><div><span className="flow-kicker">{asset.ticker} / {asset.issuer}</span><h3>{asset.issuer}</h3></div><span className={`flow-verdict ${asset.tradeable ? "flow-verdict-ready" : ""}`}>{asset.tradeable ? "REVIEW AVAILABLE" : "NO TRADE HANDOFF"}</span></header><p>{asset.summary}</p><div className="flow-asset-meta"><span>Read <b>{asset.stance}</b></span><span>Confidence <b>{Math.round(asset.confidence * 100)}%</b></span>{asset.market.lastPrice !== null ? <span>Reference <b>${asset.market.lastPrice.toLocaleString()}</b></span> : null}</div>{asset.gateReasons?.length ? <div className="flow-gates"><b>Decision gates</b><ul>{asset.gateReasons.map((reason, index) => <li key={index}>{reason}</li>)}</ul></div> : null}<details className="flow-sources"><summary>Inspect {asset.sources.length} {asset.sources.length === 1 ? "source" : "sources"}</summary>{asset.sources.length ? <ul>{asset.sources.map((source, index) => <li key={`${source.url}-${index}`}><span>{source.publisher}{source.publishedAt ? ` · ${new Date(source.publishedAt).toLocaleDateString()}` : ""}</span><a href={source.url} target="_blank" rel="noopener noreferrer">{source.title} ↗</a></li>)}</ul> : <p>No source links were returned; the trading gate remains closed.</p>}</details></article>)}</div>
+    {result ? <section className="flow-results" aria-label="Research findings"><div className="flow-section-head"><div><span className="flow-kicker">RESEARCH / {result.assets.length} {result.assets.length === 1 ? "COMPANY" : "COMPANIES"}</span><h2>One question. Separate decisions.</h2><p>Each company has its own evidence and market gate, checked during this run. Review the quote timestamp before opening a trading desk.</p></div></div>
+      <div className="flow-asset-grid">{result.assets.map((asset) => <article key={asset.ticker} className="flow-asset-card"><header><div><span className="flow-kicker">{asset.ticker} / {asset.issuer}</span><h3>{asset.issuer}</h3></div><span className={`flow-verdict ${asset.tradeable ? "flow-verdict-ready" : ""}`}>{asset.tradeable ? "REVIEW AVAILABLE" : "NO TRADE HANDOFF"}</span></header><p>{asset.summary}</p><div className="flow-asset-meta"><span>Read <b>{asset.stance}</b></span><span>Confidence <b>{Math.round(asset.confidence * 100)}%</b></span>{asset.market.lastPrice !== null ? <span>Quote snapshot <b>${asset.market.lastPrice.toLocaleString()}</b></span> : null}</div><QuoteFreshness market={asset.market} now={quoteNow} />{asset.gateReasons?.length ? <div className="flow-gates"><b>Decision gates</b><ul>{asset.gateReasons.map((reason, index) => <li key={index}>{reason}</li>)}</ul></div> : null}<details className="flow-sources"><summary>Inspect {asset.sources.length} {asset.sources.length === 1 ? "source" : "sources"}</summary>{asset.sources.length ? <ul>{asset.sources.map((source, index) => <li key={`${source.url}-${index}`}><span>{source.publisher}{source.publishedAt ? ` · ${new Date(source.publishedAt).toLocaleDateString()}` : ""}</span><a href={source.url} target="_blank" rel="noopener noreferrer">{source.title} ↗</a></li>)}</ul> : <p>No source links were returned; the trading gate remains closed.</p>}</details></article>)}</div>
       {tradeableAssets.length ? <div className="flow-handoff" ref={handoffRef} tabIndex={-1} role="region" aria-label="Choose a trading review desk"><div className="flow-handoff-intro"><span className="flow-kicker">NEXT / YOUR DECISION</span><h2>Review the market before acting.</h2><p>The research gates found a scenario worth inspecting. Choose paper futures, or review a Bitget tokenized stock spot order in demo or live account mode. You can review both desks. Every order still requires your own approval and risk checks.</p></div><div className="flow-handoff-list">{tradeableAssets.map((asset) => <div className="flow-handoff-asset" key={asset.ticker}><div><b>{asset.ticker}</b><span>{asset.handoff?.reason}</span></div><div className="flow-handoff-actions">{asset.handoff?.destinations.flatMap((destination) => { const href = safeDeskLink(destination); if (!href) return []; if (destination.mode === "paper_futures") return [<Link key="paper" href={href} onClick={() => setMode("pro")}>Review paper futures <span>↗</span></Link>]; const demo = `${href}${href.includes("?") ? "&" : "?"}intent=demo`; const live = `${href}${href.includes("?") ? "&" : "?"}intent=live`; return [<Link key="demo" href={demo} onClick={() => setMode("pro")}>Review Bitget demo spot <span>↗</span></Link>, <Link key="live" href={live} onClick={() => setMode("pro")}>Review Bitget live spot <span>↗</span></Link>]; })}</div></div>)}</div><small>Research can be uncertain. A review link never places a trade or switches your account into live mode.{mode === "mini" ? " Trade reviews open the Pro workspace controls." : ""}</small></div> : <div className="flow-no-handoff"><span className="flow-kicker">RISK GATE / HOLD</span><b>No trading handoff for this read.</b><p>Review the sources and decision gates above. You can return when fresher or stronger evidence is available.</p><Link href="/markets">Explore the market map ↗</Link></div>}
     </section> : null}
   </div>;

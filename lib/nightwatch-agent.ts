@@ -13,10 +13,10 @@ export type AgentDecision = {
   horizon: string;
 };
 
-function parseDecision(value: Record<string, unknown>): AgentDecision | null {
+export function parseDecision(value: Record<string, unknown>): AgentDecision | null {
   try {
     const action = typeof value.action === "string" ? value.action.toLowerCase() : "";
-    const confidence = Number(value.confidence);
+    const confidence = typeof value.confidence === "number" ? value.confidence : NaN;
     const rationale = typeof value.rationale === "string" ? value.rationale.trim() : "";
     if (!["buy", "sell", "hold"].includes(action) || !Number.isFinite(confidence) || confidence < 0 || confidence > 1 || rationale.length < 12 || rationale.length > 500) return null;
     const list = (item: unknown) => Array.isArray(item) ? item.filter((x): x is string => typeof x === "string").slice(0, 4).map(x => x.trim().slice(0, 220)) : [];
@@ -39,7 +39,7 @@ export async function decideNightwatch(input: {
   account: { cashUsd: number; positionQuantity: number; averageCostUsd: number | null; dailyRealizedPnlUsd: number; fillsToday: number };
   research?: { question: string; summary: unknown } | null;
   playbookKey: StrategyKey;
-}): Promise<AgentDecision> {
+}, options?: { budgetMs?: number; deadlineAt?: number }): Promise<AgentDecision> {
   const snapshot = marketSnapshot(input.candles);
   const playbookSignals = buildSignals(input.candles, input.playbookKey);
   const currentState = playbookSignals.at(-1) ? "in_candidate_state" : "outside_candidate_state";
@@ -49,7 +49,7 @@ export async function decideNightwatch(input: {
   const user = JSON.stringify({ market: { symbol: input.symbol, issuer: input.issuer, interval: "4H", ...snapshot }, selectedPlaybook: playbook, paperAccount: input.account, linkedResearch: input.research ?? null });
   const messages = [{ role:"system",content:system },{ role:"user",content:user }];
   try {
-    const value = await aiJsonWithFallback(messages, (candidate) => Boolean(parseDecision(candidate)));
+    const value = await aiJsonWithFallback(messages, (candidate) => Boolean(parseDecision(candidate)), options);
     return parseDecision(value)!;
   } catch (error) {
     console.error("Nightwatch analysis unavailable", error instanceof Error ? error.message : "unknown");

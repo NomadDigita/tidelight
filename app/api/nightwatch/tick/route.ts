@@ -11,6 +11,7 @@ export const maxDuration = 60;
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
 
 export async function POST(request: Request) {
+  const deadlineAt = Date.now() + 48000;
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: "Sign in to run Nightwatch." }, { status: 401 });
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
     const account = { cashUsd: Number(accountResult.data?.cash_balance ?? 10000), positionQuantity: Number(positionResult.data?.quantity ?? 0), averageCostUsd: positionResult.data?.average_cost == null ? null : Number(positionResult.data.average_cost), dailyRealizedPnlUsd: dailyOrders.reduce((sum, order) => sum + Number(order.realized_pnl ?? 0), 0), fillsToday: dailyOrders.length };
     const { data: savedPreferences } = await supabase.from("nightwatch_preferences").select("playbook_key").maybeSingle();
     const selectedPreferences = normalizeNightwatchPreferences(savedPreferences ?? {});
-    const aiDecision = await decideNightwatch({ symbol, issuer: asset.name, candles: closed.slice(-90), account, playbookKey: selectedPreferences.playbook_key, research: linkedResearch?.status === "complete" ? { question: linkedResearch.question, summary: linkedResearch.summary } : null });
+    const aiDecision = await decideNightwatch({ symbol, issuer: asset.name, candles: closed.slice(-90), account, playbookKey: selectedPreferences.playbook_key, research: linkedResearch?.status === "complete" ? { question: linkedResearch.question, summary: linkedResearch.summary } : null }, { budgetMs: 38000, deadlineAt });
     const signal = aiDecision.signal;
     const decision = signal === aiDecision.action ? aiDecision : { ...aiDecision, rationale: aiDecision.rationale + " Confidence was below the 0.66 execution threshold, so the agent held." };
     const { data, error } = await supabase.rpc("nightwatch_tick", {

@@ -1,7 +1,7 @@
 import "server-only";
 
 type Message = { role: string; content: string };
-type Provider = { label: "qwen" | "gemini"; endpoint: string; model: string; key: string };
+export type Provider = { label: "qwen" | "gemini"; endpoint: string; model: string; key: string };
 
 export function configuredAiProviders(): Provider[] {
   const providers: Provider[] = [];
@@ -35,6 +35,8 @@ export type AiRequestOptions = {
   budgetMs?: number;
   /** Absolute route deadline, so work done before AI also consumes the budget. */
   deadlineAt?: number;
+  provider?: Provider["label"];
+  onSuccess?: (provider: { label: Provider["label"]; model: string }) => void;
 };
 
 type AiPayload = {
@@ -58,7 +60,7 @@ function responseText(payload: AiPayload, nativeGemini: boolean): string {
 }
 
 export async function aiJsonWithFallback(messages: Message[], valid: (value: Record<string, unknown>) => boolean, options: AiRequestOptions = {}) {
-  const providers = configuredAiProviders();
+  const providers = configuredAiProviders().filter(provider => !options.provider || provider.label === options.provider);
   if (!providers.length) throw new Error("ai-not-configured");
   const budgetMs = Number.isFinite(options.budgetMs) ? Math.max(0, Math.min(options.budgetMs!, 45000)) : 20000;
   const deadlineAt = Math.min(Date.now() + budgetMs, Number.isFinite(options.deadlineAt) ? options.deadlineAt! : Infinity);
@@ -97,11 +99,12 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
             body: JSON.stringify(nativeGemini ? {
               systemInstruction: { parts: messages.filter(message => message.role === "system").map(message => ({ text: message.content })) },
               contents: messages.filter(message => message.role !== "system").map(message => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] })),
-              generationConfig: { temperature: 0.15, responseMimeType: "application/json" },
-            } : { model: provider.model, temperature: 0.15, response_format: { type: "json_object" }, messages }),
+              generationConfig: { temperature: 0.15, responseMimeType: "application/json", ...(provider.model.startsWith("gemini-3") ? { thinkingConfig: { thinkingLevel: "LOW" } } : {}) },
+            } : { model: provider.model, temperature: 0.15, enable_thinking: false, response_format: { type: "json_object" }, messages }),
           });
           if (!response.ok) {
-            await response.body?.cancel();
+            const detail = await response.text();
+            console.warn("ai-provider-http", { provider: provider.label, model: provider.model, status: response.status, detail: safeProviderError(detail, provider.key) });
             return { response, payload: null };
           }
           return { response, payload: await response.json() as AiPayload };
@@ -114,7 +117,7 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
           break;
         }
         const parsed = jsonObject(payload ? responseText(payload, nativeGemini) : "");
-        if (parsed && valid(parsed)) return parsed;
+        if (parsed && valid(parsed)) { options.onSuccess?.({ label: provider.label, model: provider.model }); return parsed; }
         failures.push(`${provider.label}-invalid-response`);
         break;
       } catch (error) {
@@ -128,4 +131,17 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
   }
   if (Date.now() >= deadlineAt) failures.push("ai-budget-exhausted");
   throw new Error(failures.join(",") || "ai-unavailable");
+}
+
+/** Only bounded provider error fields are retained; credentials and URLs are redacted. */
+export function safeProviderError(raw: string, key: string): string {
+  let value = "Provider returned a non-JSON error.";
+  try {
+    const body = JSON.parse(raw);
+    const error = body?.error;
+    if (error && typeof error === "object") {
+      value = [error.status, error.code, error.type, error.message].filter(item => typeof item === "string" || typeof item === "number").join(": ");
+    } else if (typeof error === "string") value = error;
+  } catch { /* HTML gateway errors are not retained. */ }
+  return value.split(key).join("[redacted]").replace(/https?:\/\/\S+/gi, "[url]").replace(/(?:Bearer\s+|AIza|sk-)[A-Za-z0-9._-]+/gi, "[redacted]").slice(0, 400);
 }

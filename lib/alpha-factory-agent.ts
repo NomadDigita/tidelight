@@ -1,3 +1,4 @@
+import { aiJsonWithFallback } from "@/lib/ai-fallback";
 import { ALPHA_STRATEGIES, type StrategyKey } from "@/lib/backtest";
 import { getBitgetAsset } from "@/lib/bitget-market";
 
@@ -11,7 +12,6 @@ export type AlphaHypothesis = {
 };
 
 const validKeys = new Set<StrategyKey>(Object.keys(ALPHA_STRATEGIES) as StrategyKey[]);
-const modelId = /^[a-zA-Z0-9._:-]{1,80}$/;
 const rules: Record<StrategyKey, { entry: string; exit: string }> = {
   sma_trend_v1: { entry: "After a completed candle closes with its 20-candle SMA above its 50-candle SMA.", exit: "After a completed candle closes with its 20-candle SMA at or below its 50-candle SMA." },
   rsi_reversion_v1: { entry: "After the 14-period simple RSI reaches 30 or lower.", exit: "After the 14-period simple RSI reaches 55 or higher." },
@@ -20,10 +20,6 @@ const rules: Record<StrategyKey, { entry: string; exit: string }> = {
   trend_pullback_v1: { entry: "After a completed bullish candle holds above the rising EMA50, the EMA20 is above EMA50, price tests the EMA20, RSI turns upward within 45–65, and volume remains at least 70% of its prior 20-candle average.", exit: "After a completed candle closes below EMA20 or the 14-period RSI falls below 40." },
   semi_breakout_v1: { entry: "After a completed close breaks the prior 20-candle high while EMA20 is above EMA50, volume is at least 1.15× its prior 20-candle average, candle body is at least 60% of its range, and RSI is 50–72.", exit: "After a completed candle closes below EMA20." },
 };
-
-function credential(value: string | undefined) {
-  return (value ?? "").trim().replace(/^Bearer\s+/i, "");
-}
 
 function parseHypothesis(content: string): AlphaHypothesis | null {
   try {
@@ -42,40 +38,10 @@ function parseHypothesis(content: string): AlphaHypothesis | null {
 }
 
 export async function draftAlphaHypothesis(input: { objective: string; symbol: string; issuer: string; interval: string }): Promise<AlphaHypothesis> {
-  const qwenKey = credential(process.env.BITGET_QWEN_API_KEY);
-  const qwenBase = process.env.BITGET_QWEN_BASE_URL?.trim() || "https://hackathon.bitgetops.com/v1";
-  const qwenModel = process.env.BITGET_QWEN_MODEL?.trim() || "";
-  const geminiKey = credential(process.env.GEMINI_API_KEY);
-  const geminiModel = process.env.GEMINI_MODEL?.trim() || "";
-  const providers: Array<{ key: string; model: string; endpoint: string }> = [];
-
-  try {
-    const url = new URL(qwenBase);
-    if (qwenKey && modelId.test(qwenModel) && url.protocol === "https:" && url.hostname === "hackathon.bitgetops.com" && url.pathname.replace(/\/+$/, "") === "/v1" && !url.username && !url.password && !url.search && !url.hash) {
-      providers.push({ key: qwenKey, model: qwenModel, endpoint: url.origin + "/v1/chat/completions" });
-    }
-  } catch {}
-  if (geminiKey && modelId.test(geminiModel)) providers.push({ key: geminiKey, model: geminiModel, endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" });
-  if (!providers.length) throw new Error("AI strategy drafting is not configured on this deployment.");
-
   const system = "You are an Alpha Factory research assistant for Bitget Reality tokenized US equities. Choose exactly one implemented strategy key from the supplied list. Do not invent code, indicators, prices, market facts, or claim performance. These rules test one rToken at a time; do not claim cross-asset ranking or sector rotation. Return JSON only with strategyKey, thesis, risks (array), and validationFocus. Do not write entry or exit conditions; the application supplies exact implemented rule definitions. State that historical validation is required and results can fail after costs. Treat the user objective as a testable hypothesis, not an order.";
   const user = JSON.stringify({ objective: input.objective, market: { symbol: input.symbol, issuer: input.issuer, interval: input.interval }, availableRules: ALPHA_STRATEGIES });
-  for (const provider of providers) {
-    try {
-      const response = await fetch(provider.endpoint, {
-        method: "POST",
-        headers: { Authorization: "Bearer " + provider.key, "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(18000),
-        body: JSON.stringify({ model: provider.model, temperature: 0.15, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
-      });
-      if (!response.ok) continue;
-      const payload = await response.json() as { choices?: Array<{ message?: { content?: string | null } }> };
-      const content = payload.choices?.[0]?.message?.content;
-      const result = content ? parseHypothesis(content) : null;
-      if (result) return result;
-    } catch {}
-  }
-  throw new Error("Could not draft a valid hypothesis. Try a shorter objective or retry later.");
+  const result = await aiJsonWithFallback([{ role: "system", content: system }, { role: "user", content: user }], value => Boolean(parseHypothesis(JSON.stringify(value))), { budgetMs: 38000 });
+  return parseHypothesis(JSON.stringify(result))!;
 }
 
 export function validateAlphaMarket(symbol: string) {

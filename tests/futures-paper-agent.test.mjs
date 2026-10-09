@@ -21,3 +21,10 @@ test("malformed decisions cannot reach the paper ledger as trade proposals", () 
   assert.equal(normalizeFuturesProposal({ ...proposal("open_long"), evidence: [] }, null, true, false), null);
   assert.equal(normalizeFuturesProposal(proposal("buy"), null, true, false), null);
 });
+
+test("JSON coercion cannot turn malformed confidence into an executable paper proposal", () => {
+  for (const confidence of [true, false, null, [1], [], "0.8", {}, NaN, Infinity, -1, 1.1]) {
+    assert.equal(normalizeFuturesProposal(proposal("open_long", confidence), null, true, false), null);
+  }
+  assert.equal(normalizeFuturesProposal(proposal("open_long", 0.7), null, true, false)?.action, "open_long");
+});

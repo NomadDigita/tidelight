@@ -11,7 +11,7 @@ export type FuturesPaperDecision = {
 
 export function normalizeFuturesProposal(value: Record<string, unknown>, position: "long" | "short" | null, currentCandidate: boolean, previousCandidate: boolean): FuturesPaperDecision | null {
   const proposedAction = value.action;
-  const confidence = Number(value.confidence);
+  const confidence = typeof value.confidence === "number" ? value.confidence : NaN;
   const rationale = typeof value.rationale === "string" ? value.rationale.trim() : "";
   const list = (input: unknown) => Array.isArray(input) ? input.filter((item): item is string => typeof item === "string").slice(0, 4).map(item => item.trim().slice(0, 220)).filter(Boolean) : [];
   if (proposedAction !== "open_long" && proposedAction !== "open_short" && proposedAction !== "close" && proposedAction !== "hold") return null;

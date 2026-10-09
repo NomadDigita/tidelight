@@ -17,7 +17,7 @@ export function configuredAiProviders(): Provider[] {
   const geminiKey = (process.env.GEMINI_API_KEY ?? "").trim().replace(/^Bearer\s+/i, "");
   const geminiModel = (process.env.GEMINI_MODEL ?? "").trim();
   if (geminiKey && /^[a-zA-Z0-9._:-]{1,80}$/.test(geminiModel)) {
-    providers.push({ label: "gemini", endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", model: geminiModel, key: geminiKey });
+    providers.push({ label: "gemini", endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent`, model: geminiModel, key: geminiKey });
   }
   return providers;
 }
@@ -39,19 +39,27 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
     // within a 60-second serverless request after source discovery.
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
+        const nativeGemini = provider.label === "gemini";
         const response = await fetch(provider.endpoint, {
           method: "POST",
-          headers: { Authorization: `Bearer ${provider.key}`, "Content-Type": "application/json" },
+          headers: nativeGemini
+            ? { "x-goog-api-key": provider.key, "x-goog-api-client": "tidelight-research/1.0", "Content-Type": "application/json" }
+            : { Authorization: `Bearer ${provider.key}`, "Content-Type": "application/json" },
           signal: AbortSignal.timeout(attempt === 0 ? 12000 : 9000),
-          body: JSON.stringify({ model: provider.model, temperature: 0.15, response_format: { type: "json_object" }, messages }),
+          body: JSON.stringify(nativeGemini ? {
+            systemInstruction: { parts: messages.filter(message => message.role === "system").map(message => ({ text: message.content })) },
+            contents: messages.filter(message => message.role !== "system").map(message => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] })),
+            generationConfig: { temperature: 0.15, responseMimeType: "application/json" },
+          } : { model: provider.model, temperature: 0.15, response_format: { type: "json_object" }, messages }),
         });
         if (!response.ok) {
           failures.push(`${provider.label}-http-${response.status}`);
           if (attempt === 0 && [429, 500, 502, 503, 504].includes(response.status)) continue;
           break;
         }
-        const payload = await response.json() as { choices?: Array<{ message?: { content?: string | null } }> };
-        const parsed = jsonObject(payload.choices?.[0]?.message?.content ?? "");
+        const payload = await response.json() as { choices?: Array<{ message?: { content?: string | null } }>; candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+        const raw = nativeGemini ? (payload.candidates?.[0]?.content?.parts ?? []).map(part => part.text ?? "").join("") : payload.choices?.[0]?.message?.content ?? "";
+        const parsed = jsonObject(raw);
         if (parsed && valid(parsed)) return parsed;
         failures.push(`${provider.label}-invalid-response`);
         break;

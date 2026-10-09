@@ -97,7 +97,7 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
               : { Authorization: `Bearer ${provider.key}`, "Content-Type": "application/json" },
             signal: controller.signal,
             body: JSON.stringify(nativeGemini ? {
-              systemInstruction: { parts: messages.filter(message => message.role === "system").map(message => ({ text: message.content })) },
+              ...(messages.some(message => message.role === "system") ? { systemInstruction: { parts: messages.filter(message => message.role === "system").map(message => ({ text: message.content })) } } : {}),
               contents: messages.filter(message => message.role !== "system").map(message => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] })),
               generationConfig: { temperature: 0.15, responseMimeType: "application/json", ...(provider.model.startsWith("gemini-3") ? { thinkingConfig: { thinkingLevel: "LOW" } } : {}) },
             } : { model: provider.model, temperature: 0.15, enable_thinking: false, response_format: { type: "json_object" }, messages }),

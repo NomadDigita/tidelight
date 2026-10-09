@@ -129,6 +129,8 @@ Add your Supabase project URL and publishable key to `.env.local`. To use Bitget
 BITGET_QWEN_API_KEY=your-active-Bitget-Qwen-key
 BITGET_QWEN_BASE_URL=https://hackathon.bitgetops.com/v1
 BITGET_QWEN_MODEL=qwen3.8-max
+GEMINI_MODEL=gemini-3.5-flash-lite
+GEMINI_API_KEY=your-active-Gemini-key
 ```
 
 The app appends `/chat/completions` to the base URL, so keep the value ending at `/v1`. Use the same variable names in Vercel Project Settings → Environment Variables. Keep `.env.local` private; do not commit it or paste secrets into issues.

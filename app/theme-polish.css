@@ -89,3 +89,28 @@
   .main-area>.topbar{clip-path:polygon(round 12px,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
   .main-area>.topbar::after{clip-path:polygon(round 5px,100% 50%,calc(100% - 12px) 0,100% 0,100% 100%,calc(100% - 12px) 100%)}
 }
+
+
+/* Shared workspace typography and card treatment. Status borders retain their semantic colours. */
+.app-shell :is(.flow-hero,.nw-hero,.futures-hero,.markets-hero,.strategy-hero,.hero-card) {
+  border-color:var(--line);
+  border-radius:var(--radius-card);
+}
+.app-shell :is(.flow-hero h1,.nw-hero h1,.futures-hero h1,.markets-hero h1,.strategy-hero h1) {
+  font-family:var(--display);
+  font-weight:var(--weight-heading);
+}
+.app-shell :is(.flow-section-head h2,.flow-handoff h2,.flow-asset-card h3,.futures-section-heading h2) {
+  font-weight:550;
+}
+.app-shell :is(.settings-card,.panel,.nw-panel,.company-card,.brief-card,.watch-card,.token-pulse,.flow-glass,.flow-results,.futures-ledger,.futures-workbench,.futures-audit) {
+  border-color:var(--line);
+  border-radius:var(--radius-card);
+}
+.app-shell :is(.nw-run-button,.mfa-challenge button,.experience-switch button.selected) {
+  font-weight:var(--weight-emphasis);
+}
+
+.app-shell .content-wrap :is(b,strong,button) {
+  font-weight:var(--weight-emphasis);
+}

@@ -45,7 +45,10 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
           headers: nativeGemini
             ? { "x-goog-api-key": provider.key, "x-goog-api-client": "tidelight-research/1.0", "Content-Type": "application/json" }
             : { Authorization: `Bearer ${provider.key}`, "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(attempt === 0 ? 12000 : 9000),
+          // Gemini's native structured response may need longer than the
+          // compatibility gateway. Keep the combined provider budget under
+          // the 60-second research function limit, including source lookup.
+          signal: AbortSignal.timeout(attempt === 0 ? (nativeGemini ? 22000 : 12000) : (nativeGemini ? 10000 : 9000)),
           body: JSON.stringify(nativeGemini ? {
             systemInstruction: { parts: messages.filter(message => message.role === "system").map(message => ({ text: message.content })) },
             contents: messages.filter(message => message.role !== "system").map(message => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] })),

@@ -23,7 +23,7 @@ async function rss(url: URL): Promise<FlowEvidence[]> {
     const published = Date.parse(field(item, "pubDate"));
     return [{ title, url: link, publisher: field(item, "source") || new URL(link).hostname.replace(/^www\./, ""),
       publishedAt: Number.isFinite(published) ? new Date(published).toISOString() : null,
-      snippet: field(item, "description").slice(0, 400) }];
+      snippet: field(item, "description").slice(0, 400), via: "Public feeds" }];
   });
 }
 

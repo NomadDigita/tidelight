@@ -46,17 +46,23 @@ export class AgentKeyClient {
   private initialized = false;
   private readonly key: string;
   private readonly transport: FetchLike;
+  private readonly timeoutMs: number;
+  private readonly deadlineAt: number | null;
 
-  constructor(key: string, transport: FetchLike = fetch) {
+  constructor(key: string, transport: FetchLike = fetch, timeoutMs = 12000, totalBudgetMs?: number) {
     if (!key.trim()) throw new AgentKeyError("unavailable");
     this.key = key;
     this.transport = transport;
+    this.timeoutMs = timeoutMs;
+    this.deadlineAt = totalBudgetMs ? Date.now() + totalBudgetMs : null;
   }
 
   private async request(method: string, params?: Record<string, unknown>, notification = false): Promise<unknown> {
+    const remaining = this.deadlineAt === null ? this.timeoutMs : Math.min(this.timeoutMs, this.deadlineAt - Date.now());
+    if (remaining <= 0) throw new AgentKeyError("timeout");
     const id = this.nextId++;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), remaining);
     try {
       const response = await this.transport(ENDPOINT, {
         method: "POST",
@@ -127,7 +133,7 @@ export class AgentKeyClient {
   }
 }
 
-export function configuredAgentKey(): AgentKeyClient | null {
+export function configuredAgentKey(timeoutMs?: number, totalBudgetMs?: number): AgentKeyClient | null {
   const key = process.env.AGENTKEY_API_KEY?.trim();
-  return key ? new AgentKeyClient(key) : null;
+  return key ? new AgentKeyClient(key, fetch, timeoutMs, totalBudgetMs) : null;
 }

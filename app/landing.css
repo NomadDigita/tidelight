@@ -46,6 +46,8 @@
 .landing-stage-glow{position:absolute;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,#65d9b155 0%,#65d9b112 37%,transparent 72%);filter:blur(8px)}
 .landing-hero-stage .landing-orbit{width:100%;min-height:460px;z-index:1}
 .landing-hero-stage .landing-orbit-core{width:208px;height:208px;font-size:31px;background:radial-gradient(circle at 35% 24%,#3cbf9566,#0b191b 68%);box-shadow:0 0 100px #62d6ad42,inset 0 0 40px #62d6ad20}
+.landing-brand .landing-mark{display:block;width:30px;height:30px;border:0;border-radius:9px;box-shadow:none;object-fit:contain}
+.landing-tide-hand{position:absolute;z-index:3;left:50%;bottom:-158px;width:min(43vw,430px);height:auto;transform:translateX(-50%);filter:drop-shadow(0 18px 28px #0008);pointer-events:none}
 .landing-core-pulse{position:absolute;width:14px;height:14px;border-radius:50%;background:#9bf3c9;box-shadow:0 0 0 8px #9bf3c91a,0 0 28px #9bf3c9;right:33px;top:34px;animation:landing-pulse 2.2s ease-in-out infinite}
 .landing-stage-readout{position:absolute;z-index:2;right:clamp(22px,8vw,110px);bottom:36px;display:grid;gap:7px;text-align:left;padding:15px 17px;border:1px solid #62d6ad38;border-radius:10px;background:#091819b8;backdrop-filter:blur(12px);font-family:var(--mono)}
 .landing-stage-readout span{color:#76dcb5;font-size:9px;letter-spacing:1px}.landing-stage-readout span i{display:inline-block;width:5px;height:5px;margin-right:6px;border-radius:50%;background:#76dcb5;box-shadow:0 0 9px #76dcb5}.landing-stage-readout b{color:#e2f6ea;font:600 14px var(--display)}.landing-stage-readout small{color:#76958b;font-size:9px}

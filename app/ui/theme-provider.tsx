@@ -9,11 +9,11 @@ export const themes: { id: Theme; name: string; detail: string; swatches: string
   { id: "night", name: "Night Tide", detail: "The original deep sea", swatches: ["#080f11", "#a8ebc8", "#142522"] },
   { id: "blue", name: "Blue Hour", detail: "A cooler evening desk", swatches: ["#0b1020", "#b6c5ff", "#222b4c"] },
 ];
-const ThemeContext = createContext<{ theme: Theme; setTheme: (theme: Theme) => void }>({ theme: "night", setTheme: () => {} });
+const ThemeContext = createContext<{ theme: Theme; setTheme: (theme: Theme) => void }>({ theme: "daylight", setTheme: () => {} });
 const ExperienceContext = createContext<{ mode: ExperienceMode; setMode: (mode: ExperienceMode) => void }>({ mode: "pro", setMode: () => {} });
 const getTheme = (): Theme => {
   const saved = window.localStorage.getItem("tidelight-theme");
-  return saved === "daylight" || saved === "blue" ? saved : "night";
+  return saved === "night" || saved === "blue" ? saved : "daylight";
 };
 const getExperienceMode = (): ExperienceMode => window.localStorage.getItem("tidelight-experience") === "mini" ? "mini" : "pro";
 const subscribe = (callback: () => void) => {
@@ -23,7 +23,7 @@ const subscribe = (callback: () => void) => {
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const theme = useSyncExternalStore(subscribe, getTheme, (): Theme => "night");
+  const theme = useSyncExternalStore(subscribe, getTheme, (): Theme => "daylight");
   const mode = useSyncExternalStore(subscribe, getExperienceMode, (): ExperienceMode => "pro");
   const setTheme = (next: Theme) => {
     window.localStorage.setItem("tidelight-theme", next);
@@ -74,3 +74,4 @@ export function ExperienceSwitch() {
     <button type="button" className={mode === "pro" ? "selected" : ""} aria-pressed={mode === "pro"} onClick={() => setMode("pro")}>PRO</button>
   </div>;
 }
+

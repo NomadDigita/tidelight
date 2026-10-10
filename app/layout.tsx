@@ -43,5 +43,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     || user?.email?.split("@")[0]
     || null;
 
-  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell><SupportCompanion /></ThemeProvider></body></html>;
+  return <html lang="en" data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell><SupportCompanion /></ThemeProvider></body></html>;
 }
+

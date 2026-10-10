@@ -10,7 +10,7 @@ import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
 import { NavigationIcon, type NavigationIconName } from "@/app/ui/navigation-icon";
 
 const navigation: { href: string; label: string; icon: NavigationIconName; technical?: boolean }[] = [
-  { href: "/", label: "Overview", icon: "overview" },
+  { href: "/overview", label: "Overview", icon: "overview" },
   { href: "/guide", label: "Start here", icon: "guide" },
   { href: "/research", label: "Research desk", icon: "research" },
   { href: "/flow", label: "Agent flow", icon: "flow" },
@@ -100,7 +100,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
     if (isTechnicalRoute) router.replace("/");
   }, [mode, pathname, router]);
 
-  if (pathname.startsWith("/login") || pathname.startsWith("/auth/") || (pathname === "/" && !email)) return children;
+  if (pathname.startsWith("/login") || pathname.startsWith("/auth/") || pathname === "/") return children;
 
   return (
     <div className="app-shell" data-experience={mode}>
@@ -148,3 +148,4 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
     </div>
   );
 }
+

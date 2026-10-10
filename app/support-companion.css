@@ -26,3 +26,23 @@
 @keyframes tide-guide-enter{from{opacity:0;transform:translateY(9px) scale(.98)}to{opacity:1;transform:none}}@keyframes tide-guide-pulse{to{opacity:.25;transform:translateY(-3px)}}
 @media(max-width:600px){.tide-guide{right:12px;bottom:max(12px,env(safe-area-inset-bottom))}.tide-guide-panel{height:min(570px,calc(100dvh - 92px))}.tide-guide-launcher{min-height:50px}.tide-guide-mark{width:40px;height:40px}}
 @media(prefers-reduced-motion:reduce){.tide-guide-panel,.tide-guide-working span:not(:last-child){animation:none}.tide-guide-launcher{transition:none}}
+.legal-footer-links{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px}.legal-footer-links a{white-space:nowrap}
+.auth-legal-links{display:flex;justify-content:center;gap:18px;margin-top:20px}.auth-legal-links a{color:var(--muted);font:11px var(--font);text-underline-offset:3px}.auth-legal-links a:hover{color:var(--brand-teal)}
+@media(max-width:600px){.legal-footer-links{gap:6px 10px}}
+.tide-guide-panel{border-color:color-mix(in srgb,var(--brand-teal) 42%,var(--line));border-radius:23px;box-shadow:0 30px 90px rgba(0,0,0,.4),0 0 0 5px color-mix(in srgb,var(--brand-teal) 6%,transparent)}
+.tide-guide-head{position:relative;gap:12px;padding:17px;border-bottom-color:color-mix(in srgb,var(--brand-teal) 18%,var(--line));background:radial-gradient(circle at 84% -35%,color-mix(in srgb,var(--brand-teal) 28%,transparent),transparent 60%),linear-gradient(135deg,color-mix(in srgb,var(--panel-2) 80%,#104b4a),var(--panel-2))}
+.tide-guide-head-avatar{display:grid;place-items:center;width:49px;height:49px;flex:none;border:1px solid color-mix(in srgb,var(--brand-teal) 35%,var(--line));border-radius:16px;background:color-mix(in srgb,var(--brand-teal) 10%,var(--panel));box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.tide-guide-head h2{display:flex;align-items:center;gap:7px;font-weight:520}.tide-guide-head p{font-size:11px}
+.tide-guide-online{width:7px;height:7px;border-radius:50%;background:var(--brand-teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand-teal) 17%,transparent),0 0 12px var(--brand-teal)}
+.tide-guide-head-actions{display:flex;gap:3px;margin-left:auto}.tide-guide-head-actions button{width:27px;height:27px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);font:20px/1 var(--font);cursor:pointer}.tide-guide-head-actions button:hover{border-color:var(--line);color:var(--text)}
+.tide-guide-thread{padding:18px 17px;background:radial-gradient(circle at 50% 2%,color-mix(in srgb,var(--brand-teal) 5%,transparent),transparent 55%)}
+.tide-guide-portrait{position:relative;display:grid;place-items:center;align-self:stretch;height:118px;overflow:hidden;border:1px solid color-mix(in srgb,var(--brand-teal) 24%,var(--line));border-radius:15px;background:radial-gradient(circle at 55% 52%,color-mix(in srgb,var(--brand-teal) 22%,transparent),transparent 36%),linear-gradient(120deg,color-mix(in srgb,var(--brand-teal) 13%,var(--panel-2)),var(--panel-2))}
+.tide-guide-portrait .tide-guide-mark{z-index:1;width:78px;height:78px;filter:drop-shadow(0 12px 13px rgba(0,0,0,.23)) drop-shadow(0 0 14px color-mix(in srgb,var(--brand-teal) 60%,transparent))}
+.tide-guide-portrait-halo{position:absolute;width:152px;height:152px;border:1px solid color-mix(in srgb,var(--brand-teal) 24%,transparent);border-radius:50%;box-shadow:0 0 0 24px color-mix(in srgb,var(--brand-teal) 4%,transparent),0 0 0 52px color-mix(in srgb,var(--brand-teal) 3%,transparent)}
+.tide-guide-portrait-signal{position:absolute;top:24px;right:25%;color:var(--brand-teal);font-size:17px}
+.tide-guide-welcome-tag{margin-top:5px;color:var(--brand-teal);font:9px var(--mono);letter-spacing:.13em}
+.tide-guide-welcome h3{font-weight:520}.tide-guide-welcome p{font-size:12px;line-height:1.62}
+.tide-guide-prompts>span{color:var(--faint);font:9px var(--mono);letter-spacing:.1em}.tide-guide-prompts button{min-height:45px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--panel-2) 88%,var(--brand-teal));font-size:11px;transition:border-color .2s,transform .2s}.tide-guide-prompts button:hover{transform:translateX(2px)}
+.tide-guide-composer{border-radius:13px}.tide-guide-note{font-size:10px}
+@media(max-width:600px){.tide-guide-panel{height:min(620px,calc(100dvh - 90px))}.tide-guide-portrait{height:95px}}
+@media(prefers-reduced-motion:reduce){.tide-guide-prompts button{transition:none}.tide-guide-prompts button:hover{transform:none}}

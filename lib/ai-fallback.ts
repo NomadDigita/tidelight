@@ -68,14 +68,15 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
   for (const [index, provider] of providers.entries()) {
     const remaining = deadlineAt - Date.now();
     if (remaining <= 0) break;
-    // Reserve most of the remaining budget for native Gemini when Qwen is the
-    // first provider. Retries consume this same window rather than extending it.
+    // Give the primary Qwen model time to complete a full evidence prompt,
+    // while preserving at least 22 seconds for native Gemini on the 38-second
+    // Agent Flow budget. Retries share the same window.
     const providerDeadline = index < providers.length - 1
-      ? Math.min(deadlineAt, Date.now() + Math.min(12000, Math.floor(remaining / 3)))
+      ? Math.min(deadlineAt, Date.now() + (remaining >= 30000 ? Math.min(16000, remaining - 22000) : Math.min(12000, Math.floor(remaining / 3))))
       : deadlineAt;
     for (let attempt = 0; attempt < 2; attempt++) {
       const nativeGemini = provider.label === "gemini";
-      const timeoutMs = Math.min(providerDeadline - Date.now(), attempt === 0 ? (nativeGemini ? 22000 : 12000) : 9000);
+      const timeoutMs = Math.min(providerDeadline - Date.now(), attempt === 0 ? (nativeGemini ? 22000 : 16000) : 9000);
       if (timeoutMs <= 0) break;
       const controller = new AbortController();
       let timer: ReturnType<typeof setTimeout> | undefined;
@@ -99,7 +100,15 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
             body: JSON.stringify(nativeGemini ? {
               ...(messages.some(message => message.role === "system") ? { systemInstruction: { parts: messages.filter(message => message.role === "system").map(message => ({ text: message.content })) } } : {}),
               contents: messages.filter(message => message.role !== "system").map(message => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] })),
-              generationConfig: { temperature: 0.15, responseMimeType: "application/json", ...(provider.model.startsWith("gemini-3") ? { thinkingConfig: { thinkingLevel: "LOW" } } : {}) },
+              generationConfig: {
+                responseMimeType: "application/json",
+                // Gemini 3 expects lowercase REST thinking levels. Flash-Lite
+                // defaults to minimal; other Gemini 3 models use low for a
+                // bounded research request. Google recommends default sampling.
+                ...(provider.model.startsWith("gemini-3") ? {
+                  thinkingConfig: { thinkingLevel: provider.model.includes("flash-lite") ? "minimal" : "low" },
+                } : { temperature: 0.15 }),
+              },
             } : { model: provider.model, temperature: 0.15, enable_thinking: false, response_format: { type: "json_object" }, messages }),
           });
           if (!response.ok) {
@@ -116,8 +125,19 @@ export async function aiJsonWithFallback(messages: Message[], valid: (value: Rec
           if (attempt === 0 && [429, 500, 502, 503, 504].includes(response.status)) continue;
           break;
         }
-        const parsed = jsonObject(payload ? responseText(payload, nativeGemini) : "");
+        const output = payload ? responseText(payload, nativeGemini) : "";
+        const parsed = jsonObject(output);
         if (parsed && valid(parsed)) { options.onSuccess?.({ label: provider.label, model: provider.model }); return parsed; }
+        // Only shape and finish metadata are logged; supplied evidence and
+        // provider output may contain private research questions.
+        console.warn("ai-provider-invalid", {
+          provider: provider.label,
+          model: provider.model,
+          finish: nativeGemini ? payload?.candidates?.[0]?.finishReason ?? "missing" : payload?.choices?.[0]?.finish_reason ?? "missing",
+          candidates: nativeGemini ? payload?.candidates?.length ?? 0 : payload?.choices?.length ?? 0,
+          outputLength: output.length,
+          jsonParsed: Boolean(parsed),
+        });
         failures.push(`${provider.label}-invalid-response`);
         break;
       } catch (error) {

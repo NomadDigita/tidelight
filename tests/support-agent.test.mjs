@@ -67,6 +67,22 @@ test("signed-in AI uses reserved budget and cannot emit unapproved links", async
   assert.deepEqual(reply.links, [{ label: "Open Research", href: "/research" }]);
 });
 
+test("multi-turn product guidance preserves conversation order", async () => {
+  globalThis.supportProviders = [{ label: "gemini" }];
+  globalThis.supportDatabase.rpc = async () => ({ data: true, error: null });
+  globalThis.supportGenerate = async messages => {
+    assert.deepEqual(messages.slice(1).map(item => item.content), [
+      "Where do I save a brief?", "Open Saved briefs after creating a research note.", "And how do I share it?",
+    ]);
+    return { answer: "Open your brief, review its sources, then create a separate community post to share the research summary.", linkHrefs: ["/briefs", "/community"] };
+  };
+  const reply = await (await ask("And how do I share it?", { history: [
+    { role: "user", content: "Where do I save a brief?" },
+    { role: "assistant", content: "Open Saved briefs after creating a research note." },
+  ] })).json();
+  assert.equal(reply.source, "ai");
+});
+
 test("failed reservation and provider failures return the reviewed instructions", async () => {
   globalThis.supportDatabase.rpc = async () => ({ data: false, error: null });
   globalThis.supportGenerate = () => { throw new Error("Must not call provider after limit"); };

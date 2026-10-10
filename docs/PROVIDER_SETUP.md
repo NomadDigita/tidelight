@@ -33,6 +33,12 @@ The hackathon handbook describes Qwen credits as an application process, not a p
 
 If no gateway token is issued, Tidelight's Token Pulse will remain safely disabled rather than silently using an unapproved provider.
 
+### Diagnosing a provider run
+
+In Settings, **Check AI availability** performs a small authenticated JSON request to each configured provider and reports the model listing and call result. It does not prove that a larger research request will finish before the Agent Flow deadline. On October 10, 2026, production checks returned a valid response from both Bitget Qwen `qwen3.8-max` and Gemini `gemini-3.5-flash-lite`; neither model was discontinued for those configured keys at that time. Alibaba's [model catalog](https://www.alibabacloud.com/help/en/model-studio/text-generation-model) and Google's [model catalog](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite) also list them. Google's [rate limit guidance](https://ai.google.dev/gemini-api/docs/rate-limits) says capacity depends on the project and current tier, so a later 429 still needs an account-specific check.
+
+Server logs record `ai-provider-http` with a bounded, redacted status/detail, `ai-provider-invalid` with response shape and finish metadata (no prompt or output), or `agent-flow-ai-unavailable` with a provider failure code. A 503 or timeout on the full source prompt is different from a missing key or retired model. The flow fails closed: without a validated source-bound assessment it offers no trade handoff.
+
 ## Vercel configuration
 
 Already configured for Tidelight:

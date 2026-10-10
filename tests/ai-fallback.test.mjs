@@ -131,6 +131,18 @@ test("research can opt into a longer Gemini window within its route deadline", a
   assert.deepEqual(await aiJsonWithFallback(messages, valid, { budgetMs: 42000, deadlineAt: 53000 }), answer);
 });
 
+test("full Agent Flow budget allows a source-heavy Qwen answer past twelve seconds", async t => {
+  configure(t);
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
+  const fetch = t.mock.method(globalThis, "fetch", async () => {
+    now += 13000;
+    return qwen(JSON.stringify(answer));
+  });
+  assert.deepEqual(await aiJsonWithFallback(messages, valid, { budgetMs: 38000 }), answer);
+  assert.equal(fetch.mock.callCount(), 1);
+});
+
 test("retries cannot reset a deadline consumed during source gathering", async t => {
   configure(t);
   let now = 1000;
@@ -167,12 +179,24 @@ test("provider isolation checks Gemini without touching Qwen", async t => {
   process.env.GEMINI_MODEL = "gemini-3.8-flash";
   t.mock.method(globalThis, "fetch", async (url, init) => {
     assert.match(url, /generativelanguage/);
-    assert.deepEqual(JSON.parse(init.body).generationConfig.thinkingConfig, { thinkingLevel: "LOW" });
+    assert.deepEqual(JSON.parse(init.body).generationConfig.thinkingConfig, { thinkingLevel: "low" });
     return gemini([{ text: JSON.stringify(answer) }]);
   });
   let used;
   await aiJsonWithFallback(messages, valid, { provider: "gemini", onSuccess: provider => { used = provider; } });
   assert.deepEqual(used, { label: "gemini", model: "gemini-3.8-flash" });
+});
+
+test("Gemini 3.5 Flash-Lite uses its documented minimal thinking default and default sampling", async t => {
+  configure(t, false);
+  process.env.GEMINI_MODEL = "gemini-3.5-flash-lite";
+  t.mock.method(globalThis, "fetch", async (_url, init) => {
+    const config = JSON.parse(init.body).generationConfig;
+    assert.deepEqual(config.thinkingConfig, { thinkingLevel: "minimal" });
+    assert.equal(config.temperature, undefined);
+    return gemini([{ text: JSON.stringify(answer) }]);
+  });
+  await aiJsonWithFallback(messages, valid);
 });
 
 test("Qwen disables optional thinking for bounded JSON tasks", async t => {

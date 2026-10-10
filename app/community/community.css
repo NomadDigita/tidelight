@@ -20,3 +20,5 @@
 @media(prefers-reduced-motion:reduce){.community-page *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .community-conversations small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}.community-conversation-time{align-self:flex-start;padding-top:4px;white-space:nowrap;color:var(--faint);font:400 9px var(--font)}
 .community-media-item img{height:auto}.community-media-item.video video{height:auto}.community-conversations>button:disabled{opacity:.65;cursor:progress}
+
+.community-feed-search{display:grid;gap:6px;padding:13px 22px;border-bottom:1px solid var(--line);color:var(--muted);font:450 11px var(--font)}.community-feed-search input{width:100%;padding:12px 15px;border:1px solid var(--line);border-radius:99px;background:var(--panel-2);color:var(--text);font:400 13px var(--font)}.community-feed-search small{color:var(--faint);font:400 10px var(--font)}.community-post{scroll-margin-top:100px}.community-post:target{background:color-mix(in srgb,var(--mint-2) 10%,var(--panel));box-shadow:inset 3px 0 var(--mint)}.community-chat-history>div:last-child{height:1px;flex:none}

@@ -6,3 +6,4 @@
 .tw-grid .tw-form :is(button,.primary-link){font:600 12px/1.25 var(--font);letter-spacing:normal}
 .tw-grid .settings-card h2{font:540 20px/1.2 var(--display);letter-spacing:-.025em;color:var(--text)}
 .tw-grid .settings-card-head .eyebrow{font-family:var(--mono)}
+.tw-grid .tw-brand-icon svg{display:block;width:20px;height:20px;stroke:currentColor}

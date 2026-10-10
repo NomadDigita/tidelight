@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 type Resource = { label: string; href: string };
-type Message = { role: "user" | "assistant"; content: string; links?: Resource[] };
+type Message = { role: "user" | "assistant"; content: string; links?: Resource[]; source?: "knowledge" | "ai" };
 
 const starts: Record<string, string[]> = {
   "/trading": ["How do I get a Bitget demo API key?", "What protects a live order?", "What is the difference between demo and paper trading?"],
@@ -59,9 +59,9 @@ export default function SupportCompanion() {
     requestRef.current = controller;
     try {
       const response = await fetch("/api/support", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question: text, pathname, history }), signal: controller.signal });
-      const result: { answer?: string; links?: Resource[]; error?: string } = await response.json();
+      const result: { answer?: string; links?: Resource[]; source?: "knowledge" | "ai"; error?: string } = await response.json();
       if (!response.ok || !result.answer) throw new Error(result.error || "The guide is unavailable right now. Please try again.");
-      setMessages((previous) => [...previous, { role: "assistant", content: result.answer!, links: result.links ?? [] }]);
+      setMessages((previous) => [...previous, { role: "assistant", content: result.answer!, links: result.links ?? [], source: result.source }]);
     } catch (cause) {
       if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : "The guide is unavailable right now. Please try again.");
@@ -77,7 +77,7 @@ export default function SupportCompanion() {
     {open ? <section className="tide-guide-panel" role="dialog" aria-modal="false" aria-label="Tide, Tidelight product guide">
       <header className="tide-guide-head"><TideGuideMark small /><div><span className="tide-guide-kicker">TIDELIGHT / YOUR GUIDE</span><h2>Ask Tide</h2><p>Explore the desk, one step at a time.</p></div><button type="button" onClick={() => setOpen(false)} aria-label="Close Tide guide">×</button></header>
       <div className="tide-guide-thread" role="log" aria-live="polite" aria-relevant="additions text">
-        {messages.length === 0 ? <div className="tide-guide-welcome"><span className="tide-guide-orbit">✳</span><h3>Find your way through the signal.</h3><p>I can explain Tidelight, its research checks, paper trading, Bitget setup, and where to go next.</p><div className="tide-guide-prompts">{suggestions.map((prompt) => <button key={prompt} type="button" onClick={() => void ask(prompt)}>{prompt}<span>↗</span></button>)}</div></div> : messages.map((message, index) => <div className={`tide-guide-message ${message.role}`} key={index}><span className="tide-guide-speaker">{message.role === "assistant" ? "TIDE" : "YOU"}</span><p>{message.content}</p>{message.links?.length ? <div className="tide-guide-resources">{message.links.map((link) => link.href.startsWith("/") ? <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label} ↗</Link> : <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer">{link.label} ↗</a>)}</div> : null}</div>)}
+        {messages.length === 0 ? <div className="tide-guide-welcome"><span className="tide-guide-orbit">✳</span><h3>Find your way through the signal.</h3><p>I can explain Tidelight, its research checks, paper trading, Bitget setup, and where to go next.</p><div className="tide-guide-prompts">{suggestions.map((prompt) => <button key={prompt} type="button" onClick={() => void ask(prompt)}>{prompt}<span>↗</span></button>)}</div></div> : messages.map((message, index) => <div className={`tide-guide-message ${message.role}`} key={index}><span className="tide-guide-speaker">{message.role === "assistant" ? `TIDE · ${message.source === "ai" ? "AI ASSISTED" : "PRODUCT GUIDE"}` : "YOU"}</span><p>{message.content}</p>{message.links?.length ? <div className="tide-guide-resources">{message.links.map((link) => link.href.startsWith("/") ? <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label} ↗</Link> : <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer">{link.label} ↗</a>)}</div> : null}</div>)}
         {busy ? <div className="tide-guide-working"><span /><span /><span /><span>Checking the guide…</span></div> : null}
         <div ref={endRef} />
       </div>

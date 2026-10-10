@@ -3,6 +3,7 @@ import ResearchWorkspace from "./ui/research-workspace";
 import MarketRadar from "./ui/market-radar";
 import { getBitgetMarketUniverse } from "@/lib/bitget-market";
 import { createClient } from "@/lib/supabase/server";
+import LandingPage from "./ui/landing-page";
 
 export const maxDuration = 60;
 
@@ -10,6 +11,7 @@ export default async function Home() {
   const today = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "America/New_York" }).format(new Date());
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return <LandingPage />;
   const market = await getBitgetMarketUniverse().catch(() => null);
   const radarTickers = new Set(["NVDA", "TSLA", "MSFT", "AMZN"]);
   const initialRadarAssets = market?.assets.filter((asset) => asset.isReality && radarTickers.has(asset.underlyingTicker ?? "")) ?? [];

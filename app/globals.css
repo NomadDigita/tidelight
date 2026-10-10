@@ -116,6 +116,7 @@ text-align:center;
 font-size:16px;
 color:#839893
 }
+.nav-icon svg{display:block;width:17px;height:17px}
 .active .nav-icon {
   color:#a4e6c4
 }
@@ -1733,6 +1734,8 @@ button.primary-link,.primary-link,.nw-run-button,.strategy-run-button {
   .mobile-drawer-links{display:grid;gap:3px;overflow-y:auto;padding:9px 0}
   .mobile-drawer-link{min-height:36px;display:flex;align-items:center;gap:10px;padding:0 9px;border:1px solid transparent;border-radius:7px;color:var(--muted);text-decoration:none;font:500 11px var(--font);transition:background .18s,border-color .18s,color .18s}
   .mobile-drawer-link>span{width:16px;text-align:center;color:var(--brand-teal);font-size:13px}
+  .mobile-drawer-link .mobile-drawer-icon{display:grid;place-items:center;width:18px;height:18px}
+  .mobile-drawer-icon svg{width:18px;height:18px}
   .mobile-drawer-link>i{margin-left:auto;color:var(--faint);font:10px var(--mono);font-style:normal}
   .mobile-drawer-link:hover,.mobile-drawer-link.active{border-color:color-mix(in srgb,var(--brand-teal) 25%,var(--line));background:color-mix(in srgb,var(--brand-teal) 8%,var(--panel-2));color:var(--text)}
   .mobile-drawer-foot{display:flex;align-items:center;gap:9px;margin-top:auto;padding:11px 5px 1px;border-top:1px solid var(--line)}

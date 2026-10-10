@@ -1,0 +1,82 @@
+/* Final mobile safety layer. Keep every route inside the device viewport. */
+@media (max-width: 780px) {
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body { -webkit-text-size-adjust: 100%; }
+  .app-shell, .main-area, .route-content, .content-wrap { min-width: 0; max-width: 100%; }
+  .main-area, .route-content { overflow-x: clip; }
+  .content-wrap { width: 100%; padding: 24px 14px 28px; }
+  .sidebar .nav-list { display: none !important; }
+  .topbar { grid-template-columns: minmax(0, 1fr) auto !important; grid-template-rows: 38px 34px !important; padding-inline: 12px !important; }
+  .mobile-brand-story { display: none !important; }
+  .mobile-brand { grid-column: 1; grid-row: 1; }
+  .mobile-utility { grid-column: 1 / -1; grid-row: 2; }
+  .mobile-utility > b { max-width: 35vw; }
+  .mobile-utility-controls { max-width: 70vw; }
+  .mobile-utility-controls .experience-switch { display: flex; transform: scale(.78); transform-origin: right center; margin-inline: -4px; }
+  .mobile-utility-controls .theme-quick-switch { transform: none !important; margin-inline: 0 !important; }
+  .mobile-utility-controls .top-signin { white-space: nowrap; }
+  .page-footer { overflow-wrap: anywhere; }
+  .page-heading, .section-heading, .universe-heading, .welcome-row,
+  .watchlist-tools, .asset-profile, .asset-next-step, .demo-final-cta,
+  .nw-command-bar, .nw-panel-head, .strategy-workbench-head, .strategy-result-heading,
+  .system-health-top { min-width: 0; }
+  .page-heading > *, .section-heading > *, .welcome-row > *, .watchlist-tools > *,
+  .asset-profile > *, .asset-next-step > *, .demo-final-cta > * { max-width: 100%; min-width: 0; }
+  .page-heading h1, .section-heading h2, .welcome-row h1, .hero-card h2,
+  .flow-hero h1, .nw-hero h1, .futures-hero h1, .markets-hero h1, .strategy-hero h1 { overflow-wrap: anywhere; }
+  .hero-card, .flow-hero, .nw-hero, .futures-hero, .markets-hero, .strategy-hero { width: 100%; max-width: 100%; min-width: 0; }
+  .flow-hero, .nw-hero, .futures-hero, .markets-hero, .strategy-hero { grid-template-columns: 1fr; }
+  .flow-hero, .nw-hero, .futures-hero, .markets-hero, .strategy-hero { padding: 24px 18px 0; }
+  .nw-orbit, .market-orbit, .strategy-hero-art { width: min(100%, 330px); max-width: 100%; justify-self: center; }
+  .hero-ornament { max-width: 52vw; }
+  .workflow-strip, .company-grid, .brief-card-grid, .watchlist-grid, .universe-grid,
+  .nw-kpi-grid, .nw-main-grid, .futures-main-grid, .strategy-metric-grid,
+  .strategy-method, .strategy-method-facts, .system-provider-grid, .systems-explainer,
+  .demo-proof-grid, .demo-architecture, .settings-layout, .overview-grid { grid-template-columns: 1fr !important; }
+  .strategy-controls, .nw-market-select-row { grid-template-columns: 1fr !important; }
+  .strategy-run-button { grid-column: auto !important; width: 100%; }
+  .nw-command-actions, .strategy-result-actions, .demo-final-actions { width: 100%; flex-wrap: wrap; }
+  .nw-command-actions > *, .strategy-result-actions > *, .demo-final-actions > * { flex: 1 1 auto; }
+  .library-toolbar, .universe-controls { align-items: stretch; flex-direction: column; }
+  .library-search, .universe-search { width: 100%; max-width: none; }
+  .filter-tabs, .universe-filters { width: 100%; overflow-x: auto; padding-bottom: 2px; }
+  .coverage-table, .strategy-history-table, .asset-chart-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .coverage-table-head, .coverage-row { min-width: 610px; }
+  .strategy-history-row { min-width: 470px; }
+  .asset-chart { min-width: 520px; }
+  .watchlist-add { width: 100%; flex-wrap: wrap; }
+  .watchlist-add input, .watchlist-add select, .watchlist-add button { min-width: 0; flex: 1 1 100%; width: 100%; }
+  .asset-profile-price { padding-left: 0; }
+  .asset-profile-heading h1 { font-size: clamp(25px, 8vw, 38px); }
+  .source-starters, .tide-guide-resources { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+  .source-starters > a, .tide-guide-resources > a { flex: 0 0 auto; }
+  input, select, textarea, button { max-width: 100%; }
+  img, svg, video { max-width: 100%; }
+}
+
+@media (max-width: 520px) {
+  .content-wrap { padding-inline: 12px; }
+  .mobile-utility { gap: 6px; }
+  .mobile-utility-controls { gap: 2px; }
+  .top-signin { padding-inline: 6px !important; }
+  .page-footer { margin-inline: 12px; }
+  .hero-card, .flow-hero, .nw-hero, .futures-hero, .markets-hero, .strategy-hero { border-radius: 14px; }
+  .landing-hero-stage { min-height: 390px; }
+  .landing-tide-hand { width: min(310px, 76vw); bottom: -92px; }
+  .landing-hero-stage .landing-orbit { min-height: 375px; }
+  .landing-stage-readout { z-index: 5; }
+  .landing-stage-readout small { max-width: 210px; white-space: normal; }
+  .proof-cards article { flex-basis: min(82vw, 280px); }
+  .tide-guide { right: 8px !important; left: 8px; width: auto; }
+  .tide-guide-panel { width: 100% !important; max-width: none !important; }
+}
+
+@media (max-width: 380px) {
+  .topbar { padding-inline: 9px !important; }
+  .mobile-brand { font-size: 14px; }
+  .mobile-brand img { width: 28px !important; height: 28px !important; flex-basis: 28px; }
+  .mobile-utility > b { max-width: 29vw; font-size: 7px !important; }
+  .mobile-utility-controls .theme-quick-option { width: 16px; height: 16px; }
+  .mobile-utility-controls .experience-switch { transform: scale(.68); margin-inline: -7px; }
+  .landing-tide-hand { width: 280px; bottom: -72px; }
+}

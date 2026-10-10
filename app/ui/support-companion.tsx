@@ -6,6 +6,8 @@ import { useEffect, useRef, useState, type FormEvent, type PointerEvent as React
 
 type Resource = { label: string; href: string };
 type Message = { role: "user" | "assistant"; content: string; links?: Resource[]; source?: "knowledge" | "ai" };
+type Conversation = { id: string; title: string; updatedAt: number; messages: Message[] };
+const HISTORY_KEY = "tidelight-tide-history";
 
 function TypingReply({ text }: { text: string }) {
   const [visible, setVisible] = useState(0);
@@ -49,10 +51,13 @@ export default function SupportCompanion() {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<AbortController | null>(null);
+  const conversationIdRef = useRef<string>("new");
   const dragRef = useRef<{ startY: number; origin: number } | null>(null);
   const bottomRef = useRef(16);
   const draggedRef = useRef(false);
@@ -62,6 +67,44 @@ export default function SupportCompanion() {
     return Number.isFinite(value) ? Math.max(12, Math.min(value, Math.max(12, window.innerHeight - 92))) : null;
   });
   const suggestions = starts[Object.keys(starts).find((path) => pathname.startsWith(path)) ?? ""] ?? defaultStarts;
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(HISTORY_KEY) ?? "[]") as Conversation[];
+      const valid = Array.isArray(saved) ? saved.filter((item) => item && Array.isArray(item.messages)).slice(0, 10) : [];
+      window.setTimeout(() => {
+        setConversations(valid);
+        if (valid[0]?.messages?.length) { conversationIdRef.current = valid[0].id; setMessages(valid[0].messages); }
+      }, 0);
+    } catch { /* a corrupt local history should never block Tide */ }
+  }, []);
+
+  function saveConversation(nextMessages: Message[]) {
+    if (!nextMessages.length) return;
+    const title = nextMessages.find((item) => item.role === "user")?.content.slice(0, 64) || "Tide conversation";
+    const currentId = conversationIdRef.current === "new" ? title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 48) || "tide-conversation" : conversationIdRef.current;
+    conversationIdRef.current = currentId;
+    const next: Conversation = { id: currentId, title, updatedAt: nextMessages.length, messages: nextMessages.slice(-24) };
+    const rest = conversations.filter((item) => item.id !== currentId);
+    const updated = [next, ...rest].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 10);
+    setConversations(updated);
+    window.localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+  }
+
+  function selectConversation(conversation: Conversation) {
+    conversationIdRef.current = conversation.id;
+    setMessages(conversation.messages);
+    setHistoryOpen(false);
+    setOpen(true);
+  }
+
+  function startConversation() {
+    conversationIdRef.current = "new";
+    setMessages([]);
+    setHistoryOpen(false);
+    setError("");
+    setOpen(true);
+  }
 
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
   useEffect(() => { if (open) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy, open]);
@@ -94,7 +137,9 @@ export default function SupportCompanion() {
     setDraft("");
     setError("");
     const history = messages.slice(-6).map(({ role, content }) => ({ role, content }));
-    setMessages((previous) => [...previous, { role: "user", content: text }]);
+    const nextMessages = [...messages, { role: "user" as const, content: text }];
+    setMessages(nextMessages);
+    saveConversation(nextMessages);
     setBusy(true);
     const controller = new AbortController();
     requestRef.current = controller;
@@ -102,7 +147,9 @@ export default function SupportCompanion() {
       const response = await fetch("/api/support", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question: text, pathname, history }), signal: controller.signal });
       const result: { answer?: string; links?: Resource[]; source?: "knowledge" | "ai"; error?: string } = await response.json();
       if (!response.ok || !result.answer) throw new Error(result.error || "The guide is unavailable right now. Please try again.");
-      setMessages((previous) => [...previous, { role: "assistant", content: result.answer!, links: result.links ?? [], source: result.source }]);
+      const completed = [...nextMessages, { role: "assistant" as const, content: result.answer!, links: result.links ?? [], source: result.source }];
+      setMessages(completed);
+      saveConversation(completed);
     } catch (cause) {
       if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : "The guide is unavailable right now. Please try again.");
@@ -116,7 +163,8 @@ export default function SupportCompanion() {
 
   return <div className={`tide-guide${open ? " is-open" : ""}`} style={bottom === null ? undefined : { bottom }}>
     {open ? <section className="tide-guide-panel" role="dialog" aria-modal="false" aria-label="Tide, Tidelight product guide">
-      <header className="tide-guide-head"><span className="tide-guide-head-avatar"><TideGuideMark small /></span><div><span className="tide-guide-kicker">TIDELIGHT / YOUR GUIDE</span><h2>Tide <span className="tide-guide-online" aria-label="Available" /></h2><p>One question. A clearer next step.</p></div><div className="tide-guide-head-actions">{messages.length ? <button type="button" onClick={() => { setMessages([]); setError(""); }} aria-label="Start a new Tide conversation" title="Start over">↺</button> : null}<button type="button" onClick={() => setOpen(false)} aria-label="Close Tide guide">×</button></div></header>
+      <header className="tide-guide-head"><span className="tide-guide-head-avatar"><TideGuideMark small /></span><div><span className="tide-guide-kicker">TIDELIGHT / YOUR GUIDE</span><h2>Tide <span className="tide-guide-online" aria-label="Available" /></h2><p>One question. A clearer next step.</p></div><div className="tide-guide-head-actions">{messages.length ? <button type="button" onClick={startConversation} aria-label="Start a new Tide conversation" title="Start over">↺</button> : null}<button type="button" onClick={() => setHistoryOpen((value) => !value)} aria-label="Show Tide conversation history" title="Conversation history">☷</button><button type="button" onClick={() => setOpen(false)} aria-label="Close Tide guide">×</button></div></header>
+      {historyOpen ? <aside className="tide-guide-history" aria-label="Recent Tide conversations"><div className="tide-guide-history-head"><b>RECENT CONVERSATIONS</b><button type="button" onClick={startConversation}>New</button></div>{conversations.length ? conversations.map((conversation) => <button type="button" className="tide-guide-history-item" key={conversation.id} onClick={() => selectConversation(conversation)}><span>{conversation.title}</span><small>{new Date(conversation.updatedAt).toLocaleDateString()}</small></button>) : <p>No saved conversations yet.</p>}</aside> : null}
       <div className="tide-guide-thread" role="log" aria-live="polite" aria-relevant="additions text">
         {messages.length === 0 ? <div className="tide-guide-welcome"><div className="tide-guide-portrait" aria-hidden="true"><span className="tide-guide-portrait-halo" /><TideGuideMark /><span className="tide-guide-portrait-signal">✦</span></div><span className="tide-guide-welcome-tag">YOUR RESEARCH COPILOT</span><h3>Find your way through the signal.</h3><p>Ask me how Tidelight works, troubleshoot a step, or let me guide you across the desk. I can reason with the product guide and show where to go next.</p><div className="tide-guide-prompts"><span>START WITH A QUESTION</span>{suggestions.map((prompt) => <button key={prompt} type="button" onClick={() => void ask(prompt)}>{prompt}<span>↗</span></button>)}</div></div> : messages.map((message, index) => <div className={`tide-guide-message ${message.role}`} key={index}><span className="tide-guide-speaker">{message.role === "assistant" ? `TIDE · ${message.source === "ai" ? "AI ASSISTED" : "VERIFIED GUIDE"}` : "YOU"}</span>{message.role === "assistant" ? <TypingReply text={message.content} /> : <p>{message.content}</p>}{message.links?.length ? <div className="tide-guide-resources">{message.links.map((link) => link.href.startsWith("/") ? <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label} ↗</Link> : <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer">{link.label} ↗</a>)}</div> : null}</div>)}
         {busy ? <div className="tide-guide-working"><span /><span /><span /><span>Checking the guide…</span></div> : null}

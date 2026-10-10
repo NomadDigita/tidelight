@@ -5,6 +5,8 @@ import "./nightwatch.css";
 import { createClient } from "@/lib/supabase/server";
 import WorkspaceShell from "./ui/workspace-shell";
 import { ThemeProvider } from "./ui/theme-provider";
+import SupportCompanion from "./ui/support-companion";
+import "./support-companion.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://tidelight-two.vercel.app"),
@@ -40,5 +42,5 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     || user?.email?.split("@")[0]
     || null;
 
-  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell></ThemeProvider></body></html>;
+  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell><SupportCompanion /></ThemeProvider></body></html>;
 }

@@ -33,3 +33,29 @@
 :root[data-theme="daylight"] .landing-footer{color:#728078}
 :root[data-theme="daylight"] .landing-footer a{color:#4b7d5b}
 
+/* The hero is intentionally product-first: an oversized wordmark, a live signal object, and a promise users can understand in one glance. */
+.landing-hero{display:block;max-width:1400px;padding-top:clamp(72px,10vh,128px);padding-bottom:72px;text-align:center}
+.landing-hero-copy{max-width:820px;margin:0 auto}
+.landing-kicker{justify-content:center}
+.landing-hero h1{font-size:clamp(50px,7.8vw,108px);line-height:.94;margin:24px 0 25px}
+.landing-hero p{max-width:690px;margin:0 auto;font-size:17px}
+.landing-actions,.landing-trust{justify-content:center}
+.landing-trust{margin-top:30px}
+.landing-hero-stage{position:relative;min-height:470px;margin:38px auto 0;max-width:1240px;overflow:hidden;display:grid;place-items:center;border-radius:28px;background:linear-gradient(180deg,#06101200 0%,#071313cc 100%)}
+.landing-product-word{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);white-space:nowrap;font:800 clamp(90px,17vw,245px)/.8 var(--display);letter-spacing:-.12em;color:#102627;text-shadow:0 0 1px #a6f4d01a;user-select:none}
+.landing-stage-glow{position:absolute;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,#65d9b155 0%,#65d9b112 37%,transparent 72%);filter:blur(8px)}
+.landing-hero-stage .landing-orbit{width:100%;min-height:460px;z-index:1}
+.landing-hero-stage .landing-orbit-core{width:208px;height:208px;font-size:31px;background:radial-gradient(circle at 35% 24%,#3cbf9566,#0b191b 68%);box-shadow:0 0 100px #62d6ad42,inset 0 0 40px #62d6ad20}
+.landing-core-pulse{position:absolute;width:14px;height:14px;border-radius:50%;background:#9bf3c9;box-shadow:0 0 0 8px #9bf3c91a,0 0 28px #9bf3c9;right:33px;top:34px;animation:landing-pulse 2.2s ease-in-out infinite}
+.landing-stage-readout{position:absolute;z-index:2;right:clamp(22px,8vw,110px);bottom:36px;display:grid;gap:7px;text-align:left;padding:15px 17px;border:1px solid #62d6ad38;border-radius:10px;background:#091819b8;backdrop-filter:blur(12px);font-family:var(--mono)}
+.landing-stage-readout span{color:#76dcb5;font-size:9px;letter-spacing:1px}.landing-stage-readout span i{display:inline-block;width:5px;height:5px;margin-right:6px;border-radius:50%;background:#76dcb5;box-shadow:0 0 9px #76dcb5}.landing-stage-readout b{color:#e2f6ea;font:600 14px var(--display)}.landing-stage-readout small{color:#76958b;font-size:9px}
+.landing-section-lede{max-width:590px;margin:-24px 0 45px;color:#849994;font-size:14px;line-height:1.7}
+@keyframes landing-pulse{0%,100%{transform:scale(.8);opacity:.75}50%{transform:scale(1.15);opacity:1}}
+:root[data-theme="daylight"] .landing-hero-stage{background:linear-gradient(180deg,#eaf3e700 0%,#e4efe5 100%);border:1px solid #dbe6d9}
+:root[data-theme="daylight"] .landing-product-word{color:#dce9dc;text-shadow:0 0 1px #286a4d18}
+:root[data-theme="daylight"] .landing-stage-glow{background:radial-gradient(circle,#6fb88755 0%,#6fb88712 37%,transparent 72%)}
+:root[data-theme="daylight"] .landing-hero-stage .landing-orbit-core{background:radial-gradient(circle at 35% 24%,#d8efda,#fbfcf6 68%);color:#20342a;box-shadow:0 0 100px #6aa47b38,inset 0 0 40px #6aa47b18}
+:root[data-theme="daylight"] .landing-stage-readout{border-color:#a8c9af;background:#f8fbf4d9}.landing-stage-readout b{color:#e2f6ea}
+:root[data-theme="daylight"] .landing-stage-readout b{color:#20342a}:root[data-theme="daylight"] .landing-stage-readout small{color:#5f7969}
+@media(max-width:800px){.landing-hero{padding-top:62px;padding-bottom:52px}.landing-hero p{font-size:15px}.landing-hero-stage{min-height:355px;margin-top:28px;border-radius:18px}.landing-hero-stage .landing-orbit{min-height:350px}.landing-hero-stage .landing-orbit-core{width:145px;height:145px;font-size:22px}.landing-product-word{font-size:24vw}.landing-stage-readout{left:20px;right:20px;bottom:18px;padding:11px 13px}.landing-stage-readout b{font-size:12px}.landing-stage-readout small{font-size:8px}.landing-section-lede{margin-top:-18px;margin-bottom:32px}}
+

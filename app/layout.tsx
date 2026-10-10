@@ -7,6 +7,7 @@ import WorkspaceShell from "./ui/workspace-shell";
 import { ThemeProvider } from "./ui/theme-provider";
 import SupportCompanion from "./ui/support-companion";
 import "./support-companion.css";
+import "./landing.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://tidelight.app"),

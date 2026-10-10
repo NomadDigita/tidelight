@@ -8,6 +8,7 @@ const hooks = registerHooks({ resolve(specifier, context, nextResolve) {
     "@/lib/ai-fallback": "export const configuredAiProviders=()=>globalThis.supportProviders;export const aiJsonWithFallback=(...args)=>globalThis.supportGenerate(...args);",
     "@/lib/supabase/server": "export const createClient=async()=>globalThis.supportDatabase;",
     "@/lib/support-knowledge": "export * from " + JSON.stringify(new URL("../lib/support-knowledge.ts", import.meta.url).href) + ";",
+    "@/lib/tidelight-docs": "export const queryTidelightDocs=async()=>\"\";export const TIDELIGHT_DOCS_HOME=\"https://docs.tidelight.app\";",
   };
   if (mocked[specifier]) return { url: "data:text/javascript," + encodeURIComponent(mocked[specifier]), shortCircuit: true };
   return nextResolve(specifier, context);

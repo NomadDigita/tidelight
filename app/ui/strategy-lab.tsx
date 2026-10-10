@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ALPHA_STRATEGIES, BACKTEST_STRATEGY, type StrategyKey, type BacktestMetrics, type BacktestResult, type WalkForwardResult } from "@/lib/backtest";
 import { STOCK_PERP_UNIVERSE, type AlphaMarketCategory, type CandleInterval, type MarketCandle } from "@/lib/bitget-market";
 import { hasAlignedHoldout } from "@/lib/alpha-matrix";
+import { assessSharpeDecay } from "@/lib/alpha-generalization";
 
 type SavedRun = {
   id: string;
@@ -53,6 +54,7 @@ function downloadRun(run: DisplayRun) {
       candleCount: run.candleCount,
       candleHash: { algorithm: "SHA-256", canonicalization: "JSON.stringify(completed candles in ascending timestamp order)", value: run.candleHash },
       train: run.train, holdout: run.test, walkForward: run.walkForward,
+      sharpeDecay: assessSharpeDecay(run.train, run.test),
       walkForwardStatus: run.walkForwardStatus, costSensitivity: run.costSensitivity,
       assumptions: ["Signals use the prior completed candle and execute at the next candle open.", "Fee and slippage assumptions are applied on entry and exit.", "This is an unlevered price replay, not futures account P&L. Funding, leverage, margin, liquidation, order-book depth, and corporate actions are not modeled."],
     },
@@ -142,6 +144,7 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
 
   const display = run;
   const test = display?.test;
+  const sharpeDecay = display ? assessSharpeDecay(display.train, display.test) : null;
   const latestSaved = initialRuns[0];
   const matrixReturn = matrix.length ? matrix.reduce((sum, item) => sum + item.test.totalReturnPct, 0) / matrix.length : null;
   const matrixWinRate = matrix.length ? matrix.reduce((sum, item) => sum + (item.test.winRatePct ?? 0), 0) / matrix.length : null;
@@ -171,6 +174,7 @@ export default function StrategyLab({ signedIn, initialRuns, initialSymbol = "RA
         <div className="strategy-result-heading"><div><span className="eyebrow small-eyebrow">{display.parameters.marketCategory === "USDT-FUTURES" ? "US STOCK PERPETUAL" : "REALITY SPOT"} · {display.parameters.strategyLabel} · OUT-OF-SAMPLE</span><h3>{display.assetName} <small>{display.symbol} · {display.interval}</small></h3></div><div className="strategy-result-actions"><button type="button" className="strategy-export-button" onClick={() => downloadRun(display)}>Export reproducible run ↓</button><span className="strategy-result-status">SAVED</span></div></div>
         {display.parameters.hypothesis ? <div className="alpha-saved-hypothesis"><span>HYPOTHESIS SAVED WITH THIS RUN</span><p>{display.parameters.hypothesis.thesis}</p></div> : null}<div className="strategy-metric-grid"><MetricCard label="Holdout return" value={pct(test?.totalReturnPct)} note="After estimated costs" positive={(test?.totalReturnPct ?? 0) >= 0}/><MetricCard label="Buy & hold" value={pct(test?.buyAndHoldReturnPct)} note="Same holdout window" positive={(test?.buyAndHoldReturnPct ?? 0) >= 0}/><MetricCard label="Max drawdown" value={pct(test?.maxDrawdownPct ? -test.maxDrawdownPct : 0)} note="Marked at each candle close" positive={false}/><MetricCard label="Trades · win rate" value={`${test?.trades ?? 0} · ${test?.winRatePct == null ? "—" : `${test.winRatePct.toFixed(0)}%`}`} note="Closed positions in holdout"/></div>
         {test ? <EquityCurve points={test.equityCurve} /> : null}
+        {sharpeDecay ? <div className="strategy-walkforward strategy-walkforward-limited" role="status"><span className="eyebrow small-eyebrow">IN-SAMPLE → HOLDOUT SHARPE</span><p>Training <b>{number(display.train.sharpeRatio)}</b> · holdout <b>{number(test?.sharpeRatio)}</b> · {sharpeDecay.state === "insufficient" ? "Too few closed trades or no positive training Sharpe for a useful decay comparison." : sharpeDecay.state === "alert" ? `Decay alert: holdout Sharpe is below half of training (${number(sharpeDecay.ratio)}×).` : `No half-Sharpe decay alert (${number(sharpeDecay.ratio)}×). This alone does not validate the strategy.`}</p></div> : null}
       <div className="strategy-result-foot"><span>{display.candleCount} candles · {date(display.dataStart)} — {date(display.dataEnd)}</span><span title={display.candleHash}>SHA-256 {display.candleHash.slice(0, 12)}…</span></div>
         {display.parameters.marketCategory === "USDT-FUTURES" ? <p className="alpha-market-context">Price-only, unlevered simulation. Funding, margin, liquidation and contract execution are not modeled. Nightwatch currently runs Reality spot paper positions.</p> : <p className="strategy-history-link"><Link href={`/nightwatch?symbol=${encodeURIComponent(display.symbol)}&playbook=${encodeURIComponent(display.strategyKey)}`}>Use this playbook in Nightwatch paper agent <span>↗</span></Link></p>}
         {display.walkForward ? <section className="strategy-walkforward" aria-label="Walk-forward validation"><div className="walkforward-heading"><div><span className="eyebrow small-eyebrow">ROLLING OUT-OF-SAMPLE</span><h4>Does it hold across time?</h4></div><b className={display.walkForward.positiveFolds === display.walkForward.totalFolds ? "metric-positive" : "metric-negative"}>{display.walkForward.positiveFolds} / {display.walkForward.totalFolds} positive windows</b></div><div className="walkforward-grid">{display.walkForward.folds.map((fold) => <article key={fold.index}><span>WINDOW 0{fold.index}</span><b className={fold.metrics.totalReturnPct >= 0 ? "metric-positive" : "metric-negative"}>{pct(fold.metrics.totalReturnPct)}</b><small>{date(fold.testStart)} – {date(fold.testEnd)}</small><small>{fold.metrics.trades} trades · {pct(fold.metrics.buyAndHoldReturnPct)} buy & hold</small></article>)}</div><p>Three disjoint trailing windows after estimated costs. The selected rule is fixed; prior candles provide indicator context and are not used to tune parameters. Mean window return: <b>{pct(display.walkForward.meanReturnPct)}</b>.</p></section> : <div className="strategy-walkforward strategy-walkforward-limited"><span className="eyebrow small-eyebrow">ROLLING WINDOWS NOT AVAILABLE</span><p>{display.walkForwardStatus || "More completed candle history is needed for three useful evaluation windows."} The main holdout and cost stress remain available.</p></div>}

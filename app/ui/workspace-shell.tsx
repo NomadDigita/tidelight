@@ -100,7 +100,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
     if (isTechnicalRoute) router.replace("/");
   }, [mode, pathname, router]);
 
-  if (pathname.startsWith("/login") || pathname.startsWith("/auth/")) return children;
+  if (pathname.startsWith("/login") || pathname.startsWith("/auth/") || (pathname === "/" && !email)) return children;
 
   return (
     <div className="app-shell" data-experience={mode}>

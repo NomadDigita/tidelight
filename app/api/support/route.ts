@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   });
 
   const history = Array.isArray(body.history) ? body.history.slice(-4) : [];
-  const precedingQuestion = history.reverse().find((item): item is { role: string; content: string } => item && typeof item === "object" && item.role === "user" && typeof item.content === "string" && item.content.length <= 1200 && !secretLike(item.content));
+  const precedingQuestion = [...history].reverse().find((item): item is { role: string; content: string } => item && typeof item === "object" && item.role === "user" && typeof item.content === "string" && item.content.length <= 1200 && !secretLike(item.content));
   const topics = supportTopicsFor(question, pathname).length ? supportTopicsFor(question, pathname) :
     /^(and |what about |where is |how do i do that|why|that\??$)/i.test(question) && precedingQuestion ? supportTopicsFor(precedingQuestion.content, pathname) : [];
   const fallback = supportFallback(topics);

@@ -2,10 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
 
 type Resource = { label: string; href: string };
 type Message = { role: "user" | "assistant"; content: string; links?: Resource[]; source?: "knowledge" | "ai" };
+
+function TypingReply({ text }: { text: string }) {
+  const [visible, setVisible] = useState(0);
+  const reducedMotion = useRef(false);
+  useEffect(() => {
+    reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setVisible(reducedMotion.current ? text.length : 0);
+  }, [text]);
+  useEffect(() => {
+    if (reducedMotion.current || visible >= text.length) return;
+    const timer = window.setTimeout(() => setVisible((value) => Math.min(text.length, value + Math.max(2, Math.ceil(text.length / 72)))), 16);
+    return () => window.clearTimeout(timer);
+  }, [text, visible]);
+  return <p>{text.slice(0, visible)}{visible < text.length ? <span className="tide-guide-cursor" aria-hidden="true" /> : null}</p>;
+}
 
 const starts: Record<string, string[]> = {
   "/trading": ["How do I get a Bitget demo API key?", "What protects a live order?", "What is the difference between demo and paper trading?"],
@@ -38,11 +53,37 @@ export default function SupportCompanion() {
   const inputRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<AbortController | null>(null);
+  const dragRef = useRef<{ startY: number; origin: number } | null>(null);
+  const bottomRef = useRef(16);
+  const draggedRef = useRef(false);
+  const [bottom, setBottom] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const value = Number(window.localStorage.getItem("tidelight-tide-bottom"));
+    return Number.isFinite(value) ? Math.max(12, Math.min(value, Math.max(12, window.innerHeight - 92))) : null;
+  });
   const suggestions = starts[Object.keys(starts).find((path) => pathname.startsWith(path)) ?? ""] ?? defaultStarts;
 
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
   useEffect(() => { if (open) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy, open]);
   useEffect(() => () => requestRef.current?.abort(), []);
+  useEffect(() => { if (bottom !== null) bottomRef.current = bottom; }, [bottom]);
+  function startDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { startY: event.clientY, origin: bottomRef.current };
+    draggedRef.current = false;
+  }
+  function moveDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!dragRef.current) return;
+    if (Math.abs(event.clientY - dragRef.current.startY) > 4) draggedRef.current = true;
+    const next = Math.max(12, Math.min(dragRef.current.origin - (event.clientY - dragRef.current.startY), Math.max(12, window.innerHeight - 80)));
+    bottomRef.current = next;
+    setBottom(next);
+  }
+  function endDrag() {
+    if (dragRef.current) window.localStorage.setItem("tidelight-tide-bottom", String(bottomRef.current));
+    dragRef.current = null;
+  }
 
   if (pathname.startsWith("/login") || pathname.startsWith("/auth/")) return null;
 
@@ -73,11 +114,11 @@ export default function SupportCompanion() {
 
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void ask(draft); }
 
-  return <div className={`tide-guide${open ? " is-open" : ""}`}>
+  return <div className={`tide-guide${open ? " is-open" : ""}`} style={bottom === null ? undefined : { bottom }}>
     {open ? <section className="tide-guide-panel" role="dialog" aria-modal="false" aria-label="Tide, Tidelight product guide">
       <header className="tide-guide-head"><span className="tide-guide-head-avatar"><TideGuideMark small /></span><div><span className="tide-guide-kicker">TIDELIGHT / YOUR GUIDE</span><h2>Tide <span className="tide-guide-online" aria-label="Available" /></h2><p>One question. A clearer next step.</p></div><div className="tide-guide-head-actions">{messages.length ? <button type="button" onClick={() => { setMessages([]); setError(""); }} aria-label="Start a new Tide conversation" title="Start over">↺</button> : null}<button type="button" onClick={() => setOpen(false)} aria-label="Close Tide guide">×</button></div></header>
       <div className="tide-guide-thread" role="log" aria-live="polite" aria-relevant="additions text">
-        {messages.length === 0 ? <div className="tide-guide-welcome"><div className="tide-guide-portrait" aria-hidden="true"><span className="tide-guide-portrait-halo" /><TideGuideMark /><span className="tide-guide-portrait-signal">✦</span></div><span className="tide-guide-welcome-tag">YOUR RESEARCH COPILOT</span><h3>Find your way through the signal.</h3><p>Ask me how Tidelight works, troubleshoot a step, or let me guide you across the desk. I can reason with the product guide and show where to go next.</p><div className="tide-guide-prompts"><span>START WITH A QUESTION</span>{suggestions.map((prompt) => <button key={prompt} type="button" onClick={() => void ask(prompt)}>{prompt}<span>↗</span></button>)}</div></div> : messages.map((message, index) => <div className={`tide-guide-message ${message.role}`} key={index}><span className="tide-guide-speaker">{message.role === "assistant" ? `TIDE · ${message.source === "ai" ? "AI ASSISTED" : "VERIFIED GUIDE"}` : "YOU"}</span><p>{message.content}</p>{message.links?.length ? <div className="tide-guide-resources">{message.links.map((link) => link.href.startsWith("/") ? <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label} ↗</Link> : <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer">{link.label} ↗</a>)}</div> : null}</div>)}
+        {messages.length === 0 ? <div className="tide-guide-welcome"><div className="tide-guide-portrait" aria-hidden="true"><span className="tide-guide-portrait-halo" /><TideGuideMark /><span className="tide-guide-portrait-signal">✦</span></div><span className="tide-guide-welcome-tag">YOUR RESEARCH COPILOT</span><h3>Find your way through the signal.</h3><p>Ask me how Tidelight works, troubleshoot a step, or let me guide you across the desk. I can reason with the product guide and show where to go next.</p><div className="tide-guide-prompts"><span>START WITH A QUESTION</span>{suggestions.map((prompt) => <button key={prompt} type="button" onClick={() => void ask(prompt)}>{prompt}<span>↗</span></button>)}</div></div> : messages.map((message, index) => <div className={`tide-guide-message ${message.role}`} key={index}><span className="tide-guide-speaker">{message.role === "assistant" ? `TIDE · ${message.source === "ai" ? "AI ASSISTED" : "VERIFIED GUIDE"}` : "YOU"}</span>{message.role === "assistant" ? <TypingReply text={message.content} /> : <p>{message.content}</p>}{message.links?.length ? <div className="tide-guide-resources">{message.links.map((link) => link.href.startsWith("/") ? <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label} ↗</Link> : <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer">{link.label} ↗</a>)}</div> : null}</div>)}
         {busy ? <div className="tide-guide-working"><span /><span /><span /><span>Checking the guide…</span></div> : null}
         <div ref={endRef} />
       </div>
@@ -85,6 +126,6 @@ export default function SupportCompanion() {
       <form className="tide-guide-composer" onSubmit={submit}><label htmlFor="tide-guide-question" className="sr-only">Ask Tide a question</label><input id="tide-guide-question" ref={inputRef} value={draft} maxLength={800} onChange={(event) => setDraft(event.target.value)} placeholder="Ask about Tidelight…" disabled={busy} /><button type="submit" disabled={busy || !draft.trim()} aria-label="Send question">↗</button></form>
       <small className="tide-guide-note">Product guidance. Check sources and confirm trading choices yourself.</small>
     </section> : null}
-    <button type="button" className="tide-guide-launcher" aria-label={open ? "Close Tide guide" : "Ask Tide for help"} aria-expanded={open} onClick={() => setOpen((previous) => !previous)}><TideGuideMark /><span>{open ? "Close guide" : "Ask Tide"}</span></button>
+    <button type="button" className="tide-guide-launcher" aria-label={open ? "Close Tide guide" : "Ask Tide for help"} aria-expanded={open} aria-describedby="tide-guide-move-hint" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onClick={() => { if (draggedRef.current) { draggedRef.current = false; return; } setOpen((previous) => !previous); }}><TideGuideMark /><span>{open ? "Close guide" : "Ask Tide"}</span><i aria-hidden="true">⋮⋮</i></button><span id="tide-guide-move-hint" className="sr-only">Drag this button up or down to move it.</span>
   </div>;
 }

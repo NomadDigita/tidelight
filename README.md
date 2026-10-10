@@ -1,11 +1,11 @@
 <div align="center">
   <img src="./public/tidelight-readme-banner.svg" alt="Tidelight — a calmer way to follow tokenized markets" width="100%" />
   <br />
-  <a href="https://tidelight-two.vercel.app/"><strong>Open Tidelight ↗</strong></a>
+  <a href="https://tidelight.app/"><strong>Open Tidelight ↗</strong></a>
   &nbsp; · &nbsp;
-  <a href="https://tidelight-two.vercel.app/markets">Explore the live market map</a>
+  <a href="https://tidelight.app/markets">Explore the live market map</a>
   &nbsp; · &nbsp;
-  <a href="https://tidelight-two.vercel.app/research">Start a research brief</a>
+  <a href="https://tidelight.app/research">Start a research brief</a>
 </div>
 
 <br />
@@ -34,15 +34,15 @@ Tidelight is a research companion. It helps organize information so people can m
 
 ## Your first look
 
-No installation or trading account needed. [Open the public app](https://tidelight-two.vercel.app/) and explore the market map.
+No installation or trading account needed. [Open the public app](https://tidelight.app/) and explore the market map.
 
 | If you want to… | Go here |
 | --- | --- |
-| Browse market assets and their latest public quotes | [Markets](https://tidelight-two.vercel.app/markets) |
-| Turn a question and a source into a cited research brief | [Research desk](https://tidelight-two.vercel.app/research) |
-| Keep track of assets you care about | [Watchlist](https://tidelight-two.vercel.app/watchlist) |
-| Explore a historical strategy replay | [Strategy Lab](https://tidelight-two.vercel.app/strategies) |
-| See how the paper-only market watcher works | [Nightwatch](https://tidelight-two.vercel.app/nightwatch) |
+| Browse market assets and their latest public quotes | [Markets](https://tidelight.app/markets) |
+| Turn a question and a source into a cited research brief | [Research desk](https://tidelight.app/research) |
+| Keep track of assets you care about | [Watchlist](https://tidelight.app/watchlist) |
+| Explore a historical strategy replay | [Strategy Lab](https://tidelight.app/strategies) |
+| See how the paper-only market watcher works | [Nightwatch](https://tidelight.app/nightwatch) |
 
 Some personal features ask you to sign in so your saved work stays with your account.
 
@@ -159,7 +159,7 @@ We are building carefully: show the evidence, label assumptions, preserve uncert
 
 ## Come build a calmer market desk with us
 
-Try the [live app](https://tidelight-two.vercel.app/), explore the [market map](https://tidelight-two.vercel.app/markets), or open an issue with a confusing moment, a missing source, or an idea that would make the product more useful.
+Try the [live app](https://tidelight.app/), explore the [market map](https://tidelight.app/markets), or open an issue with a confusing moment, a missing source, or an idea that would make the product more useful.
 
 <div align="center">
   <br />

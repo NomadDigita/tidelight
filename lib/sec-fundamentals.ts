@@ -48,12 +48,21 @@ async function analystTargets(ticker: string): Promise<CompanyResearch["analystT
   if (!token) return { status: "not_configured" };
   try {
     const response = await fetch(`https://finnhub.io/api/v1/stock/price-target?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(token)}`, { headers: { Accept: "application/json" }, next: { revalidate: 21600 }, signal: AbortSignal.timeout(4500) });
-    if (!response.ok) return { status: "unavailable" };
+    if (!response.ok) {
+      console.warn("finnhub-price-target-http-unavailable", { ticker, status: response.status });
+      return { status: "unavailable" };
+    }
     const data = await response.json() as { targetHigh?: number; targetLow?: number; targetMean?: number; targetMedian?: number; lastUpdated?: string };
     const values = [data.targetHigh, data.targetLow, data.targetMean, data.targetMedian];
-    if (!values.some((value) => typeof value === "number" && Number.isFinite(value) && value > 0)) return { status: "unavailable" };
+    if (!values.some((value) => typeof value === "number" && Number.isFinite(value) && value > 0)) {
+      console.warn("finnhub-price-target-empty", { ticker, fields: Object.keys(data) });
+      return { status: "unavailable" };
+    }
     return { status: "available", high: data.targetHigh ?? null, low: data.targetLow ?? null, mean: data.targetMean ?? null, median: data.targetMedian ?? null, updatedAt: data.lastUpdated ?? new Date().toISOString(), source: "Finnhub" };
-  } catch { return { status: "unavailable" }; }
+  } catch (error) {
+    console.warn("finnhub-price-target-request-failed", { ticker, reason: error instanceof Error ? error.name : "unknown" });
+    return { status: "unavailable" };
+  }
 }
 
 function latestFact(facts: CompanyFacts, tags: string[], unit = "USD"): SecFact[] {

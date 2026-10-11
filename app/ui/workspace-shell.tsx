@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions";
 import { useExperience } from "@/app/ui/theme-provider";
 import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
-import { NavigationIcon, type NavigationIconName } from "@/app/ui/navigation-icon";
+import { NavigationIcon, NavigationTrail, type NavigationIconName } from "@/app/ui/navigation-icon";
 
 const navigation: { href: string; label: string; icon: NavigationIconName; technical?: boolean }[] = [
   { href: "/overview", label: "Overview", icon: "overview" },
@@ -117,7 +117,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
           {visibleNavigation.map((item) => {
             const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return <Link data-technical={item.technical ? "true" : undefined} className={`nav-link${isActive ? " active" : ""}`} href={item.href} key={item.href} aria-current={isActive ? "page" : undefined}>
-              <span className="nav-icon"><NavigationIcon name={item.icon} /></span>{item.label}<span className="nav-trail" aria-hidden="true">›</span>
+              <span className="nav-icon"><NavigationIcon name={item.icon} /></span>{item.label}<NavigationTrail />
             </Link>;
           })}
         </nav>
@@ -125,11 +125,11 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
           <div className="promo-mark">∿</div>
           <b>Markets don’t keep office hours.</b>
           <p>Follow the facts across the quiet hours.</p>
-          <Link href="/research">Open research desk <span>↗</span></Link>
+          <Link href="/research">Open research desk <NavigationTrail /></Link>
         </div>
         <div className="sidebar-bottom">
           <Link className="data-status" href="/settings">
-            <span className="status-dot" /><span><b>Research systems</b><small>Source-first · Qwen assisted</small></span><span className="status-arrow">↗</span>
+            <span className="status-dot" /><span><b>Research systems</b><small>Source-first · Qwen assisted</small></span><NavigationTrail className="status-arrow" />
           </Link>
           <div className="user-profile">
             <div className="avatar">{avatarUrl ? <Image src={avatarUrl} alt={profileLabel + " profile photo"} width={30} height={30} unoptimized /> : profileInitial}</div>
@@ -147,7 +147,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
         <div className="route-content">{children}</div>
         <footer className="page-footer"><span>© 2026 Tidelight Research</span><span><b>Clarity when the bell is quiet.</b> <i>Built for markets that never sleep.</i></span><nav className="legal-footer-links" aria-label="Legal and account links"><Link href="/terms">TERMS</Link><Link href="/privacy">PRIVACY</Link><Link href="/settings">SETTINGS <span className="footer-dot">●</span></Link></nav></footer>
       </main>
-      {mobileMenuOpen ? <div className="mobile-drawer-backdrop" onClick={() => setMobileMenuPath(null)}><aside className="mobile-workspace-drawer" id="mobile-workspace-drawer" aria-label="Workspace navigation" onClick={(event) => event.stopPropagation()}><div className="mobile-drawer-head"><span>YOUR WORKSPACE</span><button type="button" aria-label="Close menu" onClick={() => setMobileMenuPath(null)}>×</button></div><nav className="mobile-drawer-links">{visibleNavigation.map((item) => { const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href); return <Link key={item.href} data-technical={item.technical ? "true" : undefined} className={`mobile-drawer-link${isActive ? " active" : ""}`} href={item.href} onClick={() => setMobileMenuPath(null)} aria-current={isActive ? "page" : undefined}><span className="mobile-drawer-icon"><NavigationIcon name={item.icon} /></span>{item.label}<i aria-hidden="true">›</i></Link>; })}<Link className="mobile-drawer-link" href="/settings" onClick={() => setMobileMenuPath(null)}><span className="mobile-drawer-icon"><NavigationIcon name="settings" /></span>Settings<i aria-hidden="true">›</i></Link></nav><div className="mobile-drawer-foot"><div className="mobile-profile-avatar">{avatarUrl ? <Image src={avatarUrl} alt={profileLabel + " profile photo"} width={30} height={30} unoptimized /> : <span>{profileInitial}</span>}</div><span><b>{email ? profileLabel : "Your Tidelight desk"}</b><small>{email ?? "Sign in to save your research"}</small></span></div></aside></div> : null}
+      {mobileMenuOpen ? <div className="mobile-drawer-backdrop" onClick={() => setMobileMenuPath(null)}><aside className="mobile-workspace-drawer" id="mobile-workspace-drawer" aria-label="Workspace navigation" onClick={(event) => event.stopPropagation()}><div className="mobile-drawer-head"><span>YOUR WORKSPACE</span><button type="button" aria-label="Close menu" onClick={() => setMobileMenuPath(null)}>×</button></div><nav className="mobile-drawer-links">{visibleNavigation.map((item) => { const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href); return <Link key={item.href} data-technical={item.technical ? "true" : undefined} className={`mobile-drawer-link${isActive ? " active" : ""}`} href={item.href} onClick={() => setMobileMenuPath(null)} aria-current={isActive ? "page" : undefined}><span className="mobile-drawer-icon"><NavigationIcon name={item.icon} /></span>{item.label}<NavigationTrail /></Link>; })}<Link className="mobile-drawer-link" href="/settings" onClick={() => setMobileMenuPath(null)}><span className="mobile-drawer-icon"><NavigationIcon name="settings" /></span>Settings<NavigationTrail /></Link></nav><div className="mobile-drawer-foot"><div className="mobile-profile-avatar">{avatarUrl ? <Image src={avatarUrl} alt={profileLabel + " profile photo"} width={30} height={30} unoptimized /> : <span>{profileInitial}</span>}</div><span><b>{email ? profileLabel : "Your Tidelight desk"}</b><small>{email ?? "Sign in to save your research"}</small></span>{email ? <form action={signOut}><button className="mobile-signout" aria-label="Sign out" title="Sign out">↪</button></form> : <Link className="mobile-signin" href="/login">Sign in</Link>}</div></aside></div> : null}
     </div>
   );
 }

@@ -11,7 +11,8 @@ import "./landing.css";
 import "./mobile-polish.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://tidelight.app"),
+  metadataBase: new URL("https://tidelight.app"),
+  alternates: { canonical: "https://tidelight.app" },
   title: "Tidelight — See the signal between sessions",
   description: "An after-hours research desk for tokenized US equities. Follow market events with clear context, scenarios, and sources.",
   icons: {
@@ -24,8 +25,16 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Tidelight — See the signal between sessions",
     description: "Clear, source-led research for markets that never sleep.",
-    images: ["/tidelight-social.svg"],
+    url: "https://tidelight.app",
+    siteName: "Tidelight",
+    images: [{ url: "/tidelight-social.png", width: 1200, height: 630, alt: "Tidelight — clarity after the closing bell" }],
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tidelight — See the signal between sessions",
+    description: "An after-hours research desk for tokenized US equities. Follow market events with clear context, scenarios, and sources.",
+    images: [{ url: "/tidelight-social.png", alt: "Tidelight — clarity after the closing bell" }],
   },
 };
 

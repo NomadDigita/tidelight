@@ -133,6 +133,7 @@ font-size:16px;
 color:#839893
 }
 .nav-icon svg{display:block;width:17px;height:17px}
+.nav-icon .navigation-icon-image{display:block;width:17px!important;height:17px!important;max-width:17px!important;max-height:17px!important;flex:0 0 17px;object-fit:contain;border-radius:4px}
 .active .nav-icon {
   color:#a4e6c4
 }

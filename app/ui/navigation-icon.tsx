@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 export type NavigationIconName = "overview" | "guide" | "research" | "flow" | "community" | "markets" | "strategies" | "nightwatch" | "futures" | "trading" | "watchlist" | "briefs" | "demo" | "systems" | "settings";
 
 export function NavigationIcon({ name, className }: { name: NavigationIconName; className?: string }) {
-  if (name === "trading") return <img className={className} src="/bitget-mark.png" alt="" aria-hidden="true" />;
+  if (name === "trading") return <img className={`navigation-icon-image${className ? ` ${className}` : ""}`} src="/bitget-mark.png" alt="" aria-hidden="true" />;
   const shared = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   const paths: Record<NavigationIconName, ReactNode> = {
     overview: <><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></>,

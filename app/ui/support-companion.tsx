@@ -61,11 +61,7 @@ export default function SupportCompanion() {
   const dragRef = useRef<{ startY: number; origin: number } | null>(null);
   const bottomRef = useRef(16);
   const draggedRef = useRef(false);
-  const [bottom, setBottom] = useState<number | null>(() => {
-    if (typeof window === "undefined") return null;
-    const value = Number(window.localStorage.getItem("tidelight-tide-bottom"));
-    return Number.isFinite(value) ? Math.max(12, Math.min(value, Math.max(12, window.innerHeight - 92))) : null;
-  });
+  const [bottom, setBottom] = useState<number | null>(null);
   const suggestions = starts[Object.keys(starts).find((path) => pathname.startsWith(path)) ?? ""] ?? defaultStarts;
 
   useEffect(() => {
@@ -77,6 +73,16 @@ export default function SupportCompanion() {
         if (valid[0]?.messages?.length) { conversationIdRef.current = valid[0].id; setMessages(valid[0].messages); }
       }, 0);
     } catch { /* a corrupt local history should never block Tide */ }
+  }, []);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("tidelight-tide-bottom");
+    if (saved === null) return;
+    const value = Number(saved);
+    if (!Number.isFinite(value)) return;
+    const restored = Math.max(12, Math.min(value, Math.max(12, window.innerHeight - 92)));
+    bottomRef.current = restored;
+    setBottom(restored);
   }, []);
 
   function saveConversation(nextMessages: Message[]) {

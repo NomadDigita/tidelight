@@ -9,6 +9,7 @@ import SupportCompanion from "./ui/support-companion";
 import "./support-companion.css";
 import "./landing.css";
 import "./mobile-polish.css";
+import "./stock-market.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://tidelight.app"),

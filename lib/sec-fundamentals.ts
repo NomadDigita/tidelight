@@ -10,6 +10,13 @@ const SEC_WEB = "https://www.sec.gov";
 const identity = process.env.SEC_USER_AGENT || "Tidelight contact research@tidelight.app";
 const requestHeaders = { "User-Agent": identity, Accept: "application/json" };
 
+export class SecIssuerNotFoundError extends Error {
+  constructor(ticker: string) {
+    super(`No SEC registrant was found for ${ticker}.`);
+    this.name = "SecIssuerNotFoundError";
+  }
+}
+
 async function secJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { headers: requestHeaders, next: { revalidate: 21600 }, signal: AbortSignal.timeout(12000) });
   if (!response.ok) throw new Error(`SEC returned HTTP ${response.status}`);
@@ -91,7 +98,7 @@ export async function getSecCompanyResearch(ticker: string, website: string | nu
   const normalized = ticker.toUpperCase();
   const index = await secJson<TickerIndex>(`${SEC_WEB}/files/company_tickers.json`);
   const match = Object.values(index).find((item) => item.ticker.toUpperCase() === normalized);
-  if (!match) throw new Error("Issuer is not listed in the SEC company ticker index.");
+  if (!match) throw new SecIssuerNotFoundError(normalized);
   const cik = String(match.cik_str).padStart(10, "0");
   const [submissions, companyfacts] = await Promise.all([
     secJson<Submissions>(`${SEC}/submissions/CIK${cik}.json`),

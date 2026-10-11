@@ -1,5 +1,5 @@
 import { getIssuerWebsite, getBitgetAsset } from "@/lib/bitget-market";
-import { getSecCompanyResearch, type CompanyResearch } from "@/lib/sec-fundamentals";
+import { getSecCompanyResearch, SecIssuerNotFoundError, type CompanyResearch } from "@/lib/sec-fundamentals";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const tickerPattern = /^[A-Z][A-Z0-9.]{0,9}$/;
@@ -38,6 +38,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ sym
       return Response.json({ status: "available", research, freshness: "current" }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
     } catch (error) {
       if (cached) return Response.json({ status: "available", research: cached.payload, freshness: "stale", cachedAt: cached.fetched_at, warning: "SEC filing data could not be refreshed." }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } });
+      if (error instanceof SecIssuerNotFoundError) return Response.json({ status: "unsupported", reason: "No SEC registrant record was found for this underlying ticker. Company filing data is unavailable for this instrument." }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" } });
       console.warn("sec-company-research-fetch-failed", error instanceof Error ? error.message : "unknown");
       return Response.json({ status: "unavailable", error: "SEC filing data is temporarily unavailable." }, { status: 503, headers: { "Cache-Control": "no-store" } });
     }

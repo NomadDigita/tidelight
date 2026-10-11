@@ -110,22 +110,23 @@ color:#eaf5ef
 color:#b9efd5;
 box-shadow:inset 2px 0 #84dbb5
 }
-.nav-trail {
+.navigation-trail {
   display:grid;
   place-items:center;
-  flex:0 0 14px;
-  width:14px;
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
   margin-left:auto;
-  color:var(--faint);
-  font:18px/1 var(--font);
-  opacity:.65;
+  color:color-mix(in srgb,var(--brand-teal) 65%,var(--muted));
+  opacity:.82;
   transition:transform .18s ease,color .18s ease,opacity .18s ease;
 }
-.nav-link:hover .nav-trail,.nav-link.active .nav-trail {
+.navigation-trail svg{display:block;width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+.nav-link:hover .navigation-trail,.nav-link.active .navigation-trail {
   color:var(--brand-teal);
   opacity:1;
 }
-.nav-link:hover .nav-trail { transform:translateX(2px); }
+.nav-link:hover .navigation-trail,.mobile-drawer-link:hover .navigation-trail{transform:translateX(1px);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--brand-teal) 45%,transparent))}
 .nav-icon {
   width:16px;
 text-align:center;
@@ -1398,7 +1399,7 @@ a{transition:color .18s ease,border-color .18s ease,background .18s ease,transfo
 .sidebar-promo a span{margin-left:5px}
 .data-status{gap:9px;padding:12px 10px;margin-bottom:12px;border-color:#20332f;border-radius:9px;text-decoration:none}
 .data-status b{font-size:9px}.data-status small{font-size:8px}
-.status-arrow{margin-left:auto;color:#647973;font-size:11px}
+.status-arrow{margin-left:auto;color:var(--brand-teal)}
 .user-profile{gap:9px;padding:12px 6px 4px}
 .user-profile-copy{min-width:0;flex:1}.user-profile-copy b,.user-profile-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:145px}
 .user-profile-copy b{font-size:9px}.user-profile-copy small{font-size:8px}
@@ -1753,13 +1754,17 @@ button.primary-link,.primary-link,.nw-run-button,.strategy-run-button {
   .mobile-drawer-link>span{width:16px;text-align:center;color:var(--brand-teal);font-size:13px}
   .mobile-drawer-link .mobile-drawer-icon{display:grid;place-items:center;width:18px;height:18px}
   .mobile-drawer-icon svg{width:18px;height:18px}
-  .mobile-drawer-link>i{margin-left:auto;color:var(--faint);font:10px var(--mono);font-style:normal}
+.mobile-drawer-link>.navigation-trail{flex:0 0 18px;margin-left:auto}
   .mobile-drawer-link:hover,.mobile-drawer-link.active{border-color:color-mix(in srgb,var(--brand-teal) 25%,var(--line));background:color-mix(in srgb,var(--brand-teal) 8%,var(--panel-2));color:var(--text)}
   .mobile-drawer-foot{display:flex;align-items:center;gap:9px;margin-top:auto;padding:11px 5px 1px;border-top:1px solid var(--line)}
   .mobile-drawer-foot img{filter:drop-shadow(0 0 10px color-mix(in srgb,var(--brand-teal) 50%,transparent))}
   .mobile-drawer-foot span{display:grid;gap:3px;min-width:0}
   .mobile-drawer-foot b{overflow:hidden;text-overflow:ellipsis;color:var(--text);font:600 10px var(--font)}
   .mobile-drawer-foot small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:9px}
+  .mobile-drawer-foot form{display:flex;flex:none;margin-left:auto}
+  .mobile-signout{display:grid;place-items:center;width:34px;height:34px;padding:0;border:1px solid color-mix(in srgb,var(--brand-teal) 42%,var(--line));border-radius:50%;background:color-mix(in srgb,var(--brand-teal) 7%,var(--panel));color:var(--brand-teal);font:20px/1 var(--font);cursor:pointer;transition:background .18s,color .18s,transform .18s}
+  .mobile-signout:hover{transform:translateX(2px);background:var(--brand-teal);color:var(--bg)}
+  .mobile-signin{margin-left:auto;padding:8px 10px;border:1px solid color-mix(in srgb,var(--brand-teal) 35%,var(--line));border-radius:7px;color:var(--brand-teal);font:8px var(--mono);letter-spacing:.5px;text-decoration:none}
   .route-content{min-height:calc(100vh - 98px)!important;padding-bottom:20px}
   .content-wrap{padding-top:20px!important}
 }

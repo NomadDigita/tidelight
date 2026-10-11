@@ -24,3 +24,9 @@ export function NavigationIcon({ name, className }: { name: NavigationIconName; 
   };
   return <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...shared}>{paths[name]}</svg>;
 }
+
+export function NavigationTrail({ className }: { className?: string }) {
+  return <span className={`navigation-trail${className ? ` ${className}` : ""}`} aria-hidden="true">
+    <svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.2" /><path d="M7.5 12.5 12 8m-3.7 0H12v3.7" /></svg>
+  </span>;
+}

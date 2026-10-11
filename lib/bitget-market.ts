@@ -241,13 +241,15 @@ export async function getBitgetMarketUniverse() {
 }
 
 export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null> {
-  const instruments = await fetchBitget<BitgetInstrument[]>("/market/instruments?category=SPOT", 1800);
+  const marketQuery = new URLSearchParams({ category: "SPOT", symbol });
+  const stockQuery = new URLSearchParams({ symbol });
+  const instruments = await fetchBitget<BitgetInstrument[]>(`/market/instruments?${marketQuery}`, 1800);
   const instrument = instruments.data.find((item) => item.symbol.toUpperCase() === symbol);
   if (!instrument) return null;
   const [tickers, stockInfo, states] = await Promise.all([
-    fetchBitget<BitgetTicker[]>("/market/tickers?category=SPOT", 12),
+    fetchBitget<BitgetTicker[]>(`/market/tickers?${marketQuery}`, 12),
     instrument.isReality?.toLowerCase() === "yes"
-      ? fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500).catch(() => null)
+      ? fetchBitget<RealityStockInfo[]>(`/reality/market/stock-info?${stockQuery}`, 3600, 4500).catch(() => null)
       : Promise.resolve(null),
     instrument.isReality?.toLowerCase() === "yes"
       ? fetchBitget<Array<{ market: string; daylightType?: string; stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> }>>("/reality/market/states", 60, 5000).catch(() => null)

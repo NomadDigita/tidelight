@@ -6,6 +6,7 @@ type Submissions = { name: string; sic?: string; sicDescription?: string; exchan
 type TickerIndex = Record<string, { cik_str: number; ticker: string; title: string }>;
 
 const SEC = "https://data.sec.gov";
+const SEC_WEB = "https://www.sec.gov";
 const identity = process.env.SEC_USER_AGENT || "Tidelight contact research@tidelight.app";
 const requestHeaders = { "User-Agent": identity, Accept: "application/json" };
 
@@ -88,7 +89,7 @@ function buildPeriods(facts: CompanyFacts, duration: "quarter" | "annual") {
 
 export async function getSecCompanyResearch(ticker: string, website: string | null): Promise<CompanyResearch> {
   const normalized = ticker.toUpperCase();
-  const index = await secJson<TickerIndex>(`${SEC}/files/company_tickers.json`);
+  const index = await secJson<TickerIndex>(`${SEC_WEB}/files/company_tickers.json`);
   const match = Object.values(index).find((item) => item.ticker.toUpperCase() === normalized);
   if (!match) throw new Error("Issuer is not listed in the SEC company ticker index.");
   const cik = String(match.cik_str).padStart(10, "0");

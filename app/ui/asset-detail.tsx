@@ -4,131 +4,105 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CandleInterval, MarketAsset, MarketCandle } from "@/lib/bitget-market";
+import type { CompanyResearch } from "@/lib/sec-fundamentals";
 
 type Interval = CandleInterval;
 type Payload = { asset: MarketAsset };
 type CandlePayload = { candles: MarketCandle[]; error?: string };
+type ResearchPayload = { status: "available" | "unsupported" | "unavailable"; research?: CompanyResearch; freshness?: "current" | "cached" | "stale"; warning?: string; reason?: string };
+type ViewTab = "chart" | "company" | "financials";
 
-const intervals: { value: Interval; label: string }[] = [
-  { value: "1H", label: "1H" }, { value: "4H", label: "4H" }, { value: "1D", label: "1D" },
-];
-
+const intervals: { value: Interval; label: string }[] = [{ value: "1H", label: "1H" }, { value: "4H", label: "4H" }, { value: "1D", label: "1D" }];
+const numberFmt = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 2 });
 function money(value: number | null, maxDecimals = 4) {
   if (value === null) return "—";
   const digits = Math.max(0, Math.min(12, maxDecimals));
-  const minimum = Math.min(digits, value > 0 && value < 0.01 ? 6 : 2);
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: digits, minimumFractionDigits: minimum }).format(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: digits, minimumFractionDigits: value > 0 && value < 0.01 ? 6 : Math.min(2, digits) }).format(value);
 }
+function formatDollars(value: number | null) { return value === null ? "—" : `$${numberFmt.format(value)}`; }
+function date(value: string | number | null) { return value ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"; }
 
 function MarketChart({ candles }: { candles: MarketCandle[] }) {
   const frame = useMemo(() => {
-    const low = Math.min(...candles.map((candle) => candle.low));
-    const high = Math.max(...candles.map((candle) => candle.high));
-    const spread = high - low || Math.max(high * 0.02, 1);
-    const ceiling = high + spread * 0.08;
-    const floor = low - spread * 0.08;
     const drawable = candles.slice(-140);
+    const low = Math.min(...drawable.map((candle) => candle.low));
+    const high = Math.max(...drawable.map((candle) => candle.high));
+    const spread = high - low || Math.max(high * 0.02, 1);
+    const ceiling = high + spread * 0.08, floor = low - spread * 0.08;
     const volumeMax = Math.max(1, ...drawable.map((candle) => candle.volume ?? 0));
-    const x = (index: number) => 18 + (index / Math.max(1, drawable.length - 1)) * 864;
-    const y = (value: number) => 24 + ((ceiling - value) / (ceiling - floor)) * 198;
-    return { drawable, ceiling, floor, volumeMax, x, y };
+    return { drawable, ceiling, floor, volumeMax, x: (index: number) => 18 + (index / Math.max(1, drawable.length - 1)) * 864, y: (value: number) => 24 + ((ceiling - value) / (ceiling - floor)) * 198 };
   }, [candles]);
-
-  if (!candles.length) return <div className="asset-chart-empty">No Bitget candles are available for this interval yet.</div>;
-
+  if (!frame.drawable.length) return <div className="asset-chart-empty">No Bitget candles are available for this interval yet.</div>;
   const barWidth = Math.max(2, Math.min(9, 720 / frame.drawable.length));
-  return <div className="asset-chart-wrap">
-    <svg className="asset-chart" viewBox="0 0 900 300" role="img" aria-label={`${candles.length} Bitget market candles`}>
-      {[0, 1, 2, 3].map((line) => {
-        const y = 24 + line * 66;
-        const value = frame.ceiling - (line / 3) * (frame.ceiling - frame.floor);
-        return <g key={line}><line x1="12" x2="888" y1={y} y2={y} className="chart-gridline" /><text x="12" y={y - 5} className="chart-axis-label">{money(value, 2)}</text></g>;
-      })}
-      {frame.drawable.map((candle, index) => {
-        const x = frame.x(index);
-        const openY = frame.y(candle.open);
-        const closeY = frame.y(candle.close);
-        const up = candle.close >= candle.open;
-        const bodyTop = Math.min(openY, closeY);
-        const bodyHeight = Math.max(2, Math.abs(closeY - openY));
-        const volumeHeight = 36 * ((candle.volume ?? 0) / frame.volumeMax);
-        return <g key={candle.timestamp} className={up ? "candle-up" : "candle-down"}>
-          <title>{`${new Date(candle.timestamp).toLocaleString()} · O ${money(candle.open)} H ${money(candle.high)} L ${money(candle.low)} C ${money(candle.close)}`}</title>
-          <line x1={x} x2={x} y1={frame.y(candle.high)} y2={frame.y(candle.low)} className="chart-wick" />
-          <rect x={x - barWidth / 2} y={bodyTop} width={barWidth} height={bodyHeight} rx="1" className="chart-body" />
-          <rect x={x - barWidth / 2} y={268 - volumeHeight} width={barWidth} height={volumeHeight} className="chart-volume" />
-        </g>;
-      })}
-      <text x="16" y="294" className="chart-axis-label">{new Date(frame.drawable[0].timestamp).toLocaleDateString()}</text>
-      <text x="884" y="294" textAnchor="end" className="chart-axis-label">{new Date(frame.drawable[frame.drawable.length - 1].timestamp).toLocaleDateString()}</text>
-      <text x="18" y="248" className="chart-volume-label">VOLUME</text>
-    </svg>
-  </div>;
+  return <div className="asset-chart-wrap"><svg className="asset-chart" viewBox="0 0 900 300" role="img" aria-label={`${frame.drawable.length} Bitget market candles`}>
+    {[0, 1, 2, 3].map((line) => { const y = 24 + line * 66, value = frame.ceiling - (line / 3) * (frame.ceiling - frame.floor); return <g key={line}><line x1="12" x2="888" y1={y} y2={y} className="chart-gridline"/><text x="12" y={y - 5} className="chart-axis-label">{money(value, 2)}</text></g>; })}
+    {frame.drawable.map((candle, index) => { const x = frame.x(index), openY = frame.y(candle.open), closeY = frame.y(candle.close), up = candle.close >= candle.open, volumeHeight = 36 * ((candle.volume ?? 0) / frame.volumeMax); return <g key={candle.timestamp} className={up ? "candle-up" : "candle-down"}><title>{`${new Date(candle.timestamp).toLocaleString()} · O ${money(candle.open)} H ${money(candle.high)} L ${money(candle.low)} C ${money(candle.close)}`}</title><line x1={x} x2={x} y1={frame.y(candle.high)} y2={frame.y(candle.low)} className="chart-wick"/><rect x={x - barWidth / 2} y={Math.min(openY, closeY)} width={barWidth} height={Math.max(2, Math.abs(closeY - openY))} rx="1" className="chart-body"/><rect x={x - barWidth / 2} y={268 - volumeHeight} width={barWidth} height={volumeHeight} className="chart-volume"/></g>; })}
+    <text x="16" y="294" className="chart-axis-label">{date(frame.drawable[0].timestamp)}</text><text x="884" y="294" textAnchor="end" className="chart-axis-label">{date(frame.drawable.at(-1)?.timestamp ?? null)}</text><text x="18" y="248" className="chart-volume-label">VOLUME</text>
+  </svg></div>;
+}
+
+function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) { return <div className="stock-stat"><span>{label}</span><b className={tone ?? ""}>{value}</b></div>; }
+
+function FinancialRows({ research, annual }: { research: CompanyResearch; annual: boolean }) {
+  const rows = annual ? research.financials.annual : research.financials.quarterly;
+  const fields: [string, keyof (typeof rows)[number]][] = [["Revenue", "revenue"], ["Net income", "netIncome"], ["Total assets", "totalAssets"], ["Total liabilities", "totalLiabilities"], ["Operating cash flow", "operatingCashFlow"], ["Capital expenditure", "capitalExpenditure"]];
+  const sections = [
+    { title: "Income statement", fields: fields.slice(0, 2), color: "teal" },
+    { title: "Balance sheet", fields: fields.slice(2, 4), color: "blue" },
+    { title: "Cash flow statement", fields: fields.slice(4), color: "violet" },
+  ];
+  if (!rows.length) return <div className="research-empty"><b>Filing data not found yet</b><span>SEC EDGAR did not return compatible reported periods for this issuer.</span></div>;
+  return <div className="financial-sections">{sections.map((section) => <section className={`financial-card ${section.color}`} key={section.title}><div className="financial-card-head"><div><span className="eyebrow small-eyebrow">SEC REPORTED · USD</span><h3>{section.title}</h3></div><span className="financial-units">{annual ? "Annual" : "Quarterly"}</span></div><div className="financial-chart" role="img" aria-label={`${section.title} reported values across ${rows.length} periods`}>{section.fields.map(([label, field]) => {
+    const values = rows.map((row) => row[field] as number | null), max = Math.max(1, ...values.map((value) => value === null ? 0 : Math.abs(value)));
+    return <div className="financial-series" key={label}><div className="financial-series-label"><i/> {label}</div><div className="financial-bars">{rows.slice(0, 8).reverse().map((row) => { const value = row[field] as number | null; return <div className="financial-bar-wrap" key={`${label}-${row.periodEnd}`}><span title={`${row.period}: ${formatDollars(value)}`} className="financial-bar" style={{ height: `${Math.max(value === null ? 3 : 8, 100 * Math.abs(value ?? 0) / max)}%` }}/><small>{row.period.replace(" ", "\n")}</small></div>; })}</div></div>;
+  })}</div><div className="financial-table" role="table" aria-label={`${section.title} values`}>{section.fields.map(([label, field]) => <div className="financial-row" role="row" key={label}><b>{label}</b>{rows.slice(0, 5).map((row) => <span role="cell" key={`${label}-${row.periodEnd}`} title={`${row.form} filed ${row.filed || "date unavailable"}`}>{formatDollars(row[field] as number | null)}</span>)}</div>)}<div className="financial-row period-row"><b>Period</b>{rows.slice(0, 5).map((row) => <span key={row.periodEnd}>{row.period}</span>)}</div></div><p className="filing-foot">Reported periods · Latest filing {date(rows[0]?.filed)} · SEC EDGAR</p></section>)}</div>;
 }
 
 export default function AssetDetail({ symbol }: { symbol: string }) {
-  const [asset, setAsset] = useState<MarketAsset | null>(null);
-  const [candles, setCandles] = useState<MarketCandle[]>([]);
-  const [interval, setInterval] = useState<Interval>("1D");
-  const [loading, setLoading] = useState(true);
-  const [loadedChartKey, setLoadedChartKey] = useState("");
-  const [error, setError] = useState("");
-  const [chartError, setChartError] = useState("");
-  const [logoFailed, setLogoFailed] = useState(false);
+  const [asset, setAsset] = useState<MarketAsset | null>(null), [candles, setCandles] = useState<MarketCandle[]>([]);
+  const [interval, setInterval] = useState<Interval>("1D"), [loading, setLoading] = useState(true), [loadedChartKey, setLoadedChartKey] = useState("");
+  const [error, setError] = useState(""), [chartError, setChartError] = useState(""), [logoFailed, setLogoFailed] = useState(false);
+  const [tab, setTab] = useState<ViewTab>("chart"), [research, setResearch] = useState<ResearchPayload | null>(null), [researchLoading, setResearchLoading] = useState(false), [annual, setAnnual] = useState(false), [sessionOpen, setSessionOpen] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    void fetch(`/api/market/assets/${encodeURIComponent(symbol)}`).then(async (response) => {
-      const body = await response.json() as Payload & { error?: string };
-      if (!response.ok) throw new Error(body.error ?? "Market details unavailable");
-      if (active) { setAsset(body.asset); setError(""); }
-    }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "Market details unavailable"); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [symbol]);
+  useEffect(() => { let active = true; void fetch(`/api/market/assets/${encodeURIComponent(symbol)}`).then(async (response) => { const body = await response.json() as Payload & { error?: string }; if (!response.ok) throw new Error(body.error ?? "Market details unavailable"); if (active) { setAsset(body.asset); setError(""); } }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "Market details unavailable"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [symbol]);
+  useEffect(() => { let active = true; void fetch(`/api/market/assets/${encodeURIComponent(symbol)}/candles?interval=${interval}`).then(async (response) => { const body = await response.json() as CandlePayload; if (!response.ok) throw new Error(body.error ?? "Bitget candle history unavailable"); if (active) { setCandles(body.candles); setChartError(""); } }).catch((cause: unknown) => { if (active) { setCandles([]); setChartError(cause instanceof Error ? cause.message : "Bitget candle history unavailable"); } }).finally(() => { if (active) setLoadedChartKey(`${symbol}:${interval}`); }); return () => { active = false; }; }, [symbol, interval]);
+  useEffect(() => { if (!asset || asset.kind !== "rtoken" || tab === "chart" || research) return; let active = true; setResearchLoading(true); void fetch(`/api/market/assets/${encodeURIComponent(symbol)}/fundamentals`).then(async (response) => { const body = await response.json() as ResearchPayload; if (active) setResearch(body); }).catch(() => { if (active) setResearch({ status: "unavailable" }); }).finally(() => { if (active) setResearchLoading(false); }); return () => { active = false; }; }, [asset, symbol, tab, research]);
 
-  useEffect(() => {
-    let active = true;
-    void fetch(`/api/market/assets/${encodeURIComponent(symbol)}/candles?interval=${interval}`).then(async (response) => {
-      const body = await response.json() as CandlePayload;
-      if (!response.ok) throw new Error(body.error ?? "Bitget candle history unavailable");
-      if (active) { setCandles(body.candles); setChartError(""); }
-    }).catch((cause: unknown) => { if (active) { setCandles([]); setChartError(cause instanceof Error ? cause.message : "Bitget candle history unavailable"); } })
-      .finally(() => { if (active) setLoadedChartKey(`${symbol}:${interval}`); });
-    return () => { active = false; };
-  }, [symbol, interval]);
-
-  const change = asset?.change24h ?? null;
-  const lastCandle = candles.at(-1);
-  const firstCandle = candles[0];
-  const chartLoading = loadedChartKey !== `${symbol}:${interval}`;
-  const changeClass = change !== null && change !== undefined && change < 0 ? "negative" : "positive";
-
+  const change = asset?.change24h ?? null, lastCandle = candles.at(-1), firstCandle = candles[0], chartLoading = loadedChartKey !== `${symbol}:${interval}`;
+  const changeClass = change !== null && change < 0 ? "negative" : "positive";
   if (loading && !asset) return <div className="content-wrap inner-page asset-page"><div className="asset-loading">Loading verified Bitget market details…</div></div>;
   if (error && !asset) return <div className="content-wrap inner-page asset-page"><Link className="asset-back" href="/markets">← Market map</Link><div className="universe-message"><b>Market details unavailable</b><span>{error}</span></div></div>;
   if (!asset) return null;
+  const stock = asset.kind === "rtoken";
+  const tabItems: { id: ViewTab; label: string }[] = [{ id: "chart", label: "Chart" }, ...(stock ? [{ id: "company" as const, label: "Company" }, { id: "financials" as const, label: "Financials" }] : [])];
+  const sessionName = asset.marketSession?.schedule.map((item) => item.state.replaceAll("_", " ")).join(" · ") || (asset.marketSessionStatus === "unavailable" ? "Session feed unavailable" : "Session details unavailable");
 
-  return <div className="content-wrap inner-page asset-page">
+  return <div className="content-wrap inner-page asset-page stock-workspace">
     <nav className="asset-breadcrumb" aria-label="Breadcrumb"><Link href="/markets">Market map</Link><span>/</span><span>{asset.symbol}</span></nav>
-    <header className="asset-profile">
+    <header className="asset-profile stock-hero">
       <div className={`asset-profile-logo ${asset.kind}`}>{asset.logoUrl && !logoFailed ? <img src={asset.logoUrl} alt="" onError={() => setLogoFailed(true)} /> : <b>{(asset.underlyingTicker ?? asset.baseCoin).slice(0, 1)}</b>}</div>
-      <div className="asset-profile-heading"><div className="eyebrow"><span className="eyebrow-line" /> BITGET {asset.kind === "rtoken" ? "REALITY ASSET" : asset.kind === "rwa" ? "RWA MARKET" : "SPOT MARKET"}</div><h1>{asset.name}</h1><p>{asset.underlyingTicker ? `${asset.underlyingTicker} · ${asset.symbol}` : asset.symbol} <span>·</span> {asset.quoteCoin} spot pair</p></div>
-      <div className="asset-profile-price"><b>${money(asset.lastPrice)}</b><span className={changeClass}>{change === null ? "Change unavailable" : `${change >= 0 ? "+" : ""}${(change * 100).toFixed(2)}% · 24h`}</span><small>Bitget · {asset.providerTimestamp ? new Date(asset.providerTimestamp).toLocaleString() : "timestamp unavailable"}</small></div>
+      <div className="asset-profile-heading"><div className="eyebrow"><span className="eyebrow-line"/> TIDELIGHT · {asset.kind === "rtoken" ? "REALITY STOCK" : asset.kind === "rwa" ? "RWA MARKET" : "SPOT MARKET"}</div><h1>{asset.name}</h1><p>{asset.underlyingTicker ? `${asset.underlyingTicker} · ${asset.symbol}` : asset.symbol}<span>·</span>{asset.quoteCoin} spot pair</p></div>
+      <div className="asset-profile-price"><b>${money(asset.lastPrice)}</b><span className={changeClass}>{change === null ? "Change unavailable" : `${change >= 0 ? "+" : ""}${(change * 100).toFixed(2)}% · 24h`}</span><small>BITGET · {asset.providerTimestamp ? new Date(asset.providerTimestamp).toLocaleString() : "TIMESTAMP UNAVAILABLE"}</small></div>
     </header>
+    <nav className="stock-tabs" aria-label="Instrument views" role="tablist">{tabItems.map((item) => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} onClick={() => setTab(item.id)}>{item.label}</button>)}<span className="stock-tab-spacer"/>{stock && <span className="stock-issuer-chip">{asset.underlyingTicker} · US EQUITY</span>}</nav>
 
-    <div className="asset-detail-grid">
-      <section className="asset-panel asset-chart-panel" aria-labelledby="price-chart-title">
-        <div className="asset-panel-head"><div><div className="eyebrow small-eyebrow">BITGET SPOT · OHLCV</div><h2 id="price-chart-title">Price history</h2></div><div className="asset-intervals" role="group" aria-label="Chart interval">{intervals.map((item) => <button key={item.value} type="button" aria-pressed={interval === item.value} className={interval === item.value ? "selected" : ""} onClick={() => setInterval(item.value)}>{item.label}</button>)}</div></div>
-        {chartLoading ? <div className="asset-chart-empty" role="status">Loading Bitget candles…</div> : chartError ? <div className="asset-chart-empty" role="status">{chartError}</div> : <MarketChart candles={candles} />}
-        <div className="asset-chart-foot"><span>{candles.length ? `${candles.length} candles · ${interval}` : "Bitget public candle feed"}</span><span>{lastCandle ? `Last close $${money(lastCandle.close)}` : "No last close"}</span></div>
-      </section>
+    {tab === "chart" && <div id="panel-chart" role="tabpanel" aria-labelledby="tab-chart" className="stock-tab-panel">
+      <section className="stock-market-state"><div><span className={`market-live-dot ${asset.marketSessionStatus === "available" ? "is-live" : ""}`}/><div><b>{asset.marketSession ? "US market session reference" : asset.marketSessionStatus === "unavailable" ? "Market session unavailable" : "Session reference pending"}</b><small>{sessionName}</small></div></div><button type="button" onClick={() => setSessionOpen(true)}>Trading hours <span>↗</span></button></section>
+      <div className="stock-stats-grid"><Stat label="24h change" value={change === null ? "—" : `${change >= 0 ? "+" : ""}${(change * 100).toFixed(2)}%`} tone={changeClass}/><Stat label="24h high" value={`$${money(asset.high24h)}`}/><Stat label="24h low" value={`$${money(asset.low24h)}`}/><Stat label="Turnover · 24h" value={formatDollars(asset.turnover24h)}/><Stat label="Underlying" value={asset.underlyingTicker ?? "—"}/><Stat label="Weekend trading" value={asset.weekendTradable === null ? "Not provided" : asset.weekendTradable ? "Supported" : "Not supported"}/></div>
+      <section className="asset-panel asset-chart-panel stock-chart-panel"><div className="asset-panel-head"><div><div className="eyebrow small-eyebrow">BITGET SPOT · OHLCV</div><h2 id="price-chart-title">Price history</h2></div><div className="asset-intervals" role="group" aria-label="Chart interval">{intervals.map((item) => <button key={item.value} type="button" aria-pressed={interval === item.value} className={interval === item.value ? "selected" : ""} onClick={() => setInterval(item.value)}>{item.label}</button>)}</div></div>{chartLoading ? <div className="asset-chart-empty" role="status">Loading Bitget candles…</div> : chartError ? <div className="asset-chart-empty" role="status">{chartError}</div> : <MarketChart candles={candles}/>}<div className="asset-chart-foot"><span>{candles.length ? `${candles.length} candles · ${interval}` : "Bitget public candle feed"}</span><span>{lastCandle ? `Last close $${money(lastCandle.close)}` : "No last close"}</span></div></section>
+      <div className="asset-detail-grid stock-detail-grid"><section className="asset-panel"><div className="eyebrow small-eyebrow">INSTRUMENT REFERENCE</div><h2>Market specifications</h2><dl className="asset-facts"><div><dt>Asset class</dt><dd>{stock ? "Reality · tokenized US equity" : asset.kind === "rwa" ? "Bitget flagged RWA" : "Digital asset"}</dd></div><div><dt>Underlying ticker</dt><dd>{asset.underlyingTicker ?? "Not applicable"}</dd></div><div><dt>Tradable sessions</dt><dd>{asset.tradingSessions.length ? asset.tradingSessions.map((value) => value.replaceAll("_", " ")).join(" · ") : "Not provided"}</dd></div><div><dt>Observed candles</dt><dd>{firstCandle && lastCandle ? `${date(firstCandle.timestamp)} — ${date(lastCandle.timestamp)}` : "Awaiting candles"}</dd></div></dl></section><aside className="asset-panel stock-context-card"><div className="eyebrow small-eyebrow">CLEAR EYES, BETTER CONTEXT</div><h2>One instrument. Two markets.</h2><p>Tidelight tracks the Bitget tokenized market alongside public issuer filings. The underlying US equity market and this token market have separate hours, liquidity and pricing.</p><button type="button" onClick={() => setSessionOpen(true)}>Explore session details <span>↗</span></button></aside></div>
+    </div>}
 
-      <aside className="asset-panel asset-facts-panel"><div className="eyebrow small-eyebrow">INSTRUMENT REFERENCE</div><h2>What this market is</h2>
-        <dl className="asset-facts"><div><dt>Asset class</dt><dd>{asset.kind === "rtoken" ? "Reality · tokenized US equity" : asset.kind === "rwa" ? "Bitget flagged RWA" : "Digital asset"}</dd></div><div><dt>Underlying</dt><dd>{asset.underlyingTicker ?? "Not applicable"}</dd></div><div><dt>Weekend trading</dt><dd>{asset.weekendTradable === null ? "Not provided" : asset.weekendTradable ? "Supported" : "Not supported"}</dd></div><div><dt>Tradable sessions</dt><dd>{asset.tradingSessions.length ? asset.tradingSessions.map((value) => value.replaceAll("_", " ")).join(" · ") : "Not provided"}</dd></div><div><dt>24h high / low</dt><dd>${money(asset.high24h)} / ${money(asset.low24h)}</dd></div><div><dt>24h turnover</dt><dd>${money(asset.turnover24h, 0)}</dd></div><div><dt>Observed period</dt><dd>{firstCandle && lastCandle ? `${new Date(firstCandle.timestamp).toLocaleDateString()} — ${new Date(lastCandle.timestamp).toLocaleDateString()}` : "Awaiting candles"}</dd></div></dl>
-        <div className="asset-source-note"><b>Source and limits</b><p>Prices and candles come from Bitget’s public spot market API. Reality classification, underlying ticker, tradable sessions and weekend status come from Bitget reference data. Mapped company names and logos are display metadata. This is not an order book or a trade recommendation.</p></div>
-      </aside>
-    </div>
+    {tab === "company" && <div id="panel-company" role="tabpanel" aria-labelledby="tab-company" className="stock-tab-panel"><div className="research-toolbar"><div><span className="eyebrow small-eyebrow">ISSUER PROFILE · PRIMARY SOURCE</span><h2>Company overview</h2></div><div className="research-provenance"><b>SEC EDGAR</b><span>{research?.research?.retrievedAt ? `Updated ${new Date(research.research.retrievedAt).toLocaleString()}` : "Public company filings"}</span></div></div>{researchLoading && <div className="research-empty" role="status">Loading issuer profile and reported history…</div>}{research?.status === "available" && research.research ? <>
+      {research.warning && <div className="research-stale" role="status">Showing the last cached SEC filing data. {research.warning}</div>}
+      <section className="company-overview-card"><div className="company-overview-copy"><span className="company-monogram">{asset.underlyingTicker?.slice(0, 1)}</span><div><h3>{research.research.companyName}</h3><p>{research.research.ticker} <span>·</span> {research.research.exchange ?? "Exchange not listed"}</p></div></div><p className="company-description">This issuer profile is assembled from SEC registrant metadata and reported filing facts. SEC source fields below remain distinct from Bitget’s token-market metadata.</p><div className="company-facts-grid"><div><span>Industry</span><b>{research.research.industry ?? "Not disclosed in source"}</b></div><div><span>Primary exchange</span><b>{research.research.exchange ?? "Not disclosed in source"}</b></div><div><span>Headquarters</span><b>{research.research.headquarters ?? "Not disclosed in source"}</b></div><div><span>Employees</span><b>{research.research.employeeCount?.toLocaleString() ?? "Not disclosed in source"}</b></div><div><span>SEC CIK</span><b>{research.research.cik}</b></div><div><span>Official website</span><b>{research.research.website ? <a href={research.research.website} target="_blank" rel="noreferrer">{research.research.website.replace(/^https:\/\//, "")} ↗</a> : "Not verified"}</b></div></div><a className="sec-source-link" href={research.research.sourceUrl} target="_blank" rel="noreferrer">Open SEC issuer record <span>↗</span></a></section>
+      <section className="dividend-panel"><div className="research-toolbar compact"><div><span className="eyebrow small-eyebrow">AS REPORTED IN SEC FILINGS</span><h2>Dividend history</h2></div><span className="unit-note">Per-share amounts · USD</span></div>{research.research.dividends.length ? <div className="dividend-list">{research.research.dividends.map((item) => <div className="dividend-row" key={`${item.periodEnd}-${item.filed}-${item.amountPerShare}`}><div><b>${money(item.amountPerShare, 6)} per share</b><span>Period ending {date(item.periodEnd)}</span></div><div><small>Reported {date(item.filed)}</small><span>{item.unit}</span></div></div>)}</div> : <div className="research-empty short"><b>No per-share cash dividend facts found</b><span>The SEC XBRL submissions returned no compatible reported dividend-per-share facts for this issuer.</span></div>}<p className="filing-foot">Reported per-share amounts do not identify record, ex-dividend or payment dates.</p></section>
+    </> : !researchLoading && <div className="research-empty"><b>{research?.status === "unsupported" ? "SEC profile not available for this market" : "Issuer profile temporarily unavailable"}</b><span>{research?.reason ?? "Tidelight could not retrieve compatible SEC EDGAR issuer data. No unsupported company facts are substituted."}</span></div>}</div>}
 
-    <section className="asset-next-step"><div><div className="eyebrow small-eyebrow">TAKE THE NEXT STEP</div><h2>Put the move in context.</h2><p>Build an evidence-backed brief, or add this underlying company to your private radar.</p></div><div className="asset-next-actions"><Link href={`/research?symbol=${encodeURIComponent(asset.symbol)}`}>Research this market <span>↗</span></Link><Link href={`/watchlist?symbol=${encodeURIComponent(asset.underlyingTicker ?? asset.baseCoin)}`}>Open company radar <span>↗</span></Link></div></section>
+    {tab === "financials" && <div id="panel-financials" role="tabpanel" aria-labelledby="tab-financials" className="stock-tab-panel"><div className="research-toolbar"><div><span className="eyebrow small-eyebrow">SEC XBRL · REPORTED VALUES</span><h2>Financial statements</h2><p className="research-subtitle">Filed company facts, linked to their reporting periods and SEC source.</p></div><div className="financial-period-toggle" role="group" aria-label="Reporting period"><button type="button" aria-pressed={!annual} className={!annual ? "selected" : ""} onClick={() => setAnnual(false)}>Quarterly</button><button type="button" aria-pressed={annual} className={annual ? "selected" : ""} onClick={() => setAnnual(true)}>Annual</button></div></div>{researchLoading && <div className="research-empty" role="status">Loading SEC filing data…</div>}{research?.status === "available" && research.research ? <><FinancialRows research={research.research} annual={annual}/><div className="analyst-card"><div><span className="eyebrow small-eyebrow">SELL-SIDE RESEARCH</span><h3>Analyst price targets</h3><p>Coverage and target consensus requires a licensed analyst data provider.</p></div><div className="analyst-unavailable"><span>NOT CONFIGURED</span><b>No analyst feed connected</b><small>Tidelight does not estimate or invent analyst ratings, target prices or institutions.</small></div></div><p className="sec-financial-source">Primary source: <a href={research.research.sourceUrl} target="_blank" rel="noreferrer">SEC EDGAR · CIK {research.research.cik} ↗</a><span>Updated {new Date(research.research.retrievedAt).toLocaleString()}</span></p></> : !researchLoading && <div className="research-empty"><b>{research?.status === "unsupported" ? "SEC statements are not supported for this market" : "SEC filing data temporarily unavailable"}</b><span>{research?.reason ?? "The public SEC XBRL feed did not return a compatible filing for this issuer."}</span></div>}</div>}
+
+    <section className="asset-next-step stock-next-step"><div><div className="eyebrow small-eyebrow">THE TIDELIGHT RESEARCH DESK</div><h2>Put the move in context.</h2><p>Build an evidence-backed brief, or add this underlying company to your private radar.</p></div><div className="asset-next-actions"><Link href={`/research?symbol=${encodeURIComponent(asset.symbol)}`}>Research this market <span>↗</span></Link><Link href={`/watchlist?symbol=${encodeURIComponent(asset.underlyingTicker ?? asset.baseCoin)}`}>Open company radar <span>↗</span></Link></div></section>
+
+    {sessionOpen && <div className="session-backdrop" role="presentation" onClick={() => setSessionOpen(false)}><section className="session-sheet" role="dialog" aria-modal="true" aria-labelledby="session-title" onClick={(event) => event.stopPropagation()}><div className="session-sheet-grab"/><div className="session-sheet-head"><div><span className="eyebrow small-eyebrow">BITGET REALITY REFERENCE</span><h2 id="session-title">Trading session details</h2></div><button type="button" aria-label="Close session details" onClick={() => setSessionOpen(false)}>×</button></div><p>Underlying US equity hours and token-market availability are separate. Tidelight displays the schedule Bitget publishes for Reality markets; it does not imply underlying shares trade continuously.</p>{asset.marketSession ? <><div className="session-reference-meta"><span>Market</span><b>{asset.marketSession.market} · {asset.marketSession.daylightType ?? "provider timezone"}</b></div><div className="session-schedule">{asset.marketSession.schedule.map((item, index) => <div className="session-schedule-row" key={`${item.state}-${item.startTime}-${index}`}><i className={`session-swatch session-${item.state.toLowerCase().replaceAll("_", "-")}`}/><div><b>{item.state.replaceAll("_", " ")}</b><small>{item.timeZone}</small></div><strong>{item.startTime} <span>—</span> {item.endTime}</strong></div>)}</div></> : <div className="research-empty short"><b>{asset.marketSessionStatus === "unavailable" ? "Session schedule could not be refreshed" : "Session schedule not published"}</b><span>{asset.tradingSessions.length ? `Bitget still reports: ${asset.tradingSessions.join(" · ")}.` : "No session timetable is currently available from the market provider."}</span></div>}<div className="session-limits"><b>Market data note</b><span>Schedules and session labels are provider metadata. Token liquidity, pricing and execution may differ from the underlying exchange.</span></div></section></div>}
   </div>;
 }

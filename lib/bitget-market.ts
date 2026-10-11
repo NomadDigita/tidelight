@@ -47,6 +47,8 @@ export type MarketAsset = {
   isRwa: boolean;
   weekendTradable: boolean | null;
   tradingSessions: string[];
+  marketSession: { market: string; daylightType: string | null; schedule: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> } | null;
+  marketSessionStatus: "available" | "unavailable";
   lastPrice: number;
   change24h: number | null;
   high24h: number | null;
@@ -161,6 +163,12 @@ function getLogo(baseCoin: string, underlyingTicker: string | null, isReality: b
   return null;
 }
 
+export function getIssuerWebsite(underlyingTicker: string | null): string | null {
+  if (!underlyingTicker) return null;
+  const domain = companyDomains[underlyingTicker.toUpperCase()];
+  return domain ? `https://www.${domain}` : null;
+}
+
 function getAssetName(stock: RealityStockInfo | undefined, underlyingTicker: string | null, baseCoin: string): string {
   if (underlyingTicker && issuerNames[underlyingTicker]) return issuerNames[underlyingTicker];
   return stock?.name || baseCoin;
@@ -205,6 +213,8 @@ export async function getBitgetMarketUniverse() {
         isRwa: rwa,
         weekendTradable: stock ? stock.weekendTradable?.toLowerCase() === "yes" : null,
         tradingSessions: sessions,
+        marketSession: session ? { market: session.market, daylightType: session.daylightType ?? null, schedule: session.stateList ?? [] } : null,
+        marketSessionStatus: sessionsResult.status === "rejected" ? "unavailable" : "available",
         lastPrice,
         change24h: numberOrNull(ticker.price24hPcnt),
         high24h: numberOrNull(ticker.highPrice24h),
@@ -234,10 +244,13 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
   const instruments = await fetchBitget<BitgetInstrument[]>("/market/instruments?category=SPOT", 1800);
   const instrument = instruments.data.find((item) => item.symbol.toUpperCase() === symbol);
   if (!instrument) return null;
-  const [tickers, stockInfo] = await Promise.all([
+  const [tickers, stockInfo, states] = await Promise.all([
     fetchBitget<BitgetTicker[]>("/market/tickers?category=SPOT", 12),
     instrument.isReality?.toLowerCase() === "yes"
-      ? fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500)
+      ? fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500).catch(() => null)
+      : Promise.resolve(null),
+    instrument.isReality?.toLowerCase() === "yes"
+      ? fetchBitget<Array<{ market: string; daylightType?: string; stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> }>>("/reality/market/states", 60, 5000).catch(() => null)
       : Promise.resolve(null),
   ]);
   const ticker = tickers.data.find((item) => item.symbol.toUpperCase() === symbol);
@@ -249,6 +262,7 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
   const lastPrice = numberOrNull(ticker.lastPrice);
   if (lastPrice === null) return null;
   const sessions = Array.isArray(stock?.tradingPeriod) ? stock.tradingPeriod : stock?.tradingPeriod ? [stock.tradingPeriod] : [];
+  const marketSession = states?.data.find((item) => item.market === "US") ?? null;
   return {
     symbol: instrument.symbol,
     baseCoin: instrument.baseCoin,
@@ -260,6 +274,8 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
     isRwa: rwa,
     weekendTradable: stock ? stock.weekendTradable?.toLowerCase() === "yes" : null,
     tradingSessions: sessions,
+    marketSession: marketSession ? { market: marketSession.market, daylightType: marketSession.daylightType ?? null, schedule: marketSession.stateList ?? [] } : null,
+    marketSessionStatus: states ? "available" : "unavailable",
     lastPrice,
     change24h: numberOrNull(ticker.price24hPcnt),
     high24h: numberOrNull(ticker.highPrice24h),
@@ -288,6 +304,7 @@ export async function getBitgetStockPerp(symbol: string): Promise<MarketAsset | 
     symbol, baseCoin: instrument.baseCoin, quoteCoin: "USDT", name: issuerNames[underlying] ?? underlying,
     underlyingTicker: underlying, kind: "rtoken", isReality: false, isRwa: false,
     weekendTradable: null, tradingSessions: [], lastPrice: price,
+    marketSession: null, marketSessionStatus: "unavailable",
     change24h: numberOrNull(ticker.price24hPcnt), high24h: numberOrNull(ticker.highPrice24h),
     low24h: numberOrNull(ticker.lowPrice24h), volume24h: numberOrNull(ticker.volume24h),
     turnover24h: numberOrNull(ticker.turnover24h), providerTimestamp: numberOrNull(ticker.ts),

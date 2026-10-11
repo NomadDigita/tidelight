@@ -54,7 +54,7 @@ export default function LandingDocsEmbed() {
 
   function openEmbed(path?: string) {
     if (readyRef.current && window.GitBook) {
-      revealEmbed(path ?? "/tidelight");
+      revealEmbed(path ?? "/use-tidelight/start-here");
       setStatus("The Tidelight guide is open.");
       return;
     }
@@ -63,7 +63,7 @@ export default function LandingDocsEmbed() {
       return;
     }
     pendingOpen.current = true;
-    pendingPage.current = path ?? "/tidelight";
+    pendingPage.current = path ?? "/use-tidelight/start-here";
     setStatus("Loading the Tidelight guide…");
     window.setTimeout(() => {
       if (pendingOpen.current && !readyRef.current) {

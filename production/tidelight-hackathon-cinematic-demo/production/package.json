@@ -1,0 +1,16 @@
+{
+  "name": "tidelight-hackathon-cinematic-demo-production",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Source capture and editing helpers for the Tidelight cinematic demo",
+  "type": "module",
+  "scripts": {
+    "capture:screenshots": "node scripts/capture_screenshots.mjs",
+    "capture:stream": "node scripts/capture_stream.mjs",
+    "capture:video": "node scripts/capture_video.mjs",
+    "render": "bash scripts/render_final.sh"
+  },
+  "dependencies": {
+    "playwright": "^1.56.0"
+  }
+}

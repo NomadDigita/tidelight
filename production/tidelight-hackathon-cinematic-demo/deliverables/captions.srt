@@ -1,0 +1,267 @@
+1
+00:00:00,000 --> 00:00:03,390
+Markets do not wait for the bell. A company update,
+
+2
+00:00:03,390 --> 00:00:06,781
+a policy shift, a new signal—each can ripple through tokenized
+
+3
+00:00:06,781 --> 00:00:10,171
+markets while the headlines are quiet. Tidelight is built to
+
+4
+00:00:10,171 --> 00:00:13,562
+help you follow that ripple with evidence, context, and a
+
+5
+00:00:13,562 --> 00:00:16,613
+decision that stays yours. Start with the market map.
+
+6
+00:00:16,613 --> 00:00:20,924
+This is Bitget’s public spot universe, including tokenized US equities.
+
+7
+00:00:20,924 --> 00:00:25,234
+Quotes carry provider freshness and classification context. Tidelight is read-only
+
+8
+00:00:25,234 --> 00:00:29,544
+here; browsing does not require an exchange key. From an
+
+9
+00:00:29,544 --> 00:00:31,268
+event, move to evidence.
+
+10
+00:00:31,268 --> 00:00:35,068
+Tidelight’s research desk is designed around source material you bring:
+
+11
+00:00:35,068 --> 00:00:38,867
+ask a question, inspect the captured claims beside supporting passages,
+
+12
+00:00:38,867 --> 00:00:42,667
+and keep the source link close. The system is bounded
+
+13
+00:00:42,667 --> 00:00:46,467
+by the evidence supplied. A useful answer should show what
+
+14
+00:00:46,467 --> 00:00:50,266
+supports it, what might disagree, and what remains uncertain. Agent
+
+15
+00:00:50,266 --> 00:00:52,166
+Flow makes the handoffs visible.
+
+16
+00:00:52,166 --> 00:00:56,182
+The journey connects event, evidence, exposure, scenario, and decision. Research
+
+17
+00:00:56,182 --> 00:01:00,197
+can map a company story to available instruments and risk
+
+18
+00:01:00,197 --> 00:01:04,213
+context. When gates do not agree, the right outcome can
+
+19
+00:01:04,213 --> 00:01:08,228
+be to pause or hold. That is a research workflow—not
+
+20
+00:01:08,228 --> 00:01:09,433
+an automatic recommendation.
+
+21
+00:01:09,433 --> 00:01:13,211
+The handoffs are the point. An event is the question,
+
+22
+00:01:13,211 --> 00:01:16,990
+not the answer. Evidence gives it a traceable basis. Exposure
+
+23
+00:01:16,990 --> 00:01:20,013
+asks which issuers and instruments may be affected.
+
+24
+00:01:20,013 --> 00:01:23,563
+A scenario makes assumptions visible: what could happen, what could
+
+25
+00:01:23,563 --> 00:01:27,114
+go the other way, and which new fact would change
+
+26
+00:01:27,114 --> 00:01:30,664
+the view. On the market map, token labels, provider timestamps,
+
+27
+00:01:30,664 --> 00:01:34,215
+and session context distinguish a public quote from a complete
+
+28
+00:01:34,215 --> 00:01:37,766
+investment picture. Tokenized instruments can differ in hours, liquidity, and
+
+29
+00:01:37,766 --> 00:01:41,316
+issuer terms. A price is one observation; it does not
+
+30
+00:01:41,316 --> 00:01:44,867
+prove that an asset can trade at that level or
+
+31
+00:01:44,867 --> 00:01:46,997
+that a strategy can execute there.
+
+32
+00:01:46,997 --> 00:01:50,845
+For a market idea, Strategy Lab turns a rule into
+
+33
+00:01:50,845 --> 00:01:54,692
+a reproducible historical replay. Choose an instrument, interval, and deterministic
+
+34
+00:01:54,692 --> 00:01:58,540
+strategy; review the costs, data window, holdout, and trade record.
+
+35
+00:01:58,540 --> 00:02:02,387
+The published validation is candid: its tested baseline underperformed buy
+
+36
+00:02:02,387 --> 00:02:06,235
+and hold across five markets in that snapshot. It is
+
+37
+00:02:06,235 --> 00:02:09,697
+an experiment to inspect, not a claim of alpha.
+
+38
+00:02:09,697 --> 00:02:13,562
+The hackathon’s Alpha Factory bar asks for at least sixty
+
+39
+00:02:13,562 --> 00:02:17,427
+calendar days with thirty out of sample, so that qualification
+
+40
+00:02:17,427 --> 00:02:21,291
+matters. Strategy Lab replays deterministic rules over completed public candles,
+
+41
+00:02:21,291 --> 00:02:25,156
+with a chronological holdout and explicit fee and slippage assumptions.
+
+42
+00:02:25,156 --> 00:02:29,020
+Tidelight records the window and outputs so a result can
+
+43
+00:02:29,020 --> 00:02:32,885
+be examined and repeated. A replay helps test a rule;
+
+44
+00:02:32,885 --> 00:02:35,977
+one short sample does not prove durable performance.
+
+45
+00:02:35,977 --> 00:02:39,776
+Nightwatch carries the same discipline into paper mode. It reviews
+
+46
+00:02:39,776 --> 00:02:43,576
+completed Bitget candles, records why it proposes or declines an
+
+47
+00:02:43,576 --> 00:02:47,376
+action, and applies explicit account and loss limits before a
+
+48
+00:02:47,376 --> 00:02:51,175
+simulated fill. Its ledger is private to a signed-in workspace.
+
+49
+00:02:51,175 --> 00:02:54,975
+This public view is logged out; no private decisions or
+
+50
+00:02:54,975 --> 00:02:56,875
+fills are being shown here.
+
+51
+00:02:56,875 --> 00:03:00,912
+No live exchange orders are sent. Nightwatch reviews completed candles
+
+52
+00:03:00,912 --> 00:03:04,950
+and paper-account context, then records rationale, confidence, risks, and invalidation.
+
+53
+00:03:04,950 --> 00:03:08,987
+A hard risk rule can reject a proposal, and a
+
+54
+00:03:08,987 --> 00:03:13,025
+hold is a valid outcome. Fees and slippage are estimated;
+
+55
+00:03:13,025 --> 00:03:15,448
+simulated fills are not exchange fills.
+
+56
+00:03:15,448 --> 00:03:19,303
+A signed-in workspace is needed to show its private ledger.
+
+57
+00:03:19,303 --> 00:03:23,158
+The trading pages expose distinct review paths, including simulated workflows.
+
+58
+00:03:23,158 --> 00:03:27,013
+This walkthrough does not connect an exchange account, submit a
+
+59
+00:03:27,013 --> 00:03:30,868
+live order, or suggest that a paper result is ready
+
+60
+00:03:30,868 --> 00:03:34,723
+for execution. Human judgment remains at the center: inspect the
+
+61
+00:03:34,723 --> 00:03:38,578
+source, understand the market context, test the assumption, and decide
+
+62
+00:03:38,578 --> 00:03:40,891
+whether the question deserves another look.
+
+63
+00:03:40,891 --> 00:03:43,817
+Event. Evidence. Exposure. Scenario.
+
+64
+00:03:43,817 --> 00:03:47,061
+Decision. Tidelight brings the pieces into one calmer market desk—so
+
+65
+00:03:47,061 --> 00:03:50,305
+when the tide turns, you can see what changed, check
+
+66
+00:03:50,305 --> 00:03:53,549
+the reasoning, and choose your next step with your eyes
+
+67
+00:03:53,549 --> 00:03:53,874
+open.

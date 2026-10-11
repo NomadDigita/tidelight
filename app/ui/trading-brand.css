@@ -7,3 +7,15 @@
 .tw-grid .settings-card h2{font:540 20px/1.2 var(--display);letter-spacing:-.025em;color:var(--text)}
 .tw-grid .settings-card-head .eyebrow{font-family:var(--mono)}
 .tw-grid .tw-brand-icon svg{display:block;width:20px;height:20px;stroke:currentColor}
+.tw-grid .settings-card-head{min-width:0;align-items:flex-start}
+.tw-grid .settings-card-head>div{min-width:0}
+.tw-grid .settings-card-head h2{overflow-wrap:anywhere}
+.tw-grid .settings-card-head .tw-brand-icon{flex:0 0 40px;width:40px;height:40px;box-sizing:border-box}
+.tw-grid .tw-brand-icon .tw-bitget-mark{display:block;width:22px;height:22px;max-width:none;object-fit:contain;border-radius:4px}
+.tw-grid .tw-connected{min-width:0;align-items:start}
+.tw-grid .tw-connected>*{min-width:0}
+.tw-grid .tw-connected>span{overflow-wrap:anywhere;font:550 13px/1.45 var(--font);color:var(--text)}
+.tw-grid .tw-connected>b{font:600 11px/1.45 var(--font);letter-spacing:.04em}
+.tw-grid .tw-connected>small{font:400 12px/1.5 var(--font);color:var(--muted)}
+.tw-grid .tw-connected>button{font:550 11px/1.35 var(--font)}
+.tw-grid :is(.tw-order-note,.tw-live-warning,.tw-confirm)>:is(b,strong){font-family:var(--display)}

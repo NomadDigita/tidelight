@@ -72,6 +72,9 @@
   .tide-guide.is-open .tide-guide-launcher { display: none; }
   .tide-guide-panel { max-width: min(344px, calc(100vw - 24px)) !important; }
   .tide-guide-portrait { display: none; }
+  .tide-guide:not(.is-open) .tide-guide-launcher { width: 46px; min-width: 46px; height: 46px; min-height: 46px; justify-content: center; gap: 0; padding: 2px; }
+  .tide-guide:not(.is-open) .tide-guide-launcher > span, .tide-guide:not(.is-open) .tide-guide-launcher > i { display: none; }
+  .tide-guide:not(.is-open) .tide-guide-launcher .tide-guide-mark { width: 39px; height: 39px; }
   .tide-guide-welcome { gap: 7px; }
   .tide-guide-thread { padding: 12px; }
   .tide-guide-welcome h3 { margin-top: 1px; font-size: 17px; }

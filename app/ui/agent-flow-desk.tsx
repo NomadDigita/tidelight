@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useExperience } from "@/app/ui/theme-provider";
 
@@ -137,7 +138,7 @@ export default function AgentFlowDesk({ initialQuestion }: { initialQuestion: st
         <form className="flow-form" onSubmit={runFlow}><label htmlFor="flow-question">Your market question</label><div className="flow-form-row"><textarea id="flow-question" value={question} maxLength={280} rows={2} onChange={(event) => setQuestion(event.target.value)} placeholder="What do you think about NVDA and TSLA?" disabled={busy} /><button type="submit" disabled={busy}>{busy ? "Following the evidence…" : "Begin research ↗"}</button></div></form>
         <div className="flow-prompts"><span>TRY A QUESTION</span>{EXAMPLES.map((example) => <button type="button" key={example} onClick={() => setQuestion(example)} disabled={busy}>{example}</button>)}</div>
       </div>
-      <div className="flow-orbit" aria-hidden="true"><div className="flow-orbit-ring"><span>EVENT</span><span>EVIDENCE</span><span>EXPOSURE</span><span>DECISION</span></div><div className="flow-orbit-core">∿<small>TIDELIGHT</small></div></div>
+      <div className="flow-orbit" aria-hidden="true"><div className="flow-orbit-ring"><span>EVENT</span><span>EVIDENCE</span><span>EXPOSURE</span><span>DECISION</span></div><div className="flow-orbit-core"><Image src="/tidelight-mark.svg" alt="" width={42} height={42} /><small>TIDELIGHT</small></div></div>
     </section>
 
     {(busy || stages.length > 0) ? <section className="flow-glass" aria-label="Agent activity"><div className="flow-section-head"><div><span className="flow-kicker">THE VISIBLE WORKFLOW</span><h2>What the agents are checking.</h2><p>Operational checkpoints appear as the work runs. Private model reasoning and unverified claims are not displayed.</p></div><span className={`flow-state ${busy ? "flow-state-live" : ""}`}>{busy ? "● IN PROGRESS" : error ? "PAUSED" : "COMPLETE"}</span></div>

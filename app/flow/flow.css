@@ -20,3 +20,8 @@
 @media(prefers-reduced-motion:reduce){.flow-wait i{animation:none}.agent-flow-page *{scroll-behavior:auto!important;transition:none!important}}
 
 .flow-quote{display:grid;gap:6px;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;color:var(--muted);font:11px/1.65 var(--font);overflow-wrap:anywhere}.flow-quote>b{font-size:11px;font-weight:600}.flow-quote-fresh>b{color:var(--mint)}.flow-quote-stale>b{color:var(--amber)}.flow-quote time{color:var(--text)}.flow-source-via{color:var(--mint);font-style:normal}
+
+/* The orbit core represents Tidelight; keep the real brand mark centered. */
+.flow-orbit-core{grid-template-rows:42px auto;align-content:center;gap:3px;font-size:0}
+.flow-orbit-core>img{display:block;width:42px!important;height:42px!important;max-width:none;object-fit:contain;border-radius:13px;filter:drop-shadow(0 5px 12px color-mix(in srgb,var(--flow-glow) 24%,transparent))}
+.flow-orbit-core small{margin-top:0}

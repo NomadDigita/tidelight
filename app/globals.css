@@ -110,6 +110,22 @@ color:#eaf5ef
 color:#b9efd5;
 box-shadow:inset 2px 0 #84dbb5
 }
+.nav-trail {
+  display:grid;
+  place-items:center;
+  flex:0 0 14px;
+  width:14px;
+  margin-left:auto;
+  color:var(--faint);
+  font:18px/1 var(--font);
+  opacity:.65;
+  transition:transform .18s ease,color .18s ease,opacity .18s ease;
+}
+.nav-link:hover .nav-trail,.nav-link.active .nav-trail {
+  color:var(--brand-teal);
+  opacity:1;
+}
+.nav-link:hover .nav-trail { transform:translateX(2px); }
 .nav-icon {
   width:16px;
 text-align:center;

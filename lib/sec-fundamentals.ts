@@ -40,7 +40,21 @@ export type CompanyResearch = {
     annual: { period: string; periodEnd: string; filed: string; form: string; revenue: number | null; netIncome: number | null; totalAssets: number | null; totalLiabilities: number | null; operatingCashFlow: number | null; capitalExpenditure: number | null }[];
   };
   dividends: { periodEnd: string; filed: string; amountPerShare: number; unit: string }[];
+  analystTargets: { status: "available"; high: number | null; low: number | null; mean: number | null; median: number | null; updatedAt: string; source: "Finnhub" } | { status: "not_configured" } | { status: "unavailable" };
 };
+
+async function analystTargets(ticker: string): Promise<CompanyResearch["analystTargets"]> {
+  const token = process.env.FINNHUB_API_KEY;
+  if (!token) return { status: "not_configured" };
+  try {
+    const response = await fetch(`https://finnhub.io/api/v1/stock/price-target?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(token)}`, { headers: { Accept: "application/json" }, next: { revalidate: 21600 }, signal: AbortSignal.timeout(4500) });
+    if (!response.ok) return { status: "unavailable" };
+    const data = await response.json() as { targetHigh?: number; targetLow?: number; targetMean?: number; targetMedian?: number; lastUpdated?: string };
+    const values = [data.targetHigh, data.targetLow, data.targetMean, data.targetMedian];
+    if (!values.some((value) => typeof value === "number" && Number.isFinite(value) && value > 0)) return { status: "unavailable" };
+    return { status: "available", high: data.targetHigh ?? null, low: data.targetLow ?? null, mean: data.targetMean ?? null, median: data.targetMedian ?? null, updatedAt: data.lastUpdated ?? new Date().toISOString(), source: "Finnhub" };
+  } catch { return { status: "unavailable" }; }
+}
 
 function latestFact(facts: CompanyFacts, tags: string[], unit = "USD"): SecFact[] {
   const gaap = facts.facts["us-gaap"] ?? {};
@@ -112,6 +126,7 @@ export async function getSecCompanyResearch(ticker: string, website: string | nu
     .filter((item) => ["10-Q", "10-K"].includes(item.form) && item.end && item.filed)
     .sort((a, b) => b.end.localeCompare(a.end)).slice(0, 12)
     .map((item) => ({ periodEnd: item.end, filed: item.filed, amountPerShare: item.val, unit: "USD per share as reported" }));
+  const targetData = await analystTargets(normalized);
   return {
     ticker: normalized, cik, companyName: submissions.name || companyfacts.entityName,
     industry: submissions.sicDescription ?? null, exchange: submissions.exchanges?.[0] ?? null,
@@ -120,5 +135,6 @@ export async function getSecCompanyResearch(ticker: string, website: string | nu
     retrievedAt: new Date().toISOString(),
     financials: { quarterly: buildPeriods(companyfacts, "quarter"), annual: buildPeriods(companyfacts, "annual") },
     dividends,
+    analystTargets: targetData,
   };
 }

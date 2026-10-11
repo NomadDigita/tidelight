@@ -6,9 +6,9 @@
   .main-area, .route-content { overflow-x: clip; }
   .content-wrap { width: 100%; padding: 24px 14px 28px; }
   .sidebar .nav-list { display: none !important; }
-  .topbar { grid-template-columns: minmax(0, 1fr) auto !important; grid-template-rows: 38px 34px !important; padding-inline: 12px !important; }
-  .mobile-brand-story { display: none !important; }
+  .topbar { grid-template-columns: 112px minmax(0, 1fr) !important; grid-template-rows: 30px 30px !important; padding-inline: 12px !important; }
   .mobile-brand { grid-column: 1; grid-row: 1; }
+  .mobile-brand-story { display: grid !important; grid-column: 2; grid-row: 1; min-width: 0; height: 30px; }
   .mobile-utility { grid-column: 1 / -1; grid-row: 2; }
   .mobile-utility > b { max-width: 35vw; }
   .mobile-utility-controls { max-width: 70vw; }
@@ -67,12 +67,24 @@
   .landing-stage-readout { z-index: 5; }
   .landing-stage-readout small { max-width: 210px; white-space: normal; }
   .proof-cards article { flex-basis: min(82vw, 280px); }
-  .tide-guide { right: 8px !important; left: 8px; width: auto; }
-  .tide-guide-panel { width: 100% !important; max-width: none !important; }
+  .tide-guide { right: 10px !important; left: auto !important; width: auto !important; bottom: max(12px, env(safe-area-inset-bottom)) !important; gap: 0; }
+  .tide-guide.is-open .tide-guide-panel { width: min(344px, calc(100vw - 24px)) !important; height: min(420px, calc(100dvh - 118px)) !important; min-height: 250px; }
+  .tide-guide.is-open .tide-guide-launcher { display: none; }
+  .tide-guide-panel { max-width: min(344px, calc(100vw - 24px)) !important; }
+  .tide-guide-portrait { display: none; }
+  .tide-guide-welcome { gap: 7px; }
+  .tide-guide-thread { padding: 12px; }
+  .tide-guide-welcome h3 { margin-top: 1px; font-size: 17px; }
+  .tide-guide-welcome p { font-size: 11px; line-height: 1.45; }
+  .tide-guide-prompts { gap: 6px; margin-top: 3px; }
+  .tide-guide-prompts button { min-height: 36px; }
+  .tide-guide-history { top: 66px; }
+  .tide-guide-history-item small { font-family: var(--font); }
+  .nav-icon img { width: 17px; height: 17px; object-fit: contain; border-radius: 4px; }
 }
 
 @media (max-width: 380px) {
-  .topbar { padding-inline: 9px !important; }
+  .topbar { grid-template-columns: 104px minmax(0, 1fr) !important; padding-inline: 9px !important; }
   .mobile-brand { font-size: 14px; }
   .mobile-brand img { width: 28px !important; height: 28px !important; flex-basis: 28px; }
   .mobile-utility > b { max-width: 29vw; font-size: 7px !important; }

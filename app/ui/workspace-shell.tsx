@@ -26,12 +26,7 @@ const navigation: { href: string; label: string; icon: NavigationIconName; techn
   { href: "/systems", label: "Research systems", icon: "systems", technical: true },
 ];
 
-const BRAND_STORIES = [
-  "Read the signal between sessions.",
-  "Trace company events into tokenized equities.",
-  "Test a market view against the record.",
-  "Keep evidence and risk in the same frame.",
-];
+const BRAND_STORIES = ["Read the signal between sessions.", "Trace company events into tokenized equities.", "Test a market view against the record.", "Keep evidence and risk in the same frame."];
 
 function BrandStoryTypewriter() {
   const [storyIndex, setStoryIndex] = useState(0);
@@ -99,6 +94,14 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
     const isTechnicalRoute = navigation.some((item) => item.technical && (pathname === item.href || pathname.startsWith(`${item.href}/`)));
     if (isTechnicalRoute) router.replace("/");
   }, [mode, pathname, router]);
+
+  useEffect(() => {
+    const closeNavigation = () => setMobileMenuPath(null);
+    window.addEventListener("tidelight:close-navigation", closeNavigation);
+    return () => window.removeEventListener("tidelight:close-navigation", closeNavigation);
+  }, []);
+
+  useEffect(() => { if (mobileMenuOpen) window.dispatchEvent(new Event("tidelight:close-guide")); }, [mobileMenuOpen]);
 
   if (pathname.startsWith("/login") || pathname.startsWith("/auth/") || pathname === "/") return children;
 

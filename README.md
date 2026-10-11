@@ -135,6 +135,8 @@ GEMINI_API_KEY=your-active-Gemini-key
 
 The app appends `/chat/completions` to the base URL, so keep the value ending at `/v1`. Use the same variable names in Vercel Project Settings → Environment Variables. Keep `.env.local` private; do not commit it or paste secrets into issues.
 
+Quarterly and annual issuer facts come from SEC EDGAR. Analyst target consensus is optional and requires a Finnhub API token in the server-only `FINNHUB_API_KEY` variable. Without it, the stock page clearly shows that analyst coverage is not configured; Tidelight does not generate target prices. The current integration returns Finnhub's aggregate low, mean, median, and high targets. Company-by-company analyst rows require a provider that licenses those details.
+
 Then start the development server:
 
 ```bash

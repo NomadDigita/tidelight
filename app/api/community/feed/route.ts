@@ -85,3 +85,17 @@ export async function POST(request:Request){
  const insert={author_id:user.id,body:text,media,symbol:symbol||null,stance:["watching","bullish","bearish","question","neutral"].includes(typeof body.stance==="string"?body.stance:"")?body.stance:"watching",source_url:sourceUrl||null,reply_to:typeof body.replyTo==="string"?body.replyTo:null,quote_post_id:typeof body.quotePostId==="string"?body.quotePostId:null};
  const {data:post,error}=await db.from("community_posts").insert(insert).select(joined).single();if(error)return NextResponse.json({error:"The note could not be published. Check the asset and try again."},{status:400});return NextResponse.json({post},{status:201});
 }
+
+export async function DELETE(request:Request){
+ const db=await createClient();const {data:{user}}=await db.auth.getUser();if(!user)return NextResponse.json({error:"Sign in to manage your research notes."},{status:401});
+ let body:Record<string,unknown>;try{const value:unknown=await request.json();if(!value||typeof value!=="object"||Array.isArray(value))throw Error();body=value as Record<string,unknown>}catch{return NextResponse.json({error:"Choose a note to delete."},{status:400})}
+ if(typeof body.postId!=="string")return NextResponse.json({error:"Choose a note to delete."},{status:400});
+ const {data:post,error}=await db.from("community_posts").delete().eq("id",body.postId).eq("author_id",user.id).select("id,media").maybeSingle();
+ if(error){console.error("Community post delete failed",error.message);return NextResponse.json({error:"That note could not be deleted."},{status:503})}
+ if(!post)return NextResponse.json({error:"That note is unavailable or belongs to another member."},{status:404});
+ const origin=process.env.NEXT_PUBLIC_SUPABASE_URL?new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin:"";
+ const paths=(Array.isArray(post.media)?post.media:[]).flatMap((item)=>{if(!item||typeof item!=="object"||!("url" in item)||typeof item.url!=="string")return [];try{const url=new URL(item.url);const prefix="/storage/v1/object/public/community-media/"+user.id+"/";return origin&&url.origin===origin&&url.pathname.startsWith(prefix)?[decodeURIComponent(url.pathname.slice(prefix.length))]:[]}catch{return []}});
+ let mediaCleanupPending=false;
+ if(paths.length){const {error:storageError}=await db.storage.from("community-media").remove(paths);if(storageError){mediaCleanupPending=true;console.error("Community post media cleanup failed",storageError.message)}}
+ return NextResponse.json({deleted:true,mediaCleanupPending});
+}

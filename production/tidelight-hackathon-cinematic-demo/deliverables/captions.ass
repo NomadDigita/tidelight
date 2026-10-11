@@ -1,0 +1,80 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+ScaledBorderAndShadow: yes
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,DejaVu Sans,20,&H00F7F7F1,&H000000FF,&H00111811,&H60071917,0,0,0,0,100,100,0,0,3,5,0,2,90,90,122,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,00:00:00.00,00:00:03.39,Default,,0,0,0,,Markets do not wait for the bell. A company update,
+Dialogue: 0,00:00:03.39,00:00:06.78,Default,,0,0,0,,a policy shift, a new signal—each can ripple through tokenized
+Dialogue: 0,00:00:06.78,00:00:10.17,Default,,0,0,0,,markets while the headlines are quiet. Tidelight is built to
+Dialogue: 0,00:00:10.17,00:00:13.56,Default,,0,0,0,,help you follow that ripple with evidence, context, and a
+Dialogue: 0,00:00:13.56,00:00:16.61,Default,,0,0,0,,decision that stays yours. Start with the market map.
+Dialogue: 0,00:00:16.61,00:00:20.92,Default,,0,0,0,,This is Bitget’s public spot universe, including tokenized US equities.
+Dialogue: 0,00:00:20.92,00:00:25.23,Default,,0,0,0,,Quotes carry provider freshness and classification context. Tidelight is read-only
+Dialogue: 0,00:00:25.23,00:00:29.54,Default,,0,0,0,,here; browsing does not require an exchange key. From an
+Dialogue: 0,00:00:29.54,00:00:31.27,Default,,0,0,0,,event, move to evidence.
+Dialogue: 0,00:00:31.27,00:00:35.07,Default,,0,0,0,,Tidelight’s research desk is designed around source material you bring:
+Dialogue: 0,00:00:35.07,00:00:38.87,Default,,0,0,0,,ask a question, inspect the captured claims beside supporting passages,
+Dialogue: 0,00:00:38.87,00:00:42.67,Default,,0,0,0,,and keep the source link close. The system is bounded
+Dialogue: 0,00:00:42.67,00:00:46.47,Default,,0,0,0,,by the evidence supplied. A useful answer should show what
+Dialogue: 0,00:00:46.47,00:00:50.27,Default,,0,0,0,,supports it, what might disagree, and what remains uncertain. Agent
+Dialogue: 0,00:00:50.27,00:00:52.17,Default,,0,0,0,,Flow makes the handoffs visible.
+Dialogue: 0,00:00:52.17,00:00:56.18,Default,,0,0,0,,The journey connects event, evidence, exposure, scenario, and decision. Research
+Dialogue: 0,00:00:56.18,00:01:00.20,Default,,0,0,0,,can map a company story to available instruments and risk
+Dialogue: 0,00:01:00.20,00:01:04.21,Default,,0,0,0,,context. When gates do not agree, the right outcome can
+Dialogue: 0,00:01:04.21,00:01:08.23,Default,,0,0,0,,be to pause or hold. That is a research workflow—not
+Dialogue: 0,00:01:08.23,00:01:09.43,Default,,0,0,0,,an automatic recommendation.
+Dialogue: 0,00:01:09.43,00:01:13.21,Default,,0,0,0,,The handoffs are the point. An event is the question,
+Dialogue: 0,00:01:13.21,00:01:16.99,Default,,0,0,0,,not the answer. Evidence gives it a traceable basis. Exposure
+Dialogue: 0,00:01:16.99,00:01:20.01,Default,,0,0,0,,asks which issuers and instruments may be affected.
+Dialogue: 0,00:01:20.01,00:01:23.56,Default,,0,0,0,,A scenario makes assumptions visible: what could happen, what could
+Dialogue: 0,00:01:23.56,00:01:27.11,Default,,0,0,0,,go the other way, and which new fact would change
+Dialogue: 0,00:01:27.11,00:01:30.66,Default,,0,0,0,,the view. On the market map, token labels, provider timestamps,
+Dialogue: 0,00:01:30.66,00:01:34.22,Default,,0,0,0,,and session context distinguish a public quote from a complete
+Dialogue: 0,00:01:34.22,00:01:37.77,Default,,0,0,0,,investment picture. Tokenized instruments can differ in hours, liquidity, and
+Dialogue: 0,00:01:37.77,00:01:41.32,Default,,0,0,0,,issuer terms. A price is one observation; it does not
+Dialogue: 0,00:01:41.32,00:01:44.87,Default,,0,0,0,,prove that an asset can trade at that level or
+Dialogue: 0,00:01:44.87,00:01:47.00,Default,,0,0,0,,that a strategy can execute there.
+Dialogue: 0,00:01:47.00,00:01:50.84,Default,,0,0,0,,For a market idea, Strategy Lab turns a rule into
+Dialogue: 0,00:01:50.84,00:01:54.69,Default,,0,0,0,,a reproducible historical replay. Choose an instrument, interval, and deterministic
+Dialogue: 0,00:01:54.69,00:01:58.54,Default,,0,0,0,,strategy; review the costs, data window, holdout, and trade record.
+Dialogue: 0,00:01:58.54,00:02:02.39,Default,,0,0,0,,The published validation is candid: its tested baseline underperformed buy
+Dialogue: 0,00:02:02.39,00:02:06.24,Default,,0,0,0,,and hold across five markets in that snapshot. It is
+Dialogue: 0,00:02:06.24,00:02:09.70,Default,,0,0,0,,an experiment to inspect, not a claim of alpha.
+Dialogue: 0,00:02:09.70,00:02:13.56,Default,,0,0,0,,The hackathon’s Alpha Factory bar asks for at least sixty
+Dialogue: 0,00:02:13.56,00:02:17.43,Default,,0,0,0,,calendar days with thirty out of sample, so that qualification
+Dialogue: 0,00:02:17.43,00:02:21.29,Default,,0,0,0,,matters. Strategy Lab replays deterministic rules over completed public candles,
+Dialogue: 0,00:02:21.29,00:02:25.16,Default,,0,0,0,,with a chronological holdout and explicit fee and slippage assumptions.
+Dialogue: 0,00:02:25.16,00:02:29.02,Default,,0,0,0,,Tidelight records the window and outputs so a result can
+Dialogue: 0,00:02:29.02,00:02:32.88,Default,,0,0,0,,be examined and repeated. A replay helps test a rule;
+Dialogue: 0,00:02:32.88,00:02:35.98,Default,,0,0,0,,one short sample does not prove durable performance.
+Dialogue: 0,00:02:35.98,00:02:39.78,Default,,0,0,0,,Nightwatch carries the same discipline into paper mode. It reviews
+Dialogue: 0,00:02:39.78,00:02:43.58,Default,,0,0,0,,completed Bitget candles, records why it proposes or declines an
+Dialogue: 0,00:02:43.58,00:02:47.38,Default,,0,0,0,,action, and applies explicit account and loss limits before a
+Dialogue: 0,00:02:47.38,00:02:51.17,Default,,0,0,0,,simulated fill. Its ledger is private to a signed-in workspace.
+Dialogue: 0,00:02:51.17,00:02:54.98,Default,,0,0,0,,This public view is logged out; no private decisions or
+Dialogue: 0,00:02:54.98,00:02:56.88,Default,,0,0,0,,fills are being shown here.
+Dialogue: 0,00:02:56.88,00:03:00.91,Default,,0,0,0,,No live exchange orders are sent. Nightwatch reviews completed candles
+Dialogue: 0,00:03:00.91,00:03:04.95,Default,,0,0,0,,and paper-account context, then records rationale, confidence, risks, and invalidation.
+Dialogue: 0,00:03:04.95,00:03:08.99,Default,,0,0,0,,A hard risk rule can reject a proposal, and a
+Dialogue: 0,00:03:08.99,00:03:13.03,Default,,0,0,0,,hold is a valid outcome. Fees and slippage are estimated;
+Dialogue: 0,00:03:13.03,00:03:15.45,Default,,0,0,0,,simulated fills are not exchange fills.
+Dialogue: 0,00:03:15.45,00:03:19.30,Default,,0,0,0,,A signed-in workspace is needed to show its private ledger.
+Dialogue: 0,00:03:19.30,00:03:23.16,Default,,0,0,0,,The trading pages expose distinct review paths, including simulated workflows.
+Dialogue: 0,00:03:23.16,00:03:27.01,Default,,0,0,0,,This walkthrough does not connect an exchange account, submit a
+Dialogue: 0,00:03:27.01,00:03:30.87,Default,,0,0,0,,live order, or suggest that a paper result is ready
+Dialogue: 0,00:03:30.87,00:03:34.72,Default,,0,0,0,,for execution. Human judgment remains at the center: inspect the
+Dialogue: 0,00:03:34.72,00:03:38.58,Default,,0,0,0,,source, understand the market context, test the assumption, and decide
+Dialogue: 0,00:03:38.58,00:03:40.89,Default,,0,0,0,,whether the question deserves another look.
+Dialogue: 0,00:03:40.89,00:03:43.82,Default,,0,0,0,,Event. Evidence. Exposure. Scenario.
+Dialogue: 0,00:03:43.82,00:03:47.06,Default,,0,0,0,,Decision. Tidelight brings the pieces into one calmer market desk—so
+Dialogue: 0,00:03:47.06,00:03:50.30,Default,,0,0,0,,when the tide turns, you can see what changed, check
+Dialogue: 0,00:03:50.30,00:03:53.55,Default,,0,0,0,,the reasoning, and choose your next step with your eyes
+Dialogue: 0,00:03:53.55,00:03:53.87,Default,,0,0,0,,open.

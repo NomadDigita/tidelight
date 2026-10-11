@@ -1,0 +1,16 @@
+# Local renders/caches and Blender backups
+production/capture/
+production/rebuilt/
+assets/tide/renders/
+assets/tide/*.blend1
+assets/tide/*.blend2
+*.tmp
+*.part
+
+# Credentials and machine-local files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store

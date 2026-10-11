@@ -1,0 +1,23 @@
+Markets do not wait for the bell. A company update, a policy shift, a new signal—each can ripple through tokenized markets while the headlines are quiet. Tidelight is built to help you follow that ripple with evidence, context, and a decision that stays yours.
+
+Start with the market map. This is Bitget’s public spot universe, including tokenized US equities. Quotes carry provider freshness and classification context. Tidelight is read-only here; browsing does not require an exchange key.
+
+From an event, move to evidence. Tidelight’s research desk is designed around source material you bring: ask a question, inspect the captured claims beside supporting passages, and keep the source link close. The system is bounded by the evidence supplied. A useful answer should show what supports it, what might disagree, and what remains uncertain.
+
+Agent Flow makes the handoffs visible. The journey connects event, evidence, exposure, scenario, and decision. Research can map a company story to available instruments and risk context. When gates do not agree, the right outcome can be to pause or hold. That is a research workflow—not an automatic recommendation.
+
+The handoffs are the point. An event is the question, not the answer. Evidence gives it a traceable basis. Exposure asks which issuers and instruments may be affected. A scenario makes assumptions visible: what could happen, what could go the other way, and which new fact would change the view.
+
+On the market map, token labels, provider timestamps, and session context distinguish a public quote from a complete investment picture. Tokenized instruments can differ in hours, liquidity, and issuer terms. A price is one observation; it does not prove that an asset can trade at that level or that a strategy can execute there.
+
+For a market idea, Strategy Lab turns a rule into a reproducible historical replay. Choose an instrument, interval, and deterministic strategy; review the costs, data window, holdout, and trade record. The published validation is candid: its tested baseline underperformed buy and hold across five markets in that snapshot. It is an experiment to inspect, not a claim of alpha. The hackathon’s Alpha Factory bar asks for at least sixty calendar days with thirty out of sample, so that qualification matters.
+
+Strategy Lab replays deterministic rules over completed public candles, with a chronological holdout and explicit fee and slippage assumptions. Tidelight records the window and outputs so a result can be examined and repeated. A replay helps test a rule; one short sample does not prove durable performance.
+
+Nightwatch carries the same discipline into paper mode. It reviews completed Bitget candles, records why it proposes or declines an action, and applies explicit account and loss limits before a simulated fill. Its ledger is private to a signed-in workspace. This public view is logged out; no private decisions or fills are being shown here. No live exchange orders are sent.
+
+Nightwatch reviews completed candles and paper-account context, then records rationale, confidence, risks, and invalidation. A hard risk rule can reject a proposal, and a hold is a valid outcome. Fees and slippage are estimated; simulated fills are not exchange fills. A signed-in workspace is needed to show its private ledger.
+
+The trading pages expose distinct review paths, including simulated workflows. This walkthrough does not connect an exchange account, submit a live order, or suggest that a paper result is ready for execution. Human judgment remains at the center: inspect the source, understand the market context, test the assumption, and decide whether the question deserves another look.
+
+Event. Evidence. Exposure. Scenario. Decision. Tidelight brings the pieces into one calmer market desk—so when the tide turns, you can see what changed, check the reasoning, and choose your next step with your eyes open.

@@ -31,7 +31,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ sym
     const ticker = asset.kind === "rtoken" ? asset.underlyingTicker : null;
     if (!ticker || !tickerPattern.test(ticker)) return Response.json({ status: "unsupported", reason: "SEC fundamentals are available only for verified US equity underlyings." }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
     const cached = await readCached(ticker);
-    if (cached && Date.parse(cached.expires_at) > Date.now()) return Response.json({ status: "available", research: cached.payload, freshness: "cached", cachedAt: cached.fetched_at }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
+    if (cached && Date.parse(cached.expires_at) > Date.now() && (!process.env.FINNHUB_API_KEY || cached.payload.analystTargets)) return Response.json({ status: "available", research: cached.payload, freshness: "cached", cachedAt: cached.fetched_at }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
     try {
       const research = await getSecCompanyResearch(ticker, getIssuerWebsite(ticker));
       await writeCached(ticker, research);

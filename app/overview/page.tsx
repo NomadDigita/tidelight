@@ -3,6 +3,7 @@ import ResearchWorkspace from "../ui/research-workspace";
 import MarketRadar from "../ui/market-radar";
 import { getBitgetMarketUniverse } from "@/lib/bitget-market";
 import { createClient } from "@/lib/supabase/server";
+import MarketSessionIndicator from "@/app/ui/market-session-indicator";
 
 export const maxDuration = 60;
 
@@ -16,7 +17,7 @@ export default async function Overview() {
   const { data: savedRuns } = user ? await supabase.from("research_runs").select("id, question, status, created_at").order("created_at", { ascending: false }).limit(4) : { data: [] };
 
   return <div className="content-wrap dashboard-page">
-    <section className="welcome-row dashboard-welcome"><div><div className="eyebrow"><span className="eyebrow-line" /> {today.toUpperCase()} <span className="eyebrow-divider">/</span> YOUR MARKET BRIEF</div><h1>{user ? "Welcome back" : "See what moves"}<span className="mint-dot">.</span></h1><p className="welcome-copy">The bell may be quiet. The market isn’t.</p></div><div className="dashboard-welcome-actions"><Link className="date-button" href="/flow">Ask the agent team <span>↗</span></Link><Link className="welcome-guide-link" href="/guide">New here? Follow the quick guide <span>→</span></Link></div></section>
+    <section className="welcome-row dashboard-welcome"><div><div className="eyebrow dashboard-market-eyebrow"><span className="eyebrow-line" /> {today.toUpperCase()} <span className="eyebrow-divider">/</span> YOUR MARKET BRIEF <MarketSessionIndicator session={market?.session ?? null} status={market?.marketSessionStatus ?? "unavailable"} /></div><h1>{user ? "Welcome back" : "See what moves"}<span className="mint-dot">.</span></h1><p className="welcome-copy">The bell may be quiet. The market isn’t.</p></div><div className="dashboard-welcome-actions"><Link className="date-button" href="/flow">Ask the agent team <span>↗</span></Link><Link className="welcome-guide-link" href="/guide">New here? Follow the quick guide <span>→</span></Link></div></section>
     <section className="agent-flow-entry" aria-label="Guided stock research"><div><span className="eyebrow small-eyebrow">EVENT → EVIDENCE → MARKET → RISK</span><h2>What do you think about NVDA and TSLA?</h2><p>Ask in plain language. Follow the agent handoffs and inspect the sources before a paper, demo, or live trade review is offered.</p></div><Link href="/flow?question=What%20do%20you%20think%20about%20NVDA%20and%20TSLA%3F">Follow this question <span>↗</span></Link></section>
     <ResearchWorkspace qwenAvailable={Boolean(process.env.BITGET_QWEN_API_KEY)} />
     <section className="dashboard-section" aria-labelledby="coverage-title"><div className="section-heading"><div><div className="eyebrow small-eyebrow">YOUR RADAR, AT A GLANCE</div><h2 id="coverage-title">Companies in view</h2></div><Link className="text-button" href="/watchlist">Open watchlist <span>↗</span></Link></div><MarketRadar initialAssets={initialRadarAssets} initialGeneratedAt={market?.generatedAt ?? null} initialNow={market?.generatedAt ?? 0} /><p className="data-disclaimer"><span>i</span> Prices and token classification come from Bitget’s public spot feed; issuer names and logos identify the underlying company. Quotes refresh while this page is open. Market data is informational, not an investment signal.</p></section>

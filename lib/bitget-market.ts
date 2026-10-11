@@ -50,6 +50,7 @@ export type MarketAsset = {
   marketSession: { market: string; daylightType: string | null; schedule: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> } | null;
   marketSessionStatus: "available" | "unavailable";
   lastPrice: number;
+  open24h: number | null;
   change24h: number | null;
   high24h: number | null;
   low24h: number | null;
@@ -72,9 +73,15 @@ export type MarketCandle = {
   turnover: number | null;
 };
 
+type RealityMarketState = {
+  market: string;
+  daylightType?: string;
+  stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }>;
+};
+
 const API = "https://api.bitget.com/api/v3";
 const companyDomains: Record<string, string> = {
-  AAPL: "apple.com", MSFT: "microsoft.com", NVDA: "nvidia.com", AMZN: "amazon.com", GOOGL: "google.com",
+  AAPL: "apple.com", MSFT: "microsoft.com", NVDA: "nvidia.com", AMZN: "amazon.com", GOOGL: "google.com", MRNA: "modernatx.com",
   GOOG: "google.com", META: "meta.com", TSLA: "tesla.com", AMD: "amd.com", NFLX: "netflix.com",
   AVGO: "broadcom.com", ORCL: "oracle.com", INTC: "intel.com", JPM: "jpmorganchase.com", WMT: "walmart.com",
   DIS: "thewaltdisneycompany.com", COIN: "coinbase.com", PLTR: "palantir.com", MSTR: "strategy.com", XOM: "exxonmobil.com",
@@ -99,7 +106,7 @@ const companyDomains: Record<string, string> = {
 };
 
 const issuerNames: Record<string, string> = {
-  AAPL: "Apple Inc.", MSFT: "Microsoft Corporation", NVDA: "NVIDIA Corporation", AMZN: "Amazon.com, Inc.",
+  AAPL: "Apple Inc.", MSFT: "Microsoft Corporation", NVDA: "NVIDIA Corporation", AMZN: "Amazon.com, Inc.", MRNA: "Moderna, Inc.",
   GOOGL: "Alphabet Inc.", GOOG: "Alphabet Inc.", META: "Meta Platforms, Inc.", TSLA: "Tesla, Inc.",
   AMD: "Advanced Micro Devices, Inc.", NFLX: "Netflix, Inc.", AVGO: "Broadcom Inc.", ORCL: "Oracle Corporation",
   INTC: "Intel Corporation", JPM: "JPMorgan Chase & Co.", WMT: "Walmart Inc.", DIS: "The Walt Disney Company",
@@ -138,7 +145,7 @@ async function fetchBitget<T>(path: string, revalidate: number, timeoutMs = 9000
   });
   if (!response.ok) throw new Error(`Bitget returned HTTP ${response.status}`);
   const body = (await response.json()) as BitgetEnvelope<T>;
-  if (body.code !== "00000" || !Array.isArray(body.data)) throw new Error(`Bitget market response ${body.code ?? "invalid"}`);
+  if (body.code !== "00000" || body.data === undefined || body.data === null) throw new Error(`Bitget market response ${body.code ?? "invalid"}`);
   return body;
 }
 
@@ -179,7 +186,7 @@ export async function getBitgetMarketUniverse() {
     fetchBitget<BitgetInstrument[]>("/market/instruments?category=SPOT", 1800),
     fetchBitget<BitgetTicker[]>("/market/tickers?category=SPOT", 12),
     fetchBitget<RealityStockInfo[]>("/reality/market/stock-info", 3600, 4500),
-    fetchBitget<Array<{ market: string; daylightType?: string; stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> }>>("/reality/market/states", 60, 5000),
+    fetchBitget<RealityMarketState>("/reality/market/states", 60, 5000),
   ]);
   if (instrumentsResult.status === "rejected") throw instrumentsResult.reason;
   if (tickersResult.status === "rejected") throw tickersResult.reason;
@@ -187,7 +194,7 @@ export async function getBitgetMarketUniverse() {
   const instruments = instrumentsResult.value.data;
   const tickers = tickersResult.value.data;
   const stocks = stockInfoResult.status === "fulfilled" ? stockInfoResult.value.data : [];
-  const session = sessionsResult.status === "fulfilled" ? sessionsResult.value.data.find((item) => item.market === "US") ?? null : null;
+  const session = sessionsResult.status === "fulfilled" && sessionsResult.value.data.market === "US" ? sessionsResult.value.data : null;
   const stockByPair = new Map(stocks.map((stock) => [stock.symbol.toUpperCase(), stock]));
   const tickerByPair = new Map(tickers.map((ticker) => [ticker.symbol.toUpperCase(), ticker]));
   const assets = instruments
@@ -216,6 +223,7 @@ export async function getBitgetMarketUniverse() {
         marketSession: session ? { market: session.market, daylightType: session.daylightType ?? null, schedule: session.stateList ?? [] } : null,
         marketSessionStatus: sessionsResult.status === "rejected" ? "unavailable" : "available",
         lastPrice,
+        open24h: numberOrNull(ticker.openPrice24h),
         change24h: numberOrNull(ticker.price24hPcnt),
         high24h: numberOrNull(ticker.highPrice24h),
         low24h: numberOrNull(ticker.lowPrice24h),
@@ -233,7 +241,7 @@ export async function getBitgetMarketUniverse() {
     generatedAt: Date.now(),
     assets,
     session: session ? { market: session.market, daylightType: session.daylightType ?? null, schedule: session.stateList ?? [] } : null,
-    marketSessionStatus: sessionsResult.status === "rejected" ? "unavailable" : session ? "available" : "empty",
+    marketSessionStatus: sessionsResult.status === "rejected" ? "unavailable" : session?.stateList?.length ? "available" : "empty",
     coverage: { total: assets.length, rTokens: assets.filter((asset) => asset.isReality).length, rwa: assets.filter((asset) => asset.isRwa).length, crypto: assets.filter((asset) => asset.kind === "crypto").length },
     staleAfterMs: 120_000,
     metadataStatus: stockInfoResult.status === "fulfilled" ? "available" : "partial",
@@ -252,7 +260,7 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
       ? fetchBitget<RealityStockInfo[]>(`/reality/market/stock-info?${stockQuery}`, 3600, 4500).catch(() => null)
       : Promise.resolve(null),
     instrument.isReality?.toLowerCase() === "yes"
-      ? fetchBitget<Array<{ market: string; daylightType?: string; stateList?: Array<{ state: string; timeZone: string; startTime: string; endTime: string }> }>>("/reality/market/states", 60, 5000).catch(() => null)
+      ? fetchBitget<RealityMarketState>("/reality/market/states", 60, 5000).catch(() => null)
       : Promise.resolve(null),
   ]);
   const ticker = tickers.data.find((item) => item.symbol.toUpperCase() === symbol);
@@ -264,7 +272,7 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
   const lastPrice = numberOrNull(ticker.lastPrice);
   if (lastPrice === null) return null;
   const sessions = Array.isArray(stock?.tradingPeriod) ? stock.tradingPeriod : stock?.tradingPeriod ? [stock.tradingPeriod] : [];
-  const marketSession = states?.data.find((item) => item.market === "US") ?? null;
+  const marketSession = states?.data.market === "US" ? states.data : null;
   return {
     symbol: instrument.symbol,
     baseCoin: instrument.baseCoin,
@@ -277,8 +285,9 @@ export async function getBitgetAsset(symbol: string): Promise<MarketAsset | null
     weekendTradable: stock ? stock.weekendTradable?.toLowerCase() === "yes" : null,
     tradingSessions: sessions,
     marketSession: marketSession ? { market: marketSession.market, daylightType: marketSession.daylightType ?? null, schedule: marketSession.stateList ?? [] } : null,
-    marketSessionStatus: states ? "available" : "unavailable",
+    marketSessionStatus: states && marketSession?.stateList?.length ? "available" : "unavailable",
     lastPrice,
+    open24h: numberOrNull(ticker.openPrice24h),
     change24h: numberOrNull(ticker.price24hPcnt),
     high24h: numberOrNull(ticker.highPrice24h),
     low24h: numberOrNull(ticker.lowPrice24h),
@@ -305,7 +314,7 @@ export async function getBitgetStockPerp(symbol: string): Promise<MarketAsset | 
   return {
     symbol, baseCoin: instrument.baseCoin, quoteCoin: "USDT", name: issuerNames[underlying] ?? underlying,
     underlyingTicker: underlying, kind: "rtoken", isReality: false, isRwa: false,
-    weekendTradable: null, tradingSessions: [], lastPrice: price,
+    weekendTradable: null, tradingSessions: [], lastPrice: price, open24h: numberOrNull(ticker.openPrice24h),
     marketSession: null, marketSessionStatus: "unavailable",
     change24h: numberOrNull(ticker.price24hPcnt), high24h: numberOrNull(ticker.highPrice24h),
     low24h: numberOrNull(ticker.lowPrice24h), volume24h: numberOrNull(ticker.volume24h),

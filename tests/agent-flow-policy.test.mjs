@@ -87,3 +87,16 @@ test("unknown companies and duplicate provider assessments cannot overwrite the 
   assert.equal(normalized.NVDA.confidence, 0.8);
   assert.equal(normalizeFlowAssessment({ ...assessment, stance: ["bullish"] }, sources), null);
 });
+
+test("catalyst dates and links are accepted only when valid and tied to retrieved sources", () => {
+  const normalized = normalizeFlowAssessment({ ...assessment, catalysts: [
+    { title: "Earnings call", date: "2026-11-18", sourceUrl: sources[0].url },
+    { title: "Undated filing update", date: null, sourceUrl: sources[1].url },
+    { title: "Invented link", date: "2026-11-18", sourceUrl: "https://fake.example/event" },
+    { title: "Impossible date", date: "2026-02-31", sourceUrl: sources[0].url },
+  ] }, sources);
+  assert.deepEqual(normalized?.catalysts, [
+    { title: "Earnings call", date: "2026-11-18", sourceUrl: sources[0].url },
+    { title: "Undated filing update", date: null, sourceUrl: sources[1].url },
+  ]);
+});

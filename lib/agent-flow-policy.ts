@@ -1,6 +1,7 @@
 export type FlowSource = { title: string; url: string; publisher: string; publishedAt: string | null; via?: "Public feeds" | "AgentKey" };
 export type FlowStance = "bullish" | "bearish" | "mixed" | "unclear";
-export type FlowAssessment = { summary: string; stance: FlowStance; confidence: number; citedUrls: string[]; risks: string[]; nextCheck: string };
+export type FlowCatalyst = { title: string; date: string | null; sourceUrl: string };
+export type FlowAssessment = { summary: string; stance: FlowStance; confidence: number; citedUrls: string[]; risks: string[]; nextCheck: string; catalysts: FlowCatalyst[] };
 export type FlowGateInput = {
   assessment: FlowAssessment;
   sources: FlowSource[];
@@ -64,6 +65,15 @@ export function normalizeFlowAssessment(value: Record<string, unknown>, sources:
     citedUrls: Array.isArray(value.citedUrls) ? [...new Set(value.citedUrls.filter((url): url is string => typeof url === "string" && valid.has(url)))].slice(0, 6) : [],
     risks: Array.isArray(value.risks) ? value.risks.filter((item): item is string => typeof item === "string").slice(0, 4).map(item => item.slice(0, 200)) : [],
     nextCheck: typeof value.nextCheck === "string" ? value.nextCheck.slice(0, 220) : "Review issuer filings and completed candles.",
+    catalysts: Array.isArray(value.catalysts) ? value.catalysts.flatMap((raw) => {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+      const item = raw as Record<string, unknown>;
+      const title = typeof item.title === "string" ? item.title.trim().slice(0, 180) : "";
+      const sourceUrl = typeof item.sourceUrl === "string" ? item.sourceUrl : "";
+      const date = item.date === null ? null : typeof item.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && Number.isFinite(Date.parse(`${item.date}T00:00:00Z`)) && new Date(`${item.date}T00:00:00Z`).toISOString().slice(0, 10) === item.date ? item.date : undefined;
+      if (!title || !valid.has(sourceUrl) || date === undefined) return [];
+      return [{ title, date, sourceUrl }];
+    }).slice(0, 5) : [],
   };
 }
 

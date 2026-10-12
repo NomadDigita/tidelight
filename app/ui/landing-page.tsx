@@ -30,7 +30,7 @@ export default function LandingPage() {
         <div className="landing-orbit"><div className="landing-orbit-ring ring-one" /><div className="landing-orbit-ring ring-two" /><div className="landing-orbit-core"><span>tide</span><b>light</b><small>LIVE SIGNAL</small><i className="landing-core-pulse" /></div><span className="orbit-label orbit-label-one">EVENT / LIVE</span><span className="orbit-label orbit-label-two">EVIDENCE</span><span className="orbit-label orbit-label-three">DECISION</span></div>
         <div className="landing-hand-art">
           <Image className="landing-tide-hand" src="/tide-hand.webp" alt="A hand holding Tide, the Tidelight intelligence companion" width={430} height={645} priority />
-          <span className="landing-egg-mark" aria-hidden="true"><svg viewBox="0 0 64 44" focusable="false"><circle className="egg-mark-star" cx="50" cy="8" r="2.5" /><path className="egg-mark-wave egg-mark-wave-a" d="M8 24c8 0 8-9 16-9s8 9 16 9 8-9 16-9" /><path className="egg-mark-wave egg-mark-wave-b" d="M8 33c8 0 8-6 16-6s8 6 16 6 8-6 16-6" /></svg></span>
+          <span className="landing-egg-mark" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle className="egg-mark-star" cx="48.5" cy="17.5" r="3.5" /><path className="egg-mark-wave egg-mark-wave-a" d="M11 34.5c7.3 0 7.3-10 14.6-10s7.3 10 14.7 10c7.3 0 7.3-10 14.7-10" /><path className="egg-mark-wave egg-mark-wave-b" d="M11 44.5c7.3 0 7.3-6 14.6-6s7.3 6 14.7 6c7.3 0 7.3-6 14.7-6" /></svg></span>
         </div>
         <div className="landing-stage-readout"><span><i /> SIGNAL DESK</span><b>Following the ripple</b><small>Event → Evidence → Exposure → Scenario</small></div>
       </div>

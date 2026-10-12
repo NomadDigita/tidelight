@@ -128,3 +128,12 @@
 @media (max-width: 780px) {
   .universe-identity b { display: -webkit-box; overflow: hidden; white-space: normal; text-overflow: clip; line-height: 1.2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 }
+
+@media (max-width: 780px) {
+  .company-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .company-card { min-height: 210px; }
+}
+@media (max-width: 359px) {
+  .company-grid { grid-template-columns: 1fr !important; }
+  .company-card { min-height: 220px; }
+}

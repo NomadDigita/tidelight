@@ -83,6 +83,26 @@ export async function POST(request: Request) {
       }),
       idempotencyKey: `feedback:${id}`,
     });
+    if (replyTo) {
+      // Send a separate receipt only to an address the sender explicitly supplied.
+      // Keep the feedback body private and avoid promising a response deadline.
+      await sendWithResend({
+        from: emailSenders.auth,
+        to: replyTo,
+        subject: "We received your feedback · Tidelight",
+        html: emailFrame({
+          eyebrow: "FEEDBACK RECEIVED",
+          title: "Thank you for helping us improve.",
+          body: [
+            "Your note has reached the Tidelight team. We appreciate you taking the time to share what could be clearer, smoother, or more useful.",
+            "We read every message and use your feedback to make Tidelight better. If a reply is needed, our team will follow up at this address.",
+          ].join("\n"),
+          action: { label: "Return to Tidelight", url: "https://tidelight.app" },
+          footer: "This is an automatic confirmation that your feedback was received. You can reply to this email to continue the conversation.",
+        }),
+        idempotencyKey: `feedback-receipt:${id}`,
+      });
+    }
     return json({ ok: true, id: sent.id });
   } catch {
     return json({ error: "We couldn’t send your feedback just now. Please try again." }, 503);

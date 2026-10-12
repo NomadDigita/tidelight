@@ -28,7 +28,10 @@ export default function LandingPage() {
         <span className="landing-pointer" aria-hidden="true"><svg viewBox="0 0 64 80" focusable="false"><path d="M27 8c-4 0-7 3-7 7v30l-4-4a6 6 0 0 0-8.5 8.5l13 14a15 15 0 0 0 11 5h4c10 0 18-8 18-18V27a6 6 0 0 0-12 0v-6a6 6 0 0 0-12 0v-6a6 6 0 0 0-2.5-4.9Z" /></svg></span>
         <span className="landing-product-word" aria-hidden="true">TIDELIGHT</span>
         <div className="landing-orbit"><div className="landing-orbit-ring ring-one" /><div className="landing-orbit-ring ring-two" /><div className="landing-orbit-core"><span>tide</span><b>light</b><small>LIVE SIGNAL</small><i className="landing-core-pulse" /></div><span className="orbit-label orbit-label-one">EVENT / LIVE</span><span className="orbit-label orbit-label-two">EVIDENCE</span><span className="orbit-label orbit-label-three">DECISION</span></div>
-        <Image className="landing-tide-hand" src="/tide-hand.webp" alt="A hand holding Tide, the Tidelight intelligence companion" width={430} height={645} priority />
+        <div className="landing-hand-art">
+          <Image className="landing-tide-hand" src="/tide-hand.webp" alt="A hand holding Tide, the Tidelight intelligence companion" width={430} height={645} priority />
+          <span className="landing-egg-mark" aria-hidden="true"><svg viewBox="0 0 64 44" focusable="false"><circle className="egg-mark-star" cx="50" cy="8" r="2.5" /><path className="egg-mark-wave egg-mark-wave-a" d="M8 24c8 0 8-9 16-9s8 9 16 9 8-9 16-9" /><path className="egg-mark-wave egg-mark-wave-b" d="M8 33c8 0 8-6 16-6s8 6 16 6 8-6 16-6" /></svg></span>
+        </div>
         <div className="landing-stage-readout"><span><i /> SIGNAL DESK</span><b>Following the ripple</b><small>Event → Evidence → Exposure → Scenario</small></div>
       </div>
     </section>

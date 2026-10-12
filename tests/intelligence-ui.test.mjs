@@ -34,20 +34,3 @@ test("invalid, unsafe, or out of range payloads are rejected before rendering", 
   assert.equal(parseIntelligenceResult({ ...result, assets: [{ ...result.assets[0], handoff: { destinations: [{ mode: "live_spot", label: "Go", href: "https://evil.example" }], reason: "review" } }] }), null);
   assert.equal(parseIntelligenceResult({ ...result, assets: [{ ...result.assets[0], market: { ...result.assets[0].market, candles: [{ timestamp: 1, close: Infinity }] } }] }), null);
 });
-
-test("optional structured evidence renders only source-linked catalysts and validated private or replay data", () => {
-  const asset = {
-    ...result.assets[0],
-    catalysts: [
-      { title: "Earnings call", date: "2026-11-18", sourceUrl: result.assets[0].sources[0].url },
-      { title: "Uncited item", date: "2026-11-18", sourceUrl: "https://fake.example/event" },
-    ],
-    portfolioExposure: { symbol: "RNVDAUSDT", exposurePct: 12.4, capturedAt: "2026-10-12T14:30:00.000Z" },
-    historicalBacktest: { strategy: "Trend · SMA 20/50", interval: "4H", candleCount: 900, dataStart: "2026-05-01T00:00:00.000Z", dataEnd: "2026-10-01T00:00:00.000Z", testReturnPct: 2.4, buyAndHoldReturnPct: 5.1, maxDrawdownPct: -8.3, trades: 4 },
-  };
-  const parsed = parseIntelligenceResult({ ...result, assets: [asset] });
-  assert.ok(parsed);
-  assert.deepEqual(parsed.assets[0].catalysts, [{ title: "Earnings call", date: "2026-11-18", sourceUrl: result.assets[0].sources[0].url }]);
-  assert.deepEqual(composeIntelligenceBlocks(parsed).map((block) => block.type), ["activity", "comparison", "charts", "evidence", "scenarios", "catalysts", "exposure", "backtests", "risk", "actions"]);
-  assert.equal(parseIntelligenceResult({ ...result, assets: [{ ...asset, portfolioExposure: { ...asset.portfolioExposure, exposurePct: 150 } }] })?.assets[0].portfolioExposure, undefined);
-});

@@ -102,3 +102,29 @@
   .company-card { min-width: 0; min-height: 150px; padding: 10px; }
   .company-card-foot { flex-wrap: wrap; }
 }
+
+/* Keep the Bitget universe in a compact desktop-style grid on phones. */
+@media (max-width: 780px) {
+  .universe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 9px; }
+  .universe-card { padding: 10px; border-radius: 10px; }
+  .universe-card-head { gap: 6px; }
+  .universe-logo { width: 28px; height: 28px; border-radius: 8px; }
+  .universe-logo img { width: 21px; height: 21px; }
+  .universe-identity { gap: 2px; }
+  .universe-identity b { font-size: 9px; }
+  .universe-identity span { font-size: 6px; }
+  .asset-class { padding: 3px 4px; font-size: 5px; }
+  .universe-price { gap: 5px; margin: 11px 0 10px; font-size: 17px; letter-spacing: -.5px; }
+  .universe-price span { font-size: 6px; }
+  .universe-range { grid-template-columns: auto minmax(12px, 1fr) auto; gap: 5px; }
+  .universe-range small { font-size: 5px; }
+  .universe-range b { font-size: 6px; }
+  .universe-card-foot { align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 9px; padding-top: 7px; font-size: 5px; }
+  .universe-token-details { display: grid; gap: 3px; margin-top: 6px; font-size: 6px; }
+}
+@media (max-width: 340px) {
+  .universe-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 780px) {
+  .universe-identity b { display: -webkit-box; overflow: hidden; white-space: normal; text-overflow: clip; line-height: 1.2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+}

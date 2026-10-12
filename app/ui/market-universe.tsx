@@ -11,7 +11,7 @@ type MarketPayload = {
   generatedAt: number;
   assets: MarketAsset[];
   session: { market: string; daylightType: string | null; schedule: Array<{ state: string; startTime: string; endTime: string }> } | null;
-  coverage: { total: number; rTokens: number; rwa: number; crypto: number };
+  coverage: { total: number; rTokens: number; listedRTokens?: number; listedSpotPairs?: number; unavailableRTokens?: number; rwa: number; crypto: number };
   staleAfterMs: number;
   marketSessionStatus?: "available" | "empty" | "unavailable";
 };
@@ -91,8 +91,8 @@ export default function MarketUniverse() {
       <div className="universe-source"><span className={error ? "universe-status stale" : "universe-status"}><i /> {error ? "Feed unavailable" : "Bitget connected"}</span><small>{checkedAt ? `Checked ${new Date(checkedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Connecting to public market data…"}</small></div>
     </div>
     <div className="universe-stats" aria-label="Market coverage">
-      <div><span>REALITY rTOKENS</span><b>{payload?.coverage.rTokens ?? "—"}</b><small>Bitget classified</small></div>
-      <div><span>RWA SPOT PAIRS</span><b>{payload?.coverage.rwa ?? "—"}</b><small>Flagged by instrument metadata</small></div>
+      <div><span>LIVE REALITY rTOKENS</span><b>{payload?.coverage.rTokens ?? "—"}</b><small>{payload ? `${payload.coverage.listedRTokens ?? payload.coverage.rTokens} in Bitget catalog${payload.coverage.unavailableRTokens ? ` · ${payload.coverage.unavailableRTokens} without live quotes` : ""}` : "Bitget classified"}</small></div>
+      <div><span>USDT SPOT INSTRUMENTS</span><b>{payload?.coverage.listedSpotPairs ?? payload?.coverage.total ?? "—"}</b><small>Full Bitget spot catalog · Reality + crypto</small></div>
       <div><span>CRYPTO SPOT PAIRS</span><b>{payload?.coverage.crypto ?? "—"}</b><small>USDT quoted</small></div>
       <div><span>SESSION REFERENCE</span><b className="session-value">{sessionLabel}</b><small>{payload?.marketSessionStatus === "unavailable" ? "Estimated by Eastern Time · live status not returned" : "Bitget Reality market states"}</small></div>
     </div>

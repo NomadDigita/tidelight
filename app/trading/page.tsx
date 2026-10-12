@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getBitgetMarketUniverse } from "@/lib/bitget-market";
 import { createClient } from "@/lib/supabase/server";
 import TradingWorkspace from "@/app/ui/trading-workspace";
+import { issuerLogoUrl } from "@/lib/issuer-logo";
 
 export const revalidate = 60;
 export default async function TradingPage({ searchParams }: { searchParams: Promise<{ symbol?: string; intent?: string }> }) {
@@ -10,7 +11,7 @@ export default async function TradingPage({ searchParams }: { searchParams: Prom
   const intent = params.intent === "demo" || params.intent === "live" ? params.intent : undefined;
   const [supabase, universe] = await Promise.all([createClient(), getBitgetMarketUniverse().catch(() => null)]);
   const { data: { user } } = await supabase.auth.getUser();
-  const assets = (universe?.assets ?? []).filter((asset) => asset.isReality && asset.kind === "rtoken" && asset.quoteCoin === "USDT").map((asset) => ({ symbol: asset.symbol, name: asset.name, lastPrice: asset.lastPrice }));
+  const assets = (universe?.assets ?? []).filter((asset) => asset.isReality && asset.kind === "rtoken" && asset.quoteCoin === "USDT").map((asset) => ({ symbol: asset.symbol, name: asset.name, ticker: asset.underlyingTicker, logoUrl: asset.logoUrl ?? issuerLogoUrl(asset), lastPrice: asset.lastPrice }));
   return <div className="content-wrap inner-page">
     <section className="page-heading compact-heading"><div><div className="eyebrow"><span className="eyebrow-line"/> TIDELIGHT / BITGET EXECUTION</div><h1>Trade with <span>clear limits.</span></h1><p>Connect a dedicated Bitget API key for demo or live spot orders on verified tokenized stocks.</p></div></section>
     <TradingWorkspace signedIn={Boolean(user)} assets={assets} initialSymbol={assets.some((asset) => asset.symbol === requestedSymbol) ? requestedSymbol : undefined} initialIntent={intent}/>

@@ -234,6 +234,11 @@ export async function getBitgetMarketUniverse() {
       }];
     })
     .sort((left, right) => Number(right.isReality) - Number(left.isReality) || (right.turnover24h ?? 0) - (left.turnover24h ?? 0));
+  // Keep the live quote count distinct from Bitget's instrument catalog. A
+  // listed pair can be temporarily offline or lack a valid current ticker.
+  const usdtSpotListings = instruments.filter((instrument) => instrument.category === "SPOT" && instrument.quoteCoin === "USDT");
+  const listedRealityTokens = usdtSpotListings.filter((instrument) => instrument.isReality?.toLowerCase() === "yes");
+  const liveRealityCount = assets.filter((asset) => asset.isReality).length;
 
   return {
     provider: "Bitget",
@@ -242,7 +247,7 @@ export async function getBitgetMarketUniverse() {
     assets,
     session: session ? { market: session.market, daylightType: session.daylightType ?? null, schedule: session.stateList ?? [] } : null,
     marketSessionStatus: sessionsResult.status === "rejected" ? "unavailable" : session?.stateList?.length ? "available" : "empty",
-    coverage: { total: assets.length, rTokens: assets.filter((asset) => asset.isReality).length, rwa: assets.filter((asset) => asset.isRwa).length, crypto: assets.filter((asset) => asset.kind === "crypto").length },
+    coverage: { total: assets.length, rTokens: liveRealityCount, listedRTokens: listedRealityTokens.length, listedSpotPairs: usdtSpotListings.length, unavailableRTokens: Math.max(0, listedRealityTokens.length - liveRealityCount), rwa: assets.filter((asset) => asset.isRwa).length, crypto: assets.filter((asset) => asset.kind === "crypto").length },
     staleAfterMs: 120_000,
     metadataStatus: stockInfoResult.status === "fulfilled" ? "available" : "partial",
   };

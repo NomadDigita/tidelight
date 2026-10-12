@@ -28,6 +28,7 @@ export type IntelligenceAsset = {
 export type IntelligenceResult = {
   researchRunId: string;
   question: string;
+  workspaceContext?: string;
   assets: IntelligenceAsset[];
   tradeable: boolean;
   trace: IntelligenceStage[];
@@ -96,7 +97,7 @@ export function parseIntelligenceResult(value: unknown): IntelligenceResult | nu
     trace.push({ id: raw.id as string, agent: raw.agent as string, status: raw.status as IntelligenceStage["status"], title: raw.title as string, detail: raw.detail as string, at: raw.at as string, ...(isText(raw.asset, 16) ? { asset: raw.asset as string } : {}) });
   }
   if (value.tradeable !== assets.some((asset) => asset.tradeable)) return null;
-  return { researchRunId: value.researchRunId as string, question: value.question as string, assets, tradeable: value.tradeable, trace, ...(typeof value.contextRunId === "string" ? { contextRunId: value.contextRunId } : {}) };
+  return { researchRunId: value.researchRunId as string, question: value.question as string, assets, tradeable: value.tradeable, trace, ...(typeof value.contextRunId === "string" ? { contextRunId: value.contextRunId } : {}), ...(isText(value.workspaceContext, 240) ? { workspaceContext: value.workspaceContext as string } : {}) };
 }
 
 /** Trusted component registry selection is derived from validated fields, never model-authored component names. */

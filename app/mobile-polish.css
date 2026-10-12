@@ -67,9 +67,9 @@
   .landing-stage-readout { z-index: 5; }
   .landing-stage-readout small { max-width: 210px; white-space: normal; }
   .proof-cards article { flex-basis: min(82vw, 280px); }
-  .tide-guide { right: 10px !important; left: auto !important; width: auto !important; bottom: max(12px, env(safe-area-inset-bottom)) !important; gap: 0; }
-  .tide-guide.is-open .tide-guide-panel { width: min(344px, calc(100vw - 24px)) !important; height: min(420px, calc(100dvh - 118px)) !important; min-height: 250px; }
-  .tide-guide.is-open .tide-guide-launcher { display: none; }
+  .tide-guide { width: auto; gap: 0; }
+  .tide-guide.is-open .tide-guide-panel { width: min(344px, calc(100vw - 16px)); height: min(420px, var(--tide-panel-available, calc(100dvh - 32px))); min-height: min(250px, var(--tide-panel-available, 250px)); }
+  .tide-guide.is-open .tide-guide-launcher { display: flex; position: relative; z-index: 2; }
   .tide-guide-panel { max-width: min(344px, calc(100vw - 24px)) !important; }
   .tide-guide-portrait { display: none; }
   .tide-guide:not(.is-open) .tide-guide-launcher { width: 46px; min-width: 46px; height: 46px; min-height: 46px; justify-content: center; gap: 0; padding: 2px; }

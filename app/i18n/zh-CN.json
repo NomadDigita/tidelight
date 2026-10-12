@@ -3985,5 +3985,19 @@
   "Show the latest 6": "显示最新 6 条",
   "Show the first 6": "显示前 6 家",
   "Show 6 more companies": "再显示 6 家公司",
-  "Show the first 5": "显示前 5 条"
+  "Show the first 5": "显示前 5 条",
+  "Tide workspace mode": "Tide 工作区模式",
+  "Guide": "指南",
+  "GENERATED FROM VALIDATED RESEARCH DATA": "根据已验证的研究数据生成",
+  "RESEARCH IN PROGRESS": "研究进行中",
+  "Following the evidence.": "正在追踪证据。",
+  "SOURCE-FIRST MARKET RESEARCH": "以来源为先的市场研究",
+  "Research from anywhere in your desk.": "在工作区的任何位置开始研究。",
+  "THIS WORKSPACE": "当前工作区",
+  "The current agent flow covers up to three supported US stock underlyings. Page context can preselect a symbol; it does not read private page data or portfolio exposure.": "当前代理流程最多支持三只指定美股标的。页面上下文可预选标的，但不会读取私有页面数据或投资组合敞口。",
+  "Research interpretation, not a trade instruction. All trading actions require your review.": "这是研究解读，不是交易指令。所有交易操作都需要你审核。",
+  "Ask about a supported market…": "询问支持的市场标的…",
+  "Ask the Tidelight research agents": "向 Tidelight 研究代理提问",
+  "Drag this button anywhere on the screen to move it.": "拖动此按钮即可在屏幕上任意移动。",
+  "Ask me how Tidelight works, troubleshoot a step, or let me guide you across the desk. I can find the right product docs, explain a workflow, or crack a joke when the market needs one.": "你可以询问 Tidelight 的用法、排查操作问题，或让我带你了解工作区。我可以查找产品文档、解释流程，也能在市场气氛需要时讲个笑话。"
 }

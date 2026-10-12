@@ -4,9 +4,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { parseIntelligenceResult, type IntelligenceResult, type IntelligenceStage } from "@/lib/intelligence-ui";
 
 type ActivityState = { busy: boolean; question: string; stages: IntelligenceStage[]; error: string; result: IntelligenceResult | null };
-type IntelligenceContextValue = ActivityState & { start: (question: string, contextRunId?: string | null) => Promise<IntelligenceResult | null>; restore: (result: IntelligenceResult) => void; clear: () => void };
+type IntelligenceContextValue = ActivityState & { start: (question: string, contextRunId?: string | null, workspaceContext?: string, showFloatingActivity?: boolean) => Promise<IntelligenceResult | null>; restore: (result: IntelligenceResult) => void; clear: () => void };
 const empty: ActivityState = { busy: false, question: "", stages: [], error: "", result: null };
 const IntelligenceContext = createContext<IntelligenceContextValue | null>(null);
+const ACTIVE_RUN_KEY = "tidelight-active-intelligence-run";
 
 function ActivityPanel({ state, onMinimize, onExpand, minimized }: { state: ActivityState; onMinimize: () => void; onExpand: () => void; minimized: boolean }) {
   if (!state.busy && state.stages.length === 0 && !state.error) return null;
@@ -28,17 +29,33 @@ function ActivityPanel({ state, onMinimize, onExpand, minimized }: { state: Acti
 export function IntelligenceProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ActivityState>(empty);
   const [minimized, setMinimized] = useState(true);
+  const [activityVisible, setActivityVisible] = useState(true);
   const abortRef = useRef<AbortController | null>(null);
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const start = useCallback(async (question: string, contextRunId?: string | null) => {
+  useEffect(() => {
+    const id = window.sessionStorage.getItem(ACTIVE_RUN_KEY);
+    if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return;
+    let active = true;
+    void fetch(`/api/research/agent-flow?id=${encodeURIComponent(id)}`, { cache: "no-store" }).then(async (response) => {
+      if (!response.ok) throw new Error("Saved research is unavailable.");
+      const payload = await response.json();
+      const result = parseIntelligenceResult(payload?.summary);
+      if (!result) throw new Error("Saved research did not pass interface validation.");
+      if (active && !abortRef.current) setState({ busy: false, question: result.question, stages: result.trace, error: "", result });
+    }).catch(() => { if (active && !abortRef.current) window.sessionStorage.removeItem(ACTIVE_RUN_KEY); });
+    return () => { active = false; };
+  }, []);
+
+  const start = useCallback(async (question: string, contextRunId?: string | null, workspaceContext?: string, showFloatingActivity = true) => {
     abortRef.current?.abort();
     const aborter = new AbortController();
     abortRef.current = aborter;
+    setActivityVisible(showFloatingActivity);
     setMinimized(false);
     setState({ busy: true, question, stages: [], error: "", result: null });
     try {
-      const response = await fetch("/api/research/agent-flow", { method: "POST", headers: { "Content-Type": "application/json", Accept: "text/event-stream" }, body: JSON.stringify({ question, ...(contextRunId ? { contextRunId } : {}) }), signal: aborter.signal });
+      const response = await fetch("/api/research/agent-flow", { method: "POST", headers: { "Content-Type": "application/json", Accept: "text/event-stream" }, body: JSON.stringify({ question, ...(contextRunId ? { contextRunId } : {}), ...(workspaceContext ? { workspaceContext } : {}) }), signal: aborter.signal });
       if (!response.ok || !response.body) {
         const failure = await response.json().catch(() => null);
         throw new Error(failure?.error || "The research flow could not start. Please try again.");
@@ -60,6 +77,7 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
           completed = parseIntelligenceResult(data);
           if (!completed) throw new Error("The research result did not pass Tidelight’s interface checks.");
           setState((current) => ({ ...current, busy: false, result: completed, error: "" }));
+          window.sessionStorage.setItem(ACTIVE_RUN_KEY, completed.researchRunId);
         } else if (kind === "error") {
           const message = data && typeof data === "object" && "error" in data && typeof data.error === "string" ? data.error : "The research workflow stopped before completion.";
           throw new Error(message);
@@ -86,10 +104,10 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const restore = useCallback((result: IntelligenceResult) => { setState({ busy: false, question: result.question, stages: result.trace, error: "", result }); setMinimized(false); }, []);
-  const clear = useCallback(() => { abortRef.current?.abort(); setState(empty); }, []);
+  const restore = useCallback((result: IntelligenceResult) => { setState({ busy: false, question: result.question, stages: result.trace, error: "", result }); window.sessionStorage.setItem(ACTIVE_RUN_KEY, result.researchRunId); setMinimized(false); }, []);
+  const clear = useCallback(() => { abortRef.current?.abort(); window.sessionStorage.removeItem(ACTIVE_RUN_KEY); setState(empty); }, []);
   const value = useMemo(() => ({ ...state, start, restore, clear }), [state, start, restore, clear]);
-  return <IntelligenceContext.Provider value={value}>{children}<ActivityPanel state={state} minimized={minimized} onMinimize={() => setMinimized(true)} onExpand={() => setMinimized(false)} /></IntelligenceContext.Provider>;
+  return <IntelligenceContext.Provider value={value}>{children}{activityVisible ? <ActivityPanel state={state} minimized={minimized} onMinimize={() => setMinimized(true)} onExpand={() => setMinimized(false)} /> : null}</IntelligenceContext.Provider>;
 }
 
 export function useIntelligence() {

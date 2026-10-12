@@ -3,7 +3,6 @@ import MarketRadar from "@/app/ui/market-radar";
 import { getBitgetMarketUniverse } from "@/lib/bitget-market";
 import { createClient } from "@/lib/supabase/server";
 import MarketSessionIndicator from "@/app/ui/market-session-indicator";
-import "./intelligent-overview.css";
 
 export const maxDuration = 60;
 

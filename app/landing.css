@@ -168,6 +168,29 @@
 .egg-mark-star{fill:#a6f4d0;filter:drop-shadow(0 0 5px #a6f4d0);transform-box:fill-box;transform-origin:center;animation:egg-mark-orbit 5.5s ease-in-out infinite}
 .landing-page .landing-hero-stage{overflow:hidden}
 .landing-page .landing-hero-stage .landing-hand-art .landing-tide-hand{width:100%}
+/* The artwork card follows the active desk theme while retaining its glass centerpiece. */
+.landing-page .landing-hero-stage .landing-orbit-core{position:relative}
+:root[data-theme="night"] .landing-page .landing-hero-stage{border-color:#1b3733;background:radial-gradient(ellipse at 50% 56%,#102723 0%,#071111 45%,#030707 100%)}
+:root[data-theme="daylight"] .landing-page .landing-hero-stage{border-color:#b8d0c1;background:radial-gradient(ellipse at 50% 48%,#d4eee2 0%,#e7f1e7 42%,#cbded2 100%);box-shadow:0 20px 60px #365f4522,inset 0 1px #ffffffb3}
+:root[data-theme="daylight"] .landing-page .landing-hero-stage .landing-stage-glow{background:radial-gradient(ellipse,#6dc99a62 0%,#82cba92e 35%,transparent 72%)}
+:root[data-theme="daylight"] .landing-page .landing-hero-stage .landing-orbit-ring{border-color:#46896346;box-shadow:0 0 28px #4c9a7014}
+:root[data-theme="daylight"] .landing-page .landing-dyor>span{color:#287352;text-shadow:none}
+:root[data-theme="daylight"] .landing-page .landing-dyor strong{background-image:linear-gradient(180deg,#164c39 4%,#286e50 42%,#35855d 65%,#176242 100%);filter:drop-shadow(0 2px 12px #2e8b5b30);animation:none}
+:root[data-theme="daylight"] .landing-page .landing-dyor strong::before{color:#54a977;opacity:.2;-webkit-text-fill-color:#54a977}
+:root[data-theme="daylight"] .landing-page .landing-dyor>small{color:#416b55;text-shadow:none}
+:root[data-theme="daylight"] .landing-page .landing-product-word{background-image:linear-gradient(180deg,#174b39 0%,#38775a 48%,#1c5a40 100%);filter:drop-shadow(0 2px 14px #3a8b5a24);animation:none}
+:root[data-theme="daylight"] .landing-page .landing-pointer svg{fill:#eafff2;fill-opacity:.8;stroke:#247d58}
+:root[data-theme="daylight"] .landing-page .landing-hero-stage .orbit-label{border-color:#93b9a0;background:#f4fbf4d9;color:#286a4d}
+:root[data-theme="blue"] .landing-page .landing-hero-stage{border-color:#35496f;background:radial-gradient(ellipse at 50% 55%,#1b2a48 0%,#111a30 45%,#090f1e 100%);box-shadow:0 22px 64px #05091a66,inset 0 1px #c4d2ff14}
+:root[data-theme="blue"] .landing-page .landing-hero-stage .landing-stage-glow{background:radial-gradient(ellipse,#829dff48 0%,#5369c832 34%,transparent 72%)}
+:root[data-theme="blue"] .landing-page .landing-hero-stage .landing-orbit-ring{border-color:#a6b8ff3b;box-shadow:0 0 30px #7187ff14}
+:root[data-theme="blue"] .landing-page .landing-dyor>span{color:#c1d0ff;text-shadow:0 0 18px #7992ff80}
+:root[data-theme="blue"] .landing-page .landing-dyor strong{background-image:linear-gradient(180deg,#fff 4%,#dbe3ff 34%,#8ba3ee 56%,#edf1ff 74%,#a4b9ff 100%);filter:drop-shadow(0 0 17px #829aff72) drop-shadow(0 0 55px #566fff55)}
+:root[data-theme="blue"] .landing-page .landing-dyor strong::before{color:#a4b9ff;-webkit-text-fill-color:#a4b9ff}
+:root[data-theme="blue"] .landing-page .landing-dyor>small{color:#c5d0f1}
+:root[data-theme="blue"] .landing-page .landing-product-word{background-image:linear-gradient(180deg,#fff 0%,#dce5ff 33%,#8fa7ec 55%,#f1f4ff 73%,#aabfff 100%);filter:drop-shadow(0 0 16px #879dff70) drop-shadow(0 0 40px #566fff48)}
+:root[data-theme="blue"] .landing-page .landing-hero-stage .landing-orbit-core{border-color:#91a7ff88;background:radial-gradient(circle at 35% 24%,#4a5e9a,#111a30 68%);box-shadow:0 0 90px #7087ff35,inset 0 0 40px #829aff1c}
+:root[data-theme="blue"] .landing-page .landing-hero-stage .orbit-label{border-color:#94a8ff55;background:#111a30cc;color:#c4d0ff}
 .landing-docs-launcher{position:fixed;z-index:90;right:18px;bottom:18px;display:flex;align-items:center;gap:9px;min-height:42px;padding:0 14px;border:1px solid #8dd5b4;border-radius:999px;background:#fffefa;color:#17372d;box-shadow:0 8px 26px #0920172b;font:600 11px var(--font);cursor:pointer;transition:transform .18s,box-shadow .18s}
 .landing-docs-launcher:hover{transform:translateY(-2px);box-shadow:0 12px 32px #0920173a}
 .landing-docs-launcher>span{display:grid;place-items:center;width:21px;height:21px;border-radius:7px;background:#daf2e4;color:#14765b;font-size:15px}
@@ -197,4 +220,6 @@
 @media(max-width:800px){.landing-page .landing-hero-stage{min-height:640px}.landing-dyor{top:22px}.landing-dyor strong{font-size:clamp(78px,20vw,120px)}.landing-pointer{top:216px;width:38px;height:52px}.landing-product-word{top:358px;font-size:clamp(40px,15.5vw,64px)}.landing-hero-stage .landing-orbit{min-height:380px;transform:translateY(220px)}.landing-hero-stage .landing-orbit-core{width:112px;height:112px;font-size:16px}.landing-page .landing-hand-art{width:min(260px,68vw);bottom:-60px}.landing-docs-launcher{right:12px;bottom:calc(12px + env(safe-area-inset-bottom));min-height:40px;padding:0 12px}}
 @media(max-width:520px){.landing-page .landing-hero-stage{min-height:620px}.landing-pointer{top:208px;width:35px;height:48px}.landing-product-word{top:345px;font-size:clamp(39px,15.2vw,60px)}.landing-hero-stage .landing-orbit{transform:translateY(205px)}.landing-hero-stage .landing-orbit-core{width:100px;height:100px}.landing-page .landing-hand-art{width:min(250px,67vw);bottom:-64px}.landing-docs-launcher{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.landing-pointer,.landing-product-word,.egg-mark-wave,.egg-mark-star{animation:none}}
+@media(max-width:800px){.landing-page .landing-hero-stage{min-height:520px;margin-top:26px;border-radius:22px}.landing-page .landing-dyor{top:19px}.landing-page .landing-dyor>span{margin-bottom:7px;font-size:7px}.landing-page .landing-dyor strong{font-size:clamp(82px,13vw,116px)}.landing-page .landing-dyor>small{margin-top:8px;font-size:9px}.landing-page .landing-pointer{top:145px;width:35px;height:48px}.landing-page .landing-product-word{top:218px;font-size:clamp(42px,8vw,58px)}.landing-page .landing-hero-stage .landing-orbit{min-height:300px;transform:translateY(150px)}.landing-page .landing-hero-stage .landing-orbit .ring-one{height:178px}.landing-page .landing-hero-stage .landing-orbit .ring-two{height:250px}.landing-page .landing-hand-art{width:min(260px,64vw);bottom:-55px}.landing-page .landing-egg-mark{width:44px}.landing-page .landing-hero-stage .orbit-label{display:none}}
+@media(max-width:520px){.landing-page .landing-hero-stage{min-height:420px;margin-top:22px;border-radius:18px}.landing-page .landing-dyor{top:16px}.landing-page .landing-dyor>span{font-size:6px;letter-spacing:1.4px}.landing-page .landing-dyor strong{font-size:clamp(68px,18vw,88px)}.landing-page .landing-dyor>small{margin-top:7px;font-size:8px}.landing-page .landing-pointer{top:125px;width:32px;height:44px}.landing-page .landing-product-word{top:197px;font-size:clamp(38px,12.5vw,50px)}.landing-page .landing-hero-stage .landing-orbit{min-height:250px;transform:translateY(116px)}.landing-page .landing-hero-stage .landing-orbit .ring-one{height:150px}.landing-page .landing-hero-stage .landing-orbit .ring-two{height:210px}.landing-page .landing-hand-art{width:min(200px,58vw);bottom:-46px}.landing-page .landing-egg-mark{width:40px}}
 

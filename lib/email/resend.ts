@@ -1,6 +1,6 @@
 import "server-only";
 
-export type ResendMessage = { from: string; to: string; subject: string; html: string; idempotencyKey: string; headers?: Record<string, string> };
+export type ResendMessage = { from: string; to: string; subject: string; html: string; idempotencyKey: string; replyTo?: string; headers?: Record<string, string> };
 export type ResendResult = { id: string };
 
 export async function sendWithResend(message: ResendMessage): Promise<ResendResult> {
@@ -9,7 +9,7 @@ export async function sendWithResend(message: ResendMessage): Promise<ResendResu
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "Idempotency-Key": message.idempotencyKey },
-    body: JSON.stringify({ from: message.from, to: [message.to], subject: message.subject, html: message.html, headers: message.headers }),
+    body: JSON.stringify({ from: message.from, to: [message.to], subject: message.subject, html: message.html, reply_to: message.replyTo, headers: message.headers }),
     cache: "no-store",
     signal: AbortSignal.timeout(12000),
   });

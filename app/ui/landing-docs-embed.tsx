@@ -115,6 +115,23 @@ export default function LandingDocsEmbed() {
   }, [configureEmbed, docsSite, isOpen, ready, revealEmbed]);
 
   useEffect(() => {
+    const openFromHelp = () => {
+      if (readyRef.current && window.GitBook) {
+        window.GitBook("open");
+        setIsOpen(true);
+      } else if (failed) {
+        window.open(docsSite, "_blank", "noopener,noreferrer");
+      } else {
+        setRequested(true);
+        pendingOpen.current = true;
+        pendingPage.current = DEFAULT_DOC_PATH;
+      }
+    };
+    window.addEventListener("tidelight:open-docs", openFromHelp);
+    return () => window.removeEventListener("tidelight:open-docs", openFromHelp);
+  }, [docsSite, failed]);
+
+  useEffect(() => {
     if (!ready) return;
     const syncOpenState = () => {
       const widget = document.getElementById("gitbook-widget-window");

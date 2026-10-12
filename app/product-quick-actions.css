@@ -1,0 +1,36 @@
+.product-quick-actions{position:fixed;z-index:88;left:266px;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;padding:6px;border:1px solid color-mix(in srgb,var(--line) 86%,transparent);border-radius:999px;background:color-mix(in srgb,var(--panel) 94%,transparent);box-shadow:0 8px 28px color-mix(in srgb,#07120e 18%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.product-quick-actions.is-landing{left:16px}
+.product-quick-actions button{display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid transparent;border-radius:50%;background:transparent;color:var(--text);cursor:pointer;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}
+.product-quick-actions button:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--mint) 35%,var(--line));background:color-mix(in srgb,var(--mint) 10%,var(--panel));box-shadow:0 4px 16px color-mix(in srgb,var(--mint) 13%,transparent)}
+.product-quick-actions button:focus-visible,.feedback-dialog button:focus-visible,.feedback-dialog input:focus-visible,.feedback-dialog textarea:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.product-quick-actions button:first-child span{font:20px/1 "Apple Color Emoji","Segoe UI Emoji",sans-serif}
+.product-quick-actions button:last-child span{display:grid;place-items:center;width:21px;height:21px;border:1px solid color-mix(in srgb,var(--mint) 42%,var(--line));border-radius:50%;color:var(--mint);font:600 13px/1 var(--font)}
+.feedback-scrim{position:fixed;z-index:140;inset:0;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,#07120e 42%,transparent);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.feedback-dialog{width:min(100%,480px);max-height:min(90dvh,680px);overflow:auto;padding:24px;border:1px solid var(--line);border-radius:20px;background:var(--panel);color:var(--text);box-shadow:0 28px 90px #06140f45;animation:feedback-enter .18s ease-out}
+.feedback-dialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.feedback-eyebrow{color:var(--mint);font:8px var(--mono);letter-spacing:.16em}
+.feedback-dialog h2{margin:8px 0 0;color:var(--text);font:var(--weight-heading) 25px/1.12 var(--display);letter-spacing:-.045em}
+.feedback-close{display:grid;place-items:center;flex:none;width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:var(--panel-2);color:var(--muted);font:22px/1 var(--font);cursor:pointer}
+.feedback-dialog>p{margin:14px 0 20px;color:var(--muted);font:12px/1.7 var(--font)}
+.feedback-dialog form{display:grid;gap:9px}
+.feedback-dialog label{display:flex;align-items:baseline;justify-content:space-between;margin-top:7px;color:var(--text);font:550 11px var(--font)}
+.feedback-dialog label span{color:var(--faint);font:10px var(--font)}
+.feedback-dialog textarea,.feedback-dialog input:not(.feedback-honeypot){width:100%;min-height:48px;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:color-mix(in srgb,var(--bg) 62%,var(--panel));color:var(--text);font:12px/1.65 var(--font);resize:vertical}
+.feedback-dialog textarea{min-height:132px}
+.feedback-dialog textarea::placeholder,.feedback-dialog input::placeholder{color:var(--faint)}
+.feedback-dialog form>footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+.feedback-dialog form>footer>small{color:var(--faint);font:9px var(--mono)}
+.feedback-dialog form>footer>div{display:flex;align-items:center;gap:8px}
+.feedback-dialog form button{min-height:38px;padding:0 14px;border-radius:9px;font:600 11px var(--font);cursor:pointer;transition:opacity .18s,transform .18s}
+.feedback-dialog form button:disabled{opacity:.45;cursor:wait}
+.feedback-cancel{border:1px solid var(--line);background:var(--panel-2);color:var(--muted)}
+.feedback-send{border:1px solid color-mix(in srgb,var(--mint) 62%,transparent);background:var(--mint);color:var(--bg)}
+.feedback-send:hover:not(:disabled){transform:translateY(-1px)}
+.feedback-honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
+.feedback-dialog .feedback-status{margin:14px 0 0;padding:11px 12px;border:1px solid color-mix(in srgb,var(--amber) 32%,var(--line));border-radius:10px;color:var(--muted);font:11px/1.5 var(--font)}
+.feedback-dialog .feedback-status.is-success{border-color:color-mix(in srgb,var(--mint) 34%,var(--line));color:var(--mint)}
+@keyframes feedback-enter{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:1080px){.product-quick-actions:not(.is-landing){left:236px}}
+@media(max-width:780px){.product-quick-actions,.product-quick-actions.is-landing,.product-quick-actions:not(.is-landing){left:10px}}
+@media(max-width:600px){.product-quick-actions{bottom:calc(10px + env(safe-area-inset-bottom));gap:4px;padding:4px}.product-quick-actions button{width:36px;height:36px}.feedback-scrim{align-items:end;padding:10px 10px calc(10px + env(safe-area-inset-bottom))}.feedback-dialog{max-height:min(88dvh,700px);padding:20px 18px;border-radius:18px}.feedback-dialog h2{font-size:23px}.feedback-dialog textarea{min-height:118px}}
+@media(prefers-reduced-motion:reduce){.feedback-dialog{animation:none}.product-quick-actions button,.feedback-dialog form button{transition:none}}

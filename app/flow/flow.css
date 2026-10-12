@@ -25,3 +25,33 @@
 .flow-orbit-core{grid-template-rows:42px auto;align-content:center;gap:3px;font-size:0}
 .flow-orbit-core>img{display:block;width:42px!important;height:42px!important;max-width:none;object-fit:contain;border-radius:13px;filter:drop-shadow(0 5px 12px color-mix(in srgb,var(--flow-glow) 24%,transparent))}
 .flow-orbit-core small{margin-top:0}
+
+/* A compact event rail keeps the active agent handoff readable at a glance. */
+.flow-trace{grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:0;margin-top:22px;overflow:hidden;border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--panel) 66%,transparent)}
+.flow-stage{position:relative;display:grid;grid-template-columns:22px minmax(0,1fr);align-items:start;gap:10px;min-width:0;min-height:126px;padding:15px 12px 13px;border:0;border-right:1px solid var(--line);border-radius:0;background:transparent;transition:background .2s}
+.flow-stage:last-child{border-right:0}
+.flow-stage::after{content:"";position:absolute;z-index:1;top:25px;left:32px;right:-1px;height:1px;background:var(--line);transition:background .25s}
+.flow-stage-complete::after{background:color-mix(in srgb,var(--mint) 65%,var(--line))}
+.flow-stage-running{background:color-mix(in srgb,var(--flow-glow) 7%,var(--panel))}
+.flow-stage-blocked{background:color-mix(in srgb,var(--amber) 5%,var(--panel))}
+.flow-stage-node{position:relative;z-index:2;display:grid;place-items:start center;min-height:22px}
+.flow-stage-node>span{display:grid;place-items:center;width:21px;height:21px;border:1px solid var(--line);border-radius:50%;background:var(--panel);color:var(--faint);font:8px var(--mono)}
+.flow-stage-complete .flow-stage-node>span{border-color:color-mix(in srgb,var(--mint) 68%,var(--line));background:color-mix(in srgb,var(--mint) 15%,var(--panel));color:var(--mint)}
+.flow-stage-running .flow-stage-node>span{border-color:var(--flow-glow);background:color-mix(in srgb,var(--flow-glow) 12%,var(--panel));color:var(--mint);box-shadow:0 0 0 4px color-mix(in srgb,var(--flow-glow) 10%,transparent);animation:flow-node-pulse 1.8s ease-in-out infinite}
+.flow-stage-blocked .flow-stage-node>span{border-color:color-mix(in srgb,var(--amber) 68%,var(--line));color:var(--amber)}
+.flow-stage-body{position:relative;z-index:2;display:grid;align-content:start;gap:7px;min-width:0}
+.flow-stage-body .flow-stage-meta{display:flex;justify-content:space-between;gap:6px;color:var(--faint);font:7px/1.35 var(--mono);letter-spacing:.07em;text-transform:uppercase}
+.flow-stage-meta>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flow-stage-meta small{flex:none;color:var(--faint);font:7px var(--mono)}
+.flow-stage-body h3{display:-webkit-box;overflow:hidden;margin:0;color:var(--text);font:var(--weight-heading) 11px/1.35 var(--display);letter-spacing:-.015em;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.flow-stage-status{align-self:start;color:var(--faint);font:7px var(--mono);letter-spacing:.07em;text-transform:uppercase}
+.flow-stage-complete .flow-stage-status{color:var(--mint)}
+.flow-stage-running .flow-stage-status{color:var(--mint)}
+.flow-stage-blocked .flow-stage-status{color:var(--amber)}
+.flow-stage-detail{min-width:0;margin-top:2px}
+.flow-stage-detail summary{width:max-content;max-width:100%;color:var(--muted);font:9px/1.4 var(--font);cursor:pointer}
+.flow-stage-detail p{margin:6px 0 0;color:var(--muted);font:10px/1.55 var(--font);overflow-wrap:anywhere}
+@keyframes flow-node-pulse{0%,100%{box-shadow:0 0 0 3px color-mix(in srgb,var(--flow-glow) 8%,transparent)}50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--flow-glow) 15%,transparent)}}
+@media(max-width:700px){.flow-trace{grid-auto-flow:column;grid-auto-columns:minmax(165px,1fr);grid-template-columns:none;grid-template-rows:auto;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity}.flow-stage{min-height:116px;border-right:1px solid var(--line);scroll-snap-align:start}.flow-stage:last-child{border-right:0}}
+@media(max-width:600px){.flow-trace{margin-top:18px}.flow-stage{padding:13px 11px 12px}}
+@media(prefers-reduced-motion:reduce){.flow-stage-running .flow-stage-node>span{animation:none}.flow-stage,.flow-stage::after{transition:none}}

@@ -3999,5 +3999,14 @@
   "Ask about a supported market…": "询问支持的市场标的…",
   "Ask the Tidelight research agents": "向 Tidelight 研究代理提问",
   "Drag this button anywhere on the screen to move it.": "拖动此按钮即可在屏幕上任意移动。",
-  "Ask me how Tidelight works, troubleshoot a step, or let me guide you across the desk. I can find the right product docs, explain a workflow, or crack a joke when the market needs one.": "你可以询问 Tidelight 的用法、排查操作问题，或让我带你了解工作区。我可以查找产品文档、解释流程，也能在市场气氛需要时讲个笑话。"
+  "Ask me how Tidelight works, troubleshoot a step, or let me guide you across the desk. I can find the right product docs, explain a workflow, or crack a joke when the market needs one.": "你可以询问 Tidelight 的用法、排查操作问题，或让我带你了解工作区。我可以查找产品文档、解释流程，也能在市场气氛需要时讲个笑话。",
+  "TURNOVER": "成交额",
+  "Bitget history unavailable": "Bitget 历史数据暂不可用",
+  "Live Bitget quote unavailable": "Bitget 实时行情暂不可用",
+  "Completed Bitget candles are not available yet.": "暂时没有可用的 Bitget 已完成 K 线。",
+  "Loading completed Bitget candles…": "正在加载 Bitget 已完成 K 线…",
+  "BITGET · USDT FUTURES": "BITGET · USDT 永续合约",
+  "Completed 4H closes": "已完成的 4 小时收盘价",
+  "Trading boundary": "交易范围",
+  "Overview prices, 24-hour ranges, and turnover use Bitget Reality spot references. Mini charts, where available, use separately listed Bitget USDT stock perpetual 4-hour closes; they are a derivative reference, not rToken candle history. Quotes refresh while this page is open. Market data is informational, not an investment signal.": "概览中的价格、24 小时区间和成交额来自 Bitget Reality 现货行情。迷你图表（如有）展示单独上市的 Bitget USDT 美股永续合约 4 小时收盘价，属于衍生品参考数据，并非 rToken K 线历史。此页面打开期间行情会持续刷新。市场数据仅供参考，不构成投资信号。"
 }

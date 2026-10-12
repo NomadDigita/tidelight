@@ -1,6 +1,66 @@
 :root[data-theme="daylight"] .sidebar-promo a,
 :root[data-theme="daylight"] .privacy-links a { color: #286a4d; }
 :root[data-theme="daylight"] .sidebar-promo a { font-weight: 600; }
+
+/* Keep the navigation as the flexible, scrollable region on short desktop
+   viewports so the research promo and account controls never get clipped. */
+@media (min-width: 781px) {
+  .sidebar { min-height: 0; overflow: hidden; }
+  .nav-list {
+    min-height: 0;
+    flex: 0 1 auto;
+    overflow-y: auto;
+    align-content: start;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--mint) 25%, transparent) transparent;
+  }
+  .sidebar-promo,
+  .sidebar-bottom { flex: 0 0 auto; }
+}
+@media (min-width: 781px) and (max-height: 900px) {
+  .sidebar { padding-top: 19px; padding-bottom: 12px; }
+  .brand { padding-bottom: clamp(18px, 3.2vh, 31px); }
+  .workspace-label { padding-bottom: 8px; }
+  .nav-list { gap: 3px; }
+  .nav-link { height: 39px; }
+  .sidebar-promo { margin-top: clamp(10px, 2vh, 19px); margin-bottom: 10px; padding: 13px 12px 12px; }
+  .sidebar-promo b { margin-top: 9px; }
+  .sidebar-promo p { margin-bottom: 10px; }
+  .data-status { margin-bottom: 8px; padding-top: 9px; padding-bottom: 9px; }
+}
+
+/* Overview market cards keep full quote context while the chart stays quiet. */
+.company-card { min-height: 254px; padding: 14px 15px 12px; }
+.company-card-top { margin-bottom: 8px; }
+.company-card-price { margin-top: 9px; }
+.company-chart-wrap { position: relative; height: 40px; margin: 6px -2px 3px; overflow: hidden; }
+.company-chart { display: block; width: 100%; height: 100%; overflow: visible; }
+.company-chart polyline { fill: none; stroke: var(--brand-teal); stroke-width: 1.8; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--brand-teal) 40%, transparent)); }
+.company-chart polyline.down { stroke: var(--red); }
+.company-chart-area { opacity: .85; }
+.company-chart text { fill: var(--text); opacity: .15; font: 5px var(--mono); letter-spacing: 1px; }
+.company-chart-empty { display: grid; place-items: center; min-height: 34px; color: var(--faint); font: 7px var(--mono); }
+.company-card-range { display: grid; grid-template-columns:auto minmax(32px,1fr) auto; align-items:center; gap:7px; margin-top:2px; }
+.company-card-range>span { display: grid; gap:3px; color: var(--faint); font: 6px var(--mono); letter-spacing: .04em; }
+.company-card-range>span:last-child { text-align:right; }
+.company-card-range b { color: var(--muted); font: 7px var(--mono); letter-spacing:0; }
+.company-card-range>i { position:relative; height:3px; border-radius:99px; background:color-mix(in srgb,var(--muted) 24%,transparent); }
+.company-card-range em { position:absolute; top:50%; width:7px; height:7px; border:1px solid var(--panel); border-radius:50%; background:var(--brand-teal); transform:translate(-50%,-50%); box-shadow:0 0 8px color-mix(in srgb,var(--brand-teal) 40%,transparent); }
+.company-card-volume { display:flex; justify-content:space-between; gap:8px; margin-top:8px; color:var(--faint); font:6px var(--mono); letter-spacing:.06em; }
+.company-card-volume b { color:var(--muted); font-weight:500; }
+.company-card-foot { padding-top:8px; font-size:7px; }
+.chart-brand-watermark { fill:var(--brand-teal); opacity:.10; font:600 24px var(--display); letter-spacing:6px; filter:drop-shadow(0 0 12px color-mix(in srgb,var(--brand-teal) 55%,transparent)); animation:chart-watermark-breathe 7s ease-in-out infinite; }
+@keyframes chart-watermark-breathe { 0%,100% { opacity:.065; } 50% { opacity:.13; } }
+@media (max-width:780px) {
+  .company-card { min-height:210px; padding:10px 10px 9px; }
+  .company-chart-wrap { height:34px; }
+  .company-card-range { gap:4px; }
+  .company-card-range>span { font-size:5px; }
+  .company-card-range b { font-size:6px; }
+  .company-card-volume { font-size:5px; }
+  .company-card-volume b { font-size:6px; }
+}
+@media (prefers-reduced-motion:reduce) { .chart-brand-watermark { animation:none; } }
 :root[data-theme="daylight"] .data-status b,
 :root[data-theme="daylight"] .account-identity > div:nth-child(2) b { color: #2d4437; }
 :root[data-theme="daylight"] .data-status small,
@@ -110,3 +170,7 @@
 .app-shell .content-wrap :is(b,strong,button) {
   font-weight:var(--weight-emphasis);
 }
+.company-card.is-unavailable { min-height:142px; }
+@media (max-width:780px) { .company-card.is-unavailable { min-height:132px; } }
+.company-chart-caption { margin:0 0 2px; color:var(--faint); font:5px var(--mono); letter-spacing:.06em; text-align:right; }
+@media (max-width:780px) { .company-chart-caption { font-size:4.5px; } }

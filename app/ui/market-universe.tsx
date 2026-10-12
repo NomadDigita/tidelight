@@ -51,7 +51,7 @@ export default function MarketUniverse() {
   const [payload, setPayload] = useState<MarketPayload | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
-  const [visibleCount, setVisibleCount] = useState(18);
+  const [visibleCount, setVisibleCount] = useState(6);
   const [error, setError] = useState("");
   const [checkedAt, setCheckedAt] = useState<number | null>(null);
 
@@ -97,8 +97,8 @@ export default function MarketUniverse() {
       <div><span>SESSION REFERENCE</span><b className="session-value">{sessionLabel}</b><small>{payload?.marketSessionStatus === "unavailable" ? "Estimated by Eastern Time · live status not returned" : "Bitget Reality market states"}</small></div>
     </div>
     <div className="universe-controls">
-      <label className="universe-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setVisibleCount(18); }} placeholder="Search ticker, token, or company" aria-label="Search market assets" /></label>
-      <div className="universe-filters" role="group" aria-label="Filter asset class">{filterOptions.map((item) => <button type="button" key={item.value} className={filter === item.value ? "selected" : ""} aria-pressed={filter === item.value} onClick={() => { setFilter(item.value); setVisibleCount(18); }}>{item.label}</button>)}</div>
+      <label className="universe-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setVisibleCount(6); }} placeholder="Search ticker, token, or company" aria-label="Search market assets" /></label>
+      <div className="universe-filters" role="group" aria-label="Filter asset class">{filterOptions.map((item) => <button type="button" key={item.value} className={filter === item.value ? "selected" : ""} aria-pressed={filter === item.value} onClick={() => { setFilter(item.value); setVisibleCount(6); }}>{item.label}</button>)}</div>
     </div>
     {error && !payload ? <div className="universe-message" role="alert"><b>Live feed is unavailable right now.</b><span>{error}</span><small>We won’t substitute sample or stale prices.</small></div> : null}
     {!payload && !error ? <div className="universe-loading" role="status">Connecting to Bitget spot instruments and tickers…</div> : null}
@@ -115,7 +115,7 @@ export default function MarketUniverse() {
         </article></Link>;
       })}</div>
       {!filteredAssets.length ? <div className="universe-message">No Bitget spot assets match that search. Try another symbol or asset class.</div> : null}
-      {filteredAssets.length > visibleCount ? <button className="universe-more" type="button" onClick={() => setVisibleCount((count) => count + 18)}>Show more assets <span>{visibleCount} of {filteredAssets.length}</span></button> : null}
+      {filteredAssets.length > visibleCount ? <button className="universe-more" type="button" onClick={() => setVisibleCount((count) => count + 6)}>Show 6 more assets <span>{visibleCount} of {filteredAssets.length}</span></button> : null}
       <p className="universe-disclaimer"><span>i</span> Quotes are public Bitget spot snapshots, refreshed about every 15 seconds. Feed timestamps and asset classification are shown separately; this is not an order book or an instruction to trade.</p>
     </> : null}
   </section>;

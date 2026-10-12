@@ -1,12 +1,20 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavigationTrail } from "@/app/ui/navigation-icon";
+import { useLanguage } from "@/app/ui/language-provider";
 
 const DOCS_URL = "https://docs.tidelight.app";
+const DOCS_ZH_URL = `${DOCS_URL}/untitled-zh`;
 const EMBED_SCRIPT = `${DOCS_URL}/~gitbook/embed/script.js`;
+const DEFAULT_DOC_PATH = "/use-tidelight/start-here";
+const CHINESE_DOC_PATHS: Record<string, string> = {
+  "/use-tidelight/start-here": "/shi-yong-tidelight/cong-zhe-li-kai-shi",
+  "/use-tidelight/research-desk": "/shi-yong-tidelight/yan-jiu-tai",
+  "/use-tidelight/markets-and-watchlists": "/shi-yong-tidelight/shi-chang-yu-zi-xuan-lie-biao",
+};
 
 declare global {
   interface Window {
@@ -15,6 +23,8 @@ declare global {
 }
 
 export default function LandingDocsEmbed() {
+  const { language } = useLanguage();
+  const chinese = language === "zh-CN";
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [requested, setRequested] = useState(false);
@@ -22,15 +32,43 @@ export default function LandingDocsEmbed() {
   const [widgetRoot, setWidgetRoot] = useState<HTMLElement | null>(null);
   const [status, setStatus] = useState("");
   const readyRef = useRef(false);
+  const initializedSite = useRef<string | null>(null);
   const pendingOpen = useRef(false);
   const pendingPage = useRef<string | null>(null);
+  const docsSite = chinese ? DOCS_ZH_URL : DOCS_URL;
 
-  function revealEmbed(path?: string | null) {
+  function resolveDocUrl(path?: string | null) {
+    if (!path) return chinese ? DOCS_ZH_URL : DOCS_URL;
+    const page = chinese ? CHINESE_DOC_PATHS[path] ?? "/bao" : path;
+    return `${docsSite}${page}`;
+  }
+
+  const configureEmbed = useCallback(() => {
+    if (!window.GitBook) return;
+    window.GitBook("configure", {
+      button: { label: chinese ? "Tidelight 文档" : "Tidelight docs", icon: "book" },
+      assistantName: chinese ? "Tidelight 指南" : "Tidelight Guide",
+      greeting: chinese
+        ? { title: "了解 Tidelight", subtitle: "浏览产品手册，或直接提问。" }
+        : { title: "Find your way through Tidelight", subtitle: "Browse the handbook or ask a question." },
+      suggestions: chinese
+        ? ["如何开始使用？", "Agent Flow 如何运作？", "如何研究代币化股票？"]
+        : ["How do I get started?", "How does Agent Flow work?", "How do I research a tokenized stock?"],
+      tabs: ["docs", "assistant", "search"],
+      closeButton: true,
+      trademark: true,
+    });
+  }, [chinese]);
+
+  const revealEmbed = useCallback((path?: string | null) => {
     if (!window.GitBook) return;
     window.GitBook("open");
-    if (path) window.setTimeout(() => window.GitBook?.("navigateToPage", path), 250);
+    if (path) {
+      const page = chinese ? CHINESE_DOC_PATHS[path] ?? "/bao" : path;
+      window.setTimeout(() => window.GitBook?.("navigateToPage", page), 250);
+    }
     setIsOpen(true);
-  }
+  }, [chinese]);
 
   function initializeEmbed() {
     if (!window.GitBook) return;
@@ -46,16 +84,9 @@ export default function LandingDocsEmbed() {
       `;
       document.head.appendChild(style);
     }
-    window.GitBook("init", { siteURL: DOCS_URL }, { colorScheme: theme });
-    window.GitBook("configure", {
-      button: { label: "Tidelight docs", icon: "book" },
-      assistantName: "Tidelight Guide",
-      greeting: { title: "Find your way through Tidelight", subtitle: "Browse the handbook or ask a question." },
-      suggestions: ["How do I get started?", "How does Agent Flow work?", "How do I research a tokenized stock?"],
-      tabs: ["docs", "assistant", "search"],
-      closeButton: true,
-      trademark: true,
-    });
+    window.GitBook("init", { siteURL: docsSite }, { colorScheme: theme });
+    initializedSite.current = docsSite;
+    configureEmbed();
     window.GitBook("hide");
     readyRef.current = true;
     setReady(true);
@@ -67,6 +98,21 @@ export default function LandingDocsEmbed() {
       setStatus("The Tidelight guide is open.");
     }
   }
+
+  useEffect(() => {
+    if (!ready || !window.GitBook) return;
+    if (initializedSite.current !== docsSite) {
+      const theme = document.documentElement.dataset.theme === "daylight" ? "light" : "dark";
+      window.GitBook("init", { siteURL: docsSite }, { colorScheme: theme });
+      initializedSite.current = docsSite;
+      if (isOpen) {
+        window.GitBook("open");
+        const page = docsSite === DOCS_ZH_URL ? CHINESE_DOC_PATHS[DEFAULT_DOC_PATH] : DEFAULT_DOC_PATH;
+        window.setTimeout(() => window.GitBook?.("navigateToPage", page), 250);
+      }
+    }
+    configureEmbed();
+  }, [configureEmbed, docsSite, isOpen, ready, revealEmbed]);
 
   useEffect(() => {
     if (!ready) return;
@@ -101,12 +147,12 @@ export default function LandingDocsEmbed() {
       return;
     }
     if (failed) {
-      window.open(`${DOCS_URL}${path ?? ""}`, "_blank", "noopener,noreferrer");
+      window.open(resolveDocUrl(path), "_blank", "noopener,noreferrer");
       return;
     }
     setRequested(true);
     pendingOpen.current = true;
-    pendingPage.current = path ?? "/use-tidelight/start-here";
+    pendingPage.current = path ?? DEFAULT_DOC_PATH;
     setStatus("Loading the Tidelight guide…");
     window.setTimeout(() => {
       if (pendingOpen.current && !readyRef.current) {
@@ -132,7 +178,7 @@ export default function LandingDocsEmbed() {
         <p>Explore the Tidelight guide without leaving the desk. Browse product docs, search a topic, or ask the handbook a question.</p>
         <div className="landing-docs-actions">
           <button className="landing-docs-open" type="button" onClick={() => openEmbed()} aria-describedby="landing-docs-status">Open the handbook <NavigationTrail className="landing-arrow" /></button>
-          <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">Read in a new tab <NavigationTrail className="landing-arrow" /></a>
+          <a href={docsSite} target="_blank" rel="noopener noreferrer">Read in a new tab <NavigationTrail className="landing-arrow" /></a>
         </div>
         <span id="landing-docs-status" className="landing-docs-status" role="status" aria-live="polite">{status || (ready ? "Handbook ready · opens only when you ask" : "The guide loads only when you open it.")}</span>
       </div>

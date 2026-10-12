@@ -95,3 +95,10 @@
   .mobile-utility-controls .experience-switch { transform: scale(.68); margin-inline: -7px; }
   .landing-tide-hand { width: 280px; bottom: -72px; }
 }
+
+/* The overview radar stays a compact two-by-two even below the global stack breakpoint. */
+@media (max-width: 780px) {
+  .company-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px; }
+  .company-card { min-width: 0; min-height: 150px; padding: 10px; }
+  .company-card-foot { flex-wrap: wrap; }
+}

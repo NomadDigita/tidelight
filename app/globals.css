@@ -1793,6 +1793,12 @@ button.primary-link,.primary-link,.nw-run-button,.strategy-run-button {
 .alpha-hypothesis-intro .eyebrow{color:var(--mint-2)}
 .alpha-hypothesis-intro h3{margin:11px 0 7px;color:var(--text);font:600 21px/1.14 var(--display);letter-spacing:-.7px}
 .alpha-hypothesis-intro p{max-width:440px;margin:0;color:var(--muted);font:12px/1.7 var(--font)}
+
+/* Keep the four overview tokens in a balanced two-by-two radar at every width. */
+.company-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.company-card{min-height:168px;padding:16px}
+@media(max-width:780px){.company-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.company-card{min-height:152px;padding:11px}.company-card-top{gap:7px}.company-symbol{font-size:8px}.company-card>b{font-size:11px}.company-card>small{font-size:8px}.company-card-price{font-size:12px}.company-card-foot{gap:4px;font-size:7px}}
+@media(max-width:360px){.company-grid{gap:6px}.company-card{min-height:145px;padding:9px}.company-card-foot{font-size:6px}}
 .alpha-hypothesis-form{display:grid;align-content:start;gap:9px}
 .alpha-hypothesis-form>label,.alpha-hypothesis-result-head>span,.alpha-hypothesis-conditions>div>span,.alpha-hypothesis-risk>b{color:var(--faint);font:9px var(--mono);letter-spacing:1.35px}
 .alpha-hypothesis-form textarea{width:100%;min-height:94px;resize:vertical;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:13px/1.55 var(--font);outline:none}
@@ -1816,3 +1822,6 @@ button.primary-link,.primary-link,.nw-run-button,.strategy-run-button {
 @media(max-width:430px){.alpha-hypothesis-conditions{grid-template-columns:1fr}.alpha-hypothesis-result-head{align-items:flex-start;flex-direction:column}}
 
 .alpha-saved-hypothesis{margin:0 0 16px;padding:12px 14px;border-left:2px solid var(--mint-2);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--mint-2) 6%,var(--panel-2))}.alpha-saved-hypothesis>span{color:var(--mint-2);font:9px var(--mono);letter-spacing:1.35px}.alpha-saved-hypothesis>p{margin:6px 0 0;color:var(--text);font:12px/1.6 var(--font)}
+
+/* Preserve the requested two-by-two company radar against narrow-screen stack defaults. */
+@media(max-width:760px){.company-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}.company-card{min-width:0;min-height:150px;padding:10px}.company-card-top{gap:6px}.company-card-foot{flex-wrap:wrap}}

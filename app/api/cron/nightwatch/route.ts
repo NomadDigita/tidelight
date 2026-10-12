@@ -1,11 +1,13 @@
 import { timingSafeEqual, randomUUID } from "node:crypto";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBitgetAsset, getBitgetCandles } from "@/lib/bitget-market";
 import { evaluateSmaCrossover } from "@/lib/nightwatch-signal";
 import { decideNightwatch } from "@/lib/nightwatch-agent";
 import { nightwatchAnalysisBudget, readBeforeNightwatchDeadline, rotateNightwatchSchedules } from "@/lib/nightwatch-budget";
 import { ALPHA_STRATEGIES, BACKTEST_STRATEGY, prepareBacktestCandles, type StrategyKey } from "@/lib/backtest";
+import { enqueueNightwatchEmail } from "@/lib/email/nightwatch";
+import { drainEmailQueue } from "@/lib/email/delivery";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -72,6 +74,7 @@ export async function GET(request: Request) {
   let recorded = 0;
   let failures = 0;
   let deferred = 0;
+  let emailQueueTouched = false;
   for (const [index, preference] of schedules.entries()) {
     if (nightwatchAnalysisBudget(startedAt).budgetMs < 1000) {
       deferred += schedules.length - index;
@@ -122,12 +125,31 @@ export async function GET(request: Request) {
     const alerts = [];
     if (signal !== "hold" && preference.alert_on_signal) alerts.push({ user_id: preference.user_id, run_id: result.run_id, kind: "signal", title: `${signal.toUpperCase()} signal · ${sample.asset.symbol}`, body: rationale });
     if (result.outcome === "executed" && preference.alert_on_fill) alerts.push({ user_id: preference.user_id, run_id: result.run_id, kind: "fill", title: `Paper ${signal} filled · ${sample.asset.symbol}`, body: rationale });
-    if (alerts.length) {
+    if (alerts.length || decision.risks.length || researchResult.data?.status === "complete") {
+      let alertsSaved = true;
+      if (alerts.length) {
       const alertResult = await admin.from("nightwatch_alerts").upsert(alerts, { onConflict: "run_id,kind" });
-      if (alertResult.error) failures += 1;
+      if (alertResult.error) { failures += 1; alertsSaved = false; }
+      }
+      if (alertsSaved) {
+        for (const alert of alerts) {
+          try { await enqueueNightwatchEmail({ admin, userId: preference.user_id, eventKey: `nightwatch:${result.run_id}:${alert.kind}`, kind: alert.kind === "signal" ? "nightwatch_signal" : "nightwatch_fill", title: alert.title, body: alert.body }); emailQueueTouched = true; }
+          catch { failures += 1; }
+        }
+        if (decision.risks.length) {
+          try { await enqueueNightwatchEmail({ admin, userId: preference.user_id, eventKey: `nightwatch:${result.run_id}:risk`, kind: "nightwatch_risk", title: `Risk review · ${sample.asset.symbol}`, body: [...decision.risks.slice(0, 5).map((risk) => `• ${risk}`), decision.invalidation ? `Invalidation: ${decision.invalidation}` : ""].filter(Boolean).join("\n") }); emailQueueTouched = true; }
+          catch { failures += 1; }
+        }
+        if (researchResult.data?.status === "complete") {
+          const summary = researchResult.data.summary;
+          try { await enqueueNightwatchEmail({ admin, userId: preference.user_id, eventKey: `nightwatch:${result.run_id}:research`, kind: "nightwatch_research", title: researchResult.data.question, body: typeof summary === "string" ? summary : (JSON.stringify(summary) ?? "Your linked research brief is available in Tidelight.") }); emailQueueTouched = true; }
+          catch { failures += 1; }
+        }
+      }
     }
   }
 
   const response = { runId, state: failures || deferred ? "partial" : "complete", checked: recorded, deferred, deferredReason: deferred ? "Scheduled checks reached the request time budget; remaining schedules were not evaluated." : null, pausedOrDisabled: enabled.length - schedules.length, failures, scheduleCount: count, batchSize: BATCH_SIZE, batchOffset: offset, unavailableSymbols: [...new Set(symbolErrors)], paperOnly: true };
+  if (emailQueueTouched) after(async () => { try { await drainEmailQueue(admin); } catch { console.error("Scheduled Nightwatch email delivery deferred"); } });
   return NextResponse.json(response, { status: failures || deferred ? 207 : 200, headers: { "Cache-Control": "no-store" } });
 }

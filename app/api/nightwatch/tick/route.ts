@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getBitgetAsset, getBitgetCandles } from "@/lib/bitget-market";
 import { evaluateSmaCrossover } from "@/lib/nightwatch-signal";
 import { decideNightwatch } from "@/lib/nightwatch-agent";
 import { normalizeNightwatchPreferences } from "@/lib/nightwatch-preferences";
 import { ALPHA_STRATEGIES } from "@/lib/backtest";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { enqueueNightwatchEmail } from "@/lib/email/nightwatch";
+import { drainEmailQueue } from "@/lib/email/delivery";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -100,8 +103,17 @@ export async function POST(request: Request) {
     const alerts: Array<{ kind: "signal" | "fill"; title: string; body: string }> = [];
     if (signal !== "hold" && preferences?.alert_on_signal !== false) alerts.push({ kind: "signal", title: `${signal.toUpperCase()} signal · ${symbol}`, body: decision.rationale });
     if (result?.outcome === "executed" && preferences?.alert_on_fill !== false) alerts.push({ kind: "fill", title: `Paper ${signal} filled · ${symbol}`, body: decision.rationale });
-    if (result?.run_id && alerts.length) {
-      await supabase.from("nightwatch_alerts").upsert(alerts.map((alert) => ({ user_id: user.id, run_id: result.run_id, ...alert })), { onConflict: "run_id,kind" });
+    if (result?.run_id && (alerts.length || decision.risks.length || linkedResearch?.status === "complete")) {
+      if (alerts.length) await supabase.from("nightwatch_alerts").upsert(alerts.map((alert) => ({ user_id: user.id, run_id: result.run_id, ...alert })), { onConflict: "run_id,kind" });
+      try {
+        const admin = createAdminClient();
+        for (const alert of alerts) await enqueueNightwatchEmail({ admin, userId: user.id, eventKey: `nightwatch:${result.run_id}:${alert.kind}`, kind: alert.kind === "signal" ? "nightwatch_signal" : "nightwatch_fill", title: alert.title, body: alert.body });
+        if (decision.risks.length) await enqueueNightwatchEmail({ admin, userId: user.id, eventKey: `nightwatch:${result.run_id}:risk`, kind: "nightwatch_risk", title: `Risk review · ${symbol}`, body: [...decision.risks.slice(0, 5).map((risk) => `• ${risk}`), decision.invalidation ? `Invalidation: ${decision.invalidation}` : ""].filter(Boolean).join("\n") });
+        if (linkedResearch?.status === "complete") await enqueueNightwatchEmail({ admin, userId: user.id, eventKey: `nightwatch:${result.run_id}:research`, kind: "nightwatch_research", title: linkedResearch.question, body: typeof linkedResearch.summary === "string" ? linkedResearch.summary : (JSON.stringify(linkedResearch.summary) ?? "Your linked research brief is available in Tidelight.") });
+        after(async () => { try { await drainEmailQueue(admin); } catch { console.error("Nightwatch email delivery deferred"); } });
+      } catch (emailError) {
+        console.error("Nightwatch email enqueue failed", emailError instanceof Error && "code" in emailError ? emailError.code : "queue_unavailable");
+      }
     }
     return NextResponse.json({ result: data, decision, asset: { symbol: asset.symbol, name: asset.name, ticker: asset.underlyingTicker, logoUrl: asset.logoUrl }, signal, fastSma: fast, slowSma: slow, asOf: new Date(asOfMs).toISOString(), price: current.close, history: closed.slice(-90).map((candle) => ({ t: candle.timestamp, c: candle.close })) });
   } catch (error) {

@@ -32,7 +32,7 @@ export default function PasskeyControls({ enabled }: { enabled: boolean }) {
       const client = createClient();
       const { data, error: registerError } = await client.auth.registerPasskey();
       if (registerError) setError(registerError.message.includes("NotAllowed") ? "The passkey prompt was cancelled or timed out. You can try again." : "Passkey setup didn’t complete. Check provider activation and try again.");
-      else { setPasskeys((items) => [...items, data]); const { data: { user } } = await client.auth.getUser(); if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "passkey_registered", metadata: {} }); setMessage("Passkey added to this account."); }
+      else { setPasskeys((items) => [...items, data]); void fetch("/api/security/notification", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "passkey_registered" }) }).catch(() => undefined); setMessage("Passkey added to this account."); }
     } catch { setError("Passkey setup didn’t complete. Check provider activation and try again."); }
     finally { setBusy(false); }
   }
@@ -44,7 +44,7 @@ export default function PasskeyControls({ enabled }: { enabled: boolean }) {
       const client = createClient();
       const { error: removeError } = await client.auth.passkey.delete({ passkeyId: id });
       if (removeError) setError("That passkey could not be removed. Please try again.");
-      else { setPasskeys((items) => items.filter((item) => item.id !== id)); const { data: { user } } = await client.auth.getUser(); if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "passkey_removed", metadata: {} }); setMessage("Passkey removed."); }
+      else { setPasskeys((items) => items.filter((item) => item.id !== id)); void fetch("/api/security/notification", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "passkey_removed" }) }).catch(() => undefined); setMessage("Passkey removed."); }
     } catch { setError("That passkey could not be removed. Please try again."); }
     finally { setBusy(false); }
   }

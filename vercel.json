@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/community-media-retention",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/email-delivery",
+      "schedule": "30 10 * * *"
     }
   ]
 }

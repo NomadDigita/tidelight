@@ -63,3 +63,4 @@
   .nw-workspace-alerts,.nw-email-preferences{grid-template-columns:1fr}
   .nw-workspace-alerts>span,.nw-email-preferences>span{grid-column:1}
 }
+.nw-email-preferences>small{grid-column:1/-1;max-width:62ch}

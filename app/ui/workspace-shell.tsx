@@ -8,6 +8,7 @@ import { signOut } from "@/app/actions";
 import { useExperience } from "@/app/ui/theme-provider";
 import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
 import { NavigationIcon, NavigationTrail, type NavigationIconName } from "@/app/ui/navigation-icon";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 
 const navigation: { href: string; label: string; icon: NavigationIconName; technical?: boolean }[] = [
   { href: "/overview", label: "Overview", icon: "overview" },
@@ -122,7 +123,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
           })}
         </nav>
         <div className="sidebar-promo">
-          <div className="promo-mark">∿</div>
+          <div className="promo-mark"><TidelightAnimatedMark /></div>
           <b>Markets don’t keep office hours.</b>
           <p>Follow the facts across the quiet hours.</p>
           <Link href="/research">Open research desk <NavigationTrail /></Link>

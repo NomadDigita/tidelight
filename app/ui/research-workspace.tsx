@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createEvidenceBrief } from "@/app/actions";
 import { useExperience } from "@/app/ui/theme-provider";
 import { getSourceStarters } from "@/lib/source-starters";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 
 type ResearchBrief = {
   research_run_id?: string;
@@ -84,7 +85,7 @@ export default function ResearchWorkspace({ qwenAvailable, initialQuestion = "" 
       <section className={`hero-card${mode === "mini" ? " mini-research-hero" : ""}`} id="research" aria-labelledby="research-title">
         <div className="hero-glow" /><div className="hero-grid" />
         <div className="hero-content">
-          <div className="hero-kicker"><span className="sparkle">✳</span> {mode === "mini" ? "A SIMPLE, SOURCE-BASED ANSWER" : "YOUR AFTER-HOURS RESEARCH DESK"} <span className="demo-pill">{mode === "mini" ? "MINI" : "CONCEPT DEMO"}</span></div>
+          <div className="hero-kicker"><span className="sparkle"><TidelightAnimatedMark /></span> {mode === "mini" ? "A SIMPLE, SOURCE-BASED ANSWER" : "YOUR AFTER-HOURS RESEARCH DESK"} <span className="demo-pill">{mode === "mini" ? "MINI" : "CONCEPT DEMO"}</span></div>
           <h2 id="research-title">{mode === "mini" ? <>Understand the story<br /><em>around one company.</em></> : <>Follow the story<br /><em>before the bell.</em></>}</h2>
           <p className="hero-description">{mode === "mini" ? "Choose a company, ask a question, and add a public source link. We’ll read it and show what supports the answer." : "Ask about an event, a company, or a shift in the market. Get a clear read with sources, scenarios, and what to watch next."}</p>
           {mode === "mini" ? <label className="mini-company-select">COMPANY<select aria-label="Choose a company" value={company} onChange={(event) => setCompany(event.target.value)}><option value="NVDA">NVIDIA · NVDA</option><option value="TSLA">Tesla · TSLA</option><option value="MSFT">Microsoft · MSFT</option><option value="AMZN">Amazon · AMZN</option><option value="AAPL">Apple · AAPL</option></select></label> : null}
@@ -96,7 +97,7 @@ export default function ResearchWorkspace({ qwenAvailable, initialQuestion = "" 
           {error ? <p className="form-error" role="alert">{error}</p> : null}
           <div className="prompt-examples"><span>{mode === "mini" ? "EXAMPLE:" : "TRY:"}</span>{(mode === "mini" ? ["How could this announcement affect the company?"] : suggestions).map((suggestion, index) => <span className="suggestion-wrap" key={suggestion}><button type="button" onClick={() => { setQuestion(suggestion); openBrief(suggestion); }}>{mode === "mini" ? "Explain a company announcement" : ["Rate cut impact", "NVDA export rules", "Compare event exposure"][index]}</button>{mode !== "mini" && index < suggestions.length - 1 ? <i /> : null}</span>)}</div>
         </div>
-        <div className="hero-ornament" aria-hidden="true"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><div className="orbit-core"><span className="orbit-mark">∿</span></div><span className="orbit-label label-one">EVENT FLOW</span><span className="orbit-label label-two">AFTER HOURS</span><span className="orbit-label label-three">RISK CONTEXT</span></div>
+        <div className="hero-ornament" aria-hidden="true"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><div className="orbit-core"><span className="orbit-mark"><TidelightAnimatedMark /></span></div><span className="orbit-label label-one">EVENT FLOW</span><span className="orbit-label label-two">AFTER HOURS</span><span className="orbit-label label-three">RISK CONTEXT</span></div>
         <div className="hero-foot"><span><span className="pulse-dot" /> DESIGNED FOR 24/7 TOKENIZED MARKETS</span><span>RESEARCH WITH CONTEXT <b>↗</b></span></div>
       </section>
 

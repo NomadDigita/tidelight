@@ -1,0 +1,23 @@
+.tidelight-animated-mark{display:block;width:24px;height:24px;flex:none;overflow:visible;color:var(--mint,#a6f4d0)}
+.tidelight-mark-wave{fill:none;stroke-linecap:round;stroke-width:4;transform-box:fill-box;transform-origin:center;animation:tidelight-wave-drift 4.8s ease-in-out infinite}
+.tidelight-mark-wave-primary{stroke:currentColor;filter:drop-shadow(0 0 3px color-mix(in srgb,currentColor 38%,transparent))}
+.tidelight-mark-wave-secondary{stroke:var(--amber,#f1c377);stroke-width:2.8;opacity:.88;animation-delay:-2.4s}
+.tidelight-mark-spark{fill:currentColor;transform-box:fill-box;transform-origin:center;animation:tidelight-spark 3.2s ease-in-out infinite}
+.orbit-mark .tidelight-animated-mark{width:42px;height:42px}
+.promo-mark .tidelight-animated-mark{width:18px;height:18px}
+.method-icon .tidelight-animated-mark{width:22px;height:22px}
+.market-orbit-center .tidelight-animated-mark{width:44px;height:44px}
+.settings-icon .tidelight-animated-mark,.note-star .tidelight-animated-mark,.sparkle .tidelight-animated-mark,.promise-icon-mark .tidelight-animated-mark{width:20px;height:20px}
+.heading-note .tidelight-animated-mark{width:21px;height:21px}
+.empty-mark .tidelight-animated-mark{width:26px;height:26px}
+.empty-library .empty-mark .tidelight-animated-mark,.sign-in-panel .empty-mark .tidelight-animated-mark{width:23px;height:23px}
+.market-data-card .data-card-mark .tidelight-animated-mark{width:52px;height:52px;opacity:.7}
+.landing-docs-window-brand .tidelight-animated-mark{width:16px;height:16px}
+.nw-empty-activity .tidelight-animated-mark{width:25px;height:25px}
+@keyframes tidelight-wave-drift{0%,100%{transform:translateY(1px) scaleX(.98);opacity:.83}50%{transform:translateY(-1px) scaleX(1.02);opacity:1}}
+@keyframes tidelight-spark{0%,100%{transform:scale(.82);opacity:.65}50%{transform:scale(1.08);opacity:1}}
+@media(prefers-reduced-motion:reduce){.tidelight-mark-wave,.tidelight-mark-spark{animation:none}}
+
+.market-orbit-center>.tidelight-animated-mark{color:#b3e6bc}
+.asset-picker-empty-mark .tidelight-animated-mark{width:20px;height:20px}
+.nw-kpi i>.tidelight-animated-mark{width:22px;height:22px}

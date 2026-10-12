@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import IssuerLogo from "@/app/ui/issuer-logo";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 
 export type PickableAsset = {
   symbol: string;
@@ -71,7 +72,7 @@ export default function AssetSearchPicker({
   return <div className="asset-search-picker" ref={rootRef}>
     <span className="asset-picker-label">{label}</span>
     <button type="button" className="asset-picker-trigger" aria-haspopup="listbox" aria-expanded={open} onClick={() => { setOpen((current) => !current); setQuery(""); }} disabled={disabled || assets.length === 0}>
-      {selected ? <IssuerLogo key={selected.symbol} ticker={selected.ticker || selected.symbol} logoUrl={selected.logoUrl ?? null} className="asset-picker-logo" /> : <span className="asset-picker-empty-mark">⌁</span>}
+      {selected ? <IssuerLogo key={selected.symbol} ticker={selected.ticker || selected.symbol} logoUrl={selected.logoUrl ?? null} className="asset-picker-logo" /> : <span className="asset-picker-empty-mark"><TidelightAnimatedMark /></span>}
       <span className="asset-picker-current"><b>{selected?.name ?? "No eligible token"}</b><small>{selected?.ticker ? `${selected.ticker} · ` : ""}{selected?.symbol ?? ""}</small></span>
       <span className="asset-picker-chevron" aria-hidden="true">⌄</span>
     </button>

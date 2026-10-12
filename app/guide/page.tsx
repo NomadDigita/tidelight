@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./guide.module.css";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 
 export const metadata: Metadata = {
   title: "Start here | Tidelight",
@@ -65,7 +66,7 @@ export default function GuidePage() {
         <div className={styles.heroActions}><Link className="primary-link" href="/research">Start with an event <span>↗</span></Link><Link className={styles.quietLink} href="/demo">See the product walkthrough <span>→</span></Link></div>
       </div>
       <aside className={styles.promise} aria-label="Tidelight product boundaries">
-        <span className={styles.promiseIcon}>◌</span>
+        <span className={styles.promiseIcon}><TidelightAnimatedMark /></span>
         <span className="eyebrow small-eyebrow">A QUICK ORIENTATION</span>
         <b>Research first.<br/>Optional tools next.</b>
         <p>Tidelight gives you material to inspect. You choose what to believe and what to do.</p>

@@ -4,6 +4,7 @@ import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavigationTrail } from "@/app/ui/navigation-icon";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 import { useLanguage } from "@/app/ui/language-provider";
 
 const DOCS_URL = "https://docs.tidelight.app";
@@ -200,7 +201,7 @@ export default function LandingDocsEmbed() {
         <span id="landing-docs-status" className="landing-docs-status" role="status" aria-live="polite">{status || (ready ? "Handbook ready · opens only when you ask" : "The guide loads only when you open it.")}</span>
       </div>
       <div className="landing-docs-window" aria-label="Tidelight handbook preview">
-        <div className="landing-docs-window-bar"><span className="landing-docs-window-brand"><i>∿</i> TIDELIGHT / HANDBOOK</span><span className="landing-docs-window-dots" aria-hidden="true"><i /><i /><i /></span></div>
+        <div className="landing-docs-window-bar"><span className="landing-docs-window-brand"><i><TidelightAnimatedMark /></i> TIDELIGHT / HANDBOOK</span><span className="landing-docs-window-dots" aria-hidden="true"><i /><i /><i /></span></div>
         <div className="landing-docs-window-body">
           <aside className="landing-docs-rail" aria-hidden="true"><b>◫</b><span>⌕</span><span>▤</span><i /></aside>
           <div className="landing-docs-page">

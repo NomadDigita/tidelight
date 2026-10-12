@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 import Image from "next/image";
 import {useEffect,useState} from "react";
 import "../community/community.css";
@@ -36,7 +37,7 @@ export default function CommunityProfile({handle}:{handle:string}){
     {post.media?.length?<div className="community-media-grid">{post.media.map((item,i)=><div className={"community-media-item "+item.kind} key={i}>{item.kind==="image"?<Image unoptimized width={1200} height={800} src={item.url} alt={item.name}/>:item.kind==="video"?<video controls preload="metadata" src={item.url}/>:item.kind==="audio"?<audio controls preload="metadata" src={item.url}/>:<a className="community-pdf" href={item.url} target="_blank" rel="noreferrer"><span>PDF</span><b>{item.name}</b></a>}<a className="community-download" href={downloadUrl(item)} download={item.name}>↓ Download from Tidelight</a></div>)}</div>:null}
     {post.mediaExpired?<p className="community-media-expired">Attachments were removed after 7 days.</p>:null}
     {data.isOwner&&tab==="posts"?<div className="community-profile-post-actions"><button type="button" onClick={()=>void deletePost(post)}>Delete note</button></div>:null}
-   </article>):<div className="community-empty"><span>✳</span><b>{tab==="saved"?"No saved posts yet.":"Nothing here yet."}</b><p>{tab==="saved"?"Save an issuer or rToken discussion from the community.":"Public activity appears here as this member shares and reacts."}</p></div>}</section>
+   </article>):<div className="community-empty"><span className="empty-mark"><TidelightAnimatedMark /></span><b>{tab==="saved"?"No saved posts yet.":"Nothing here yet."}</b><p>{tab==="saved"?"Save an issuer or rToken discussion from the community.":"Public activity appears here as this member shares and reacts."}</p></div>}</section>
    {rows.length>5?<button type="button" className="history-more-button" onClick={()=>setVisible(count=>count>=rows.length?5:Math.min(count+5,rows.length))}>{visible>=rows.length?"Show the first 5":"Show 5 more"}<span>{Math.min(visible,rows.length)} of {rows.length}</span></button>:null}
   </>:null}
  </main>

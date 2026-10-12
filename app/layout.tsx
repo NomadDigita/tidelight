@@ -17,6 +17,7 @@ import "./stock-market.css";
 import "./language.css";
 import "./product-quick-actions.css";
 import "./overview/intelligent-overview.css";
+import "./tidelight-animated-mark.css";
 
 const baseMetadata: Metadata = {
   metadataBase: new URL("https://tidelight.app"),

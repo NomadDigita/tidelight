@@ -1,4 +1,5 @@
 import Link from "next/link";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 import { createClient } from "@/lib/supabase/server";
 import StrategyLab from "@/app/ui/strategy-lab";
 
@@ -20,6 +21,6 @@ export default async function StrategiesPage({ searchParams }: { searchParams: P
     <StrategyLab signedIn={Boolean(user)} initialRuns={data ?? []} initialSymbol={initialSymbol} initialResearchRunId={initialResearchRunId} />
     <section className="strategy-method"><div><span className="eyebrow small-eyebrow">METHOD · TRANSPARENT MARKET RULES</span><h2>Rules you can inspect and replay.</h2><p>Choose among six fixed rule families: trend, mean reversion, price channel, after-hours drift, trend pullback, and a volume-confirmed semiconductor breakout. Each replays one verified Bitget market at a time; the basket comparison selects a training leader but does not model continuous rotation. Signals use completed candles, simulate at the next eligible open, and include estimated fees and slippage. Generated hypotheses select only implemented rules.</p></div><div className="strategy-method-facts"><div><b>20 / 50</b><span>Trend reference</span></div><div><b>66 / 34</b><span>Training and holdout split</span></div><div><b>0.15%</b><span>Assumed cost per side</span></div></div></section>
     <div className="route-footnote"><span>i</span> Historical replay is not a forecast. Results omit dividends, issuer actions and order-book liquidity; stock perpetual results also omit funding, margin and liquidation. No orders are placed.</div>
-    {!user ? <div className="sign-in-panel strategy-signin"><div className="empty-glyph">⌁</div><div><span className="eyebrow small-eyebrow">SAVE YOUR RESEARCH</span><h2>Sign in to keep a private run history.</h2><p>You can inspect the method without signing in; saving results is account scoped.</p><Link className="primary-link" href="/login">Sign in <span>↗</span></Link></div></div> : null}
+    {!user ? <div className="sign-in-panel strategy-signin"><div className="empty-glyph empty-mark"><TidelightAnimatedMark /></div><div><span className="eyebrow small-eyebrow">SAVE YOUR RESEARCH</span><h2>Sign in to keep a private run history.</h2><p>You can inspect the method without signing in; saving results is account scoped.</p><Link className="primary-link" href="/login">Sign in <span>↗</span></Link></div></div> : null}
   </div>;
 }

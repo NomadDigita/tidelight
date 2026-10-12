@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 
 type Run = { id: string; question: string; status: string; summary: unknown; model_name: string | null; event_type?: string | null; created_at: string };
 
@@ -37,7 +38,7 @@ export default function BriefLibrary({ runs }: { runs: Run[] }) {
         <div className="brief-card-tags"><span>{run.event_type === "agent_flow" ? "AGENT FLOW" : run.model_name ?? "RESEARCH NOTE"}</span>{content?.claims && Array.isArray(content.claims) ? <span>{content.claims.length} EVIDENCE CLAIM{content.claims.length === 1 ? "" : "S"}</span> : null}</div>
         <div className="brief-card-footer"><time dateTime={run.created_at}>{new Date(run.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</time>{run.event_type === "agent_flow" ? <Link href={`/flow?question=${encodeURIComponent(run.question)}`}>RECHECK CURRENT DATA ↗</Link> : typeof source?.url === "string" ? <a href={source.url} target="_blank" rel="noreferrer">OPEN SOURCE ↗</a> : <Link href="/research">ADD A SOURCE ↗</Link>}</div>
       </article>;
-    })}</div> : <div className="empty-library"><span className="empty-glyph">⌕</span><h2>{runs.length ? "No notes match that view." : "Your library is waiting."}</h2><p>{runs.length ? "Try a different search or status filter." : "Create a source-grounded note and it will appear here."}</p><Link href="/research">Go to research desk <span>↗</span></Link></div>}
+    })}</div> : <div className="empty-library"><span className="empty-glyph empty-mark"><TidelightAnimatedMark /></span><h2>{runs.length ? "No notes match that view." : "Your library is waiting."}</h2><p>{runs.length ? "Try a different search or status filter." : "Create a source-grounded note and it will appear here."}</p><Link href="/research">Go to research desk <span>↗</span></Link></div>}
     {filtered.length > 6 ? <button type="button" className="history-more-button" aria-controls="saved-brief-history" onClick={() => setVisible((count) => count >= filtered.length ? 6 : Math.min(count + 6, filtered.length))}>{visible >= filtered.length ? "Show the latest 6" : "Show 6 more notes"}<span>{Math.min(visible, filtered.length)} of {filtered.length}</span></button> : null}
   </section>;
 }

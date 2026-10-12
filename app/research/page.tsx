@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ResearchWorkspace from "@/app/ui/research-workspace";
+import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 import TokenPulse from "@/app/ui/token-pulse";
 
 export const maxDuration = 60;
@@ -15,7 +16,7 @@ export default async function ResearchPage({ searchParams }: { searchParams: Pro
   const cleanSymbol = symbol?.toUpperCase().match(/^[A-Z0-9]{2,32}$/)?.[0];
   const initialQuestion = cleanSymbol ? `What source-backed events and risks could affect ${cleanSymbol} on Bitget Spot?` : "";
   return <div className="content-wrap inner-page research-page">
-    <section className="page-heading research-heading"><div><div className="eyebrow"><span className="eyebrow-line" /> TIDELIGHT / RESEARCH DESK</div><h1>Stay curious.<br /><span>Stay grounded.</span></h1><p>Turn a market question into a clear, source-bounded research note. You provide the evidence; Tidelight helps you read it.</p></div><div className="heading-note"><span className="note-star">✳</span><b>Evidence before conviction.</b><small>Every generated claim must match a quote from the passage you supply.</small></div></section>
+    <section className="page-heading research-heading"><div><div className="eyebrow"><span className="eyebrow-line" /> TIDELIGHT / RESEARCH DESK</div><h1>Stay curious.<br /><span>Stay grounded.</span></h1><p>Turn a market question into a clear, source-bounded research note. You provide the evidence; Tidelight helps you read it.</p></div><div className="heading-note"><span className="note-star"><TidelightAnimatedMark /></span><b>Evidence before conviction.</b><small>Every generated claim must match a quote from the passage you supply.</small></div></section>
     <TokenPulse />
     <section className="agent-flow-entry" aria-label="Ask the Tidelight agent team"><div><span className="eyebrow small-eyebrow">A GUIDED MARKET QUESTION</span><h2>Ask once. Follow every handoff.</h2><p>Compare US stocks such as NVDA and TSLA. Watch evidence, exposure, strategy and risk checks as they happen, then review a paper or Bitget trade path only when a signal qualifies.</p></div><Link href="/flow">Open agent flow <span>↗</span></Link></section>
     <ResearchWorkspace key={cleanSymbol ?? "general"} qwenAvailable={Boolean(process.env.BITGET_QWEN_API_KEY)} initialQuestion={initialQuestion} />

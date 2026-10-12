@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { Theme } from "@/app/ui/theme-provider";
 
 export type PnlCardDetails = {
   ticker: string;
@@ -18,6 +19,17 @@ export type PnlCardDetails = {
   desk: "NIGHTWATCH" | "FUTURES PAPER DESK";
 };
 
+const themes: { id: Theme; label: string }[] = [
+  { id: "daylight", label: "Daylight" },
+  { id: "night", label: "Night Tide" },
+  { id: "blue", label: "Blue Hour" },
+];
+const palettes: Record<Theme, { background: string; wash: string; panel: string; ink: string; muted: string; line: string; mint: string; accent: string; loss: string }> = {
+  daylight: { background: "#f3f2e9", wash: "#e2eee3", panel: "#fffefa", ink: "#17352a", muted: "#617269", line: "#d7dfd5", mint: "#167351", accent: "#c3964b", loss: "#b84e4a" },
+  night: { background: "#071311", wash: "#0c2e28", panel: "#0b1b18", ink: "#eff9f3", muted: "#9bb4aa", line: "#244139", mint: "#a6f4d0", accent: "#f1c377", loss: "#ff978c" },
+  blue: { background: "#0b1020", wash: "#19294d", panel: "#111a30", ink: "#f0f2ff", muted: "#a2adca", line: "#2e3b60", mint: "#c5d0ff", accent: "#8ce2d1", loss: "#ff9a9e" },
+};
+
 const money = (value: number, digits = 2) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
 const number = (value: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(value);
 const stamp = (value: string) => {
@@ -25,83 +37,126 @@ const stamp = (value: string) => {
   return Number.isNaN(date.getTime()) ? "Time unavailable" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
 };
 
-function drawCard(canvas: HTMLCanvasElement, details: PnlCardDetails) {
+let brandMarkPromise: Promise<HTMLImageElement> | null = null;
+function loadBrandMark() {
+  if (!brandMarkPromise) brandMarkPromise = new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = "/tidelight-mark.svg";
+  });
+  return brandMarkPromise;
+}
+
+let qrPromise: Promise<HTMLImageElement> | null = null;
+function loadSiteQr() {
+  if (!qrPromise) qrPromise = new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = "/tidelight-site-qr.svg";
+  });
+  return qrPromise;
+}
+
+async function drawCard(canvas: HTMLCanvasElement, details: PnlCardDetails, theme: Theme) {
+  const [mark, qr] = await Promise.all([loadBrandMark(), loadSiteQr()]);
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const w = 1200; const h = 630;
+  const w = 1200; const h = 630; const p = palettes[theme];
   canvas.width = w; canvas.height = h;
   const rounded = (x: number, y: number, width: number, height: number, radius: number) => {
     ctx.beginPath(); ctx.roundRect(x, y, width, height, radius);
   };
-  const bg = ctx.createLinearGradient(0, 0, w, h);
-  bg.addColorStop(0, "#081613"); bg.addColorStop(.52, "#0b1e1d"); bg.addColorStop(1, "#101b27");
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-  const glow = ctx.createRadialGradient(890, 300, 12, 890, 300, 460);
-  glow.addColorStop(0, "rgba(60,220,174,.20)"); glow.addColorStop(1, "rgba(60,220,174,0)");
-  ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = "rgba(155,235,204,.11)"; ctx.lineWidth = 1;
-  for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(952, 306, 148 + i * 35, 63 + i * 18, -.18, .08, Math.PI * 1.18); ctx.stroke(); }
-  rounded(28, 28, w - 56, h - 56, 28); ctx.strokeStyle = "rgba(174,239,211,.22)"; ctx.lineWidth = 1.5; ctx.stroke();
 
-  // Tidelight's twin tide lines, drawn as vector paths to keep the card self contained.
-  rounded(66, 55, 56, 56, 18); ctx.fillStyle = "#123e35"; ctx.fill(); ctx.strokeStyle = "rgba(118,230,190,.35)"; ctx.stroke();
-  ctx.lineWidth = 4; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.moveTo(76, 83); ctx.bezierCurveTo(88, 83, 87, 69, 98, 69); ctx.bezierCurveTo(106, 69, 106, 80, 115, 80); ctx.strokeStyle = "#75e5bd"; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(77, 94); ctx.bezierCurveTo(88, 94, 90, 87, 99, 87); ctx.bezierCurveTo(105, 87, 109, 91, 115, 91); ctx.strokeStyle = "#e3c98d"; ctx.lineWidth = 2.5; ctx.stroke();
-  ctx.fillStyle = "#d9fff0"; ctx.beginPath(); ctx.arc(109, 67, 2.2, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#eff9f3"; ctx.font = "700 23px Inter, system-ui, sans-serif"; ctx.fillText("TIDELIGHT", 139, 83);
-  ctx.fillStyle = "#8ba8a0"; ctx.font = "10px ui-monospace, SFMono-Regular, monospace"; ctx.letterSpacing = "2px"; ctx.fillText("TRADE JOURNAL  /  " + details.desk, 140, 102);
-  rounded(941, 62, 190, 34, 17); ctx.fillStyle = "rgba(117,229,189,.09)"; ctx.fill(); ctx.strokeStyle = "rgba(117,229,189,.23)"; ctx.stroke();
-  ctx.fillStyle = "#a9eed1"; ctx.font = "10px ui-monospace, monospace"; ctx.letterSpacing = "1.3px"; ctx.fillText("PAPER SIMULATION", 967, 84);
+  ctx.fillStyle = p.background; ctx.fillRect(0, 0, w, h);
+  const glow = ctx.createRadialGradient(887, 300, 10, 887, 300, 470);
+  glow.addColorStop(0, theme === "daylight" ? "rgba(115,194,151,.20)" : theme === "blue" ? "rgba(114,143,255,.24)" : "rgba(61,205,163,.19)");
+  glow.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
 
-  ctx.letterSpacing = "0px"; ctx.fillStyle = "#f1f7f3"; ctx.font = "600 43px Inter, system-ui, sans-serif";
-  ctx.fillText(details.name || details.ticker, 68, 188);
-  ctx.fillStyle = "#96aaa3"; ctx.font = "16px ui-monospace, monospace"; ctx.letterSpacing = "1.1px"; ctx.fillText(`${details.ticker}  ·  ${details.symbol}`, 70, 219);
-  ctx.letterSpacing = "0px";
+  rounded(30, 30, 1140, 570, 30); ctx.fillStyle = p.panel; ctx.fill();
+  ctx.save(); rounded(30, 30, 1140, 570, 30); ctx.clip();
+  const wash = ctx.createRadialGradient(925, 340, 16, 925, 340, 430);
+  wash.addColorStop(0, p.wash); wash.addColorStop(1, p.panel); ctx.fillStyle = wash; ctx.fillRect(570, 30, 600, 570); ctx.restore();
+  rounded(30, 30, 1140, 570, 30); ctx.strokeStyle = p.line; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.drawImage(mark, 66, 58, 52, 52);
+  ctx.fillStyle = p.ink; ctx.font = "700 23px Inter, Avenir Next, system-ui, sans-serif"; ctx.fillText("TIDELIGHT", 133, 82);
+  ctx.fillStyle = p.muted; ctx.font = "10px ui-monospace, SFMono-Regular, monospace"; ctx.letterSpacing = "2px"; ctx.fillText("MARKET RESEARCH DESK", 134, 101);
+
+  const badge = details.status === "OPEN" ? "OPEN POSITION" : "CLOSED POSITION";
+  rounded(932, 66, 194, 34, 17); ctx.fillStyle = theme === "daylight" ? "#e8f1e8" : "#ffffff08"; ctx.fill(); ctx.strokeStyle = p.line; ctx.stroke();
+  ctx.fillStyle = p.mint; ctx.font = "10px ui-monospace, monospace"; ctx.letterSpacing = "1.25px"; ctx.fillText(badge, 952, 88);
+
+  ctx.letterSpacing = "0px"; ctx.fillStyle = p.muted; ctx.font = "11px ui-monospace, monospace"; ctx.letterSpacing = "2px"; ctx.fillText(`${details.desk}  /  PAPER LEDGER`, 68, 160);
+  ctx.letterSpacing = "0px"; ctx.fillStyle = p.ink; ctx.font = "600 43px Inter, Avenir Next, system-ui, sans-serif"; ctx.fillText(details.name || details.ticker, 68, 216);
+  ctx.fillStyle = p.muted; ctx.font = "15px ui-monospace, monospace"; ctx.letterSpacing = "1.2px"; ctx.fillText(`${details.ticker}  ·  ${details.symbol}`, 70, 245);
+
   const positive = details.pnl == null || details.pnl >= 0;
-  ctx.fillStyle = details.pnl == null ? "#f2f7f4" : positive ? "#8fe7bc" : "#f09a8e";
-  ctx.font = "600 80px Inter, system-ui, sans-serif";
-  ctx.fillText(details.pnl == null ? "—" : `${details.pnl >= 0 ? "+" : "−"}${money(Math.abs(details.pnl))}`, 66, 338);
-  ctx.fillStyle = "#9aafa7"; ctx.font = "19px ui-monospace, monospace"; ctx.letterSpacing = "2px";
-  ctx.fillText(details.status === "OPEN" ? "UNREALIZED PAPER P&L" : "REALIZED PAPER P&L", 72, 367);
+  const resultColor = details.pnl == null ? p.ink : positive ? p.mint : p.loss;
+  ctx.letterSpacing = "0px"; ctx.fillStyle = resultColor; ctx.font = "600 74px Inter, Avenir Next, system-ui, sans-serif";
+  ctx.fillText(details.pnl == null ? "—" : `${details.pnl >= 0 ? "+" : "−"}${money(Math.abs(details.pnl))}`, 66, 352);
   if (details.pnlPercent != null && Number.isFinite(details.pnlPercent)) {
-    ctx.letterSpacing = "0px"; ctx.fillStyle = positive ? "#8fe7bc" : "#f09a8e"; ctx.font = "600 18px Inter, system-ui, sans-serif";
-    ctx.fillText(`${details.pnlPercent >= 0 ? "+" : ""}${details.pnlPercent.toFixed(2)}%`, 72, 401);
+    ctx.fillStyle = resultColor; ctx.font = "600 19px Inter, Avenir Next, system-ui, sans-serif";
+    ctx.fillText(`${details.pnlPercent >= 0 ? "+" : ""}${details.pnlPercent.toFixed(2)}%`, 70, 385);
   }
+  ctx.fillStyle = p.muted; ctx.font = "11px ui-monospace, monospace"; ctx.letterSpacing = "1.6px";
+  ctx.fillText(details.status === "OPEN" ? "UNREALIZED · MARK-TO-MARKET" : "REALIZED · PAPER FILL", 70, 416);
 
-  const fields: [string, string][] = [
-    ["POSITION", `${details.direction}  ·  ${number(details.quantity)} units`],
-    ["ENTRY", details.entryPrice == null ? "Not available" : money(details.entryPrice, 4)],
-    [details.referenceLabel ?? (details.status === "OPEN" ? "LAST MARK" : "EXIT FILL"), details.referencePrice == null ? "Not available" : money(details.referencePrice, 4)],
-    ["RECORDED", stamp(details.timestamp)],
+  ctx.strokeStyle = p.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(70, 456); ctx.lineTo(680, 456); ctx.stroke();
+  const fields: [string, string, number][] = [
+    ["SIDE / SIZE", `${details.direction}  ·  ${number(details.quantity)} units`, 70],
+    ["AVERAGE ENTRY", details.entryPrice == null ? "—" : money(details.entryPrice, 4), 390],
+    [details.referenceLabel ?? (details.status === "OPEN" ? "LAST MARK" : "EXIT FILL"), details.referencePrice == null ? "—" : money(details.referencePrice, 4), 70],
+    ["RECORDED", stamp(details.timestamp), 390],
   ];
-  const startY = 457;
-  fields.forEach(([label, value], index) => {
-    const x = index % 2 === 0 ? 70 : 625;
-    const rowY = index < 2 ? startY : startY + 72;
-    ctx.fillStyle = "#6f8980"; ctx.font = "17px ui-monospace, monospace"; ctx.letterSpacing = "1.6px"; ctx.fillText(label, x, rowY);
-    ctx.fillStyle = "#e2eee8"; ctx.font = index === 3 ? "20px Inter, system-ui, sans-serif" : "25px Inter, system-ui, sans-serif"; ctx.letterSpacing = "0px"; ctx.fillText(value, x, rowY + 29, 500);
+  fields.forEach(([label, value, x], index) => {
+    const y = index < 2 ? 491 : 548;
+    ctx.fillStyle = p.muted; ctx.font = "10px ui-monospace, monospace"; ctx.letterSpacing = "1.5px"; ctx.fillText(label, x, y);
+    ctx.fillStyle = p.ink; ctx.font = index === 3 ? "15px Inter, Avenir Next, system-ui, sans-serif" : "17px Inter, Avenir Next, system-ui, sans-serif"; ctx.letterSpacing = "0px"; ctx.fillText(value, x, y + 24, 320);
   });
-  ctx.strokeStyle = "rgba(171,229,201,.16)"; ctx.beginPath(); ctx.moveTo(70, 564); ctx.lineTo(1130, 564); ctx.stroke();
-  ctx.fillStyle = "#7c958b"; ctx.font = "17px Inter, system-ui, sans-serif";
-  ctx.fillText(details.status === "OPEN" ? "Mark-based estimate before exit fees and slippage." : "Historical paper fill; not a live exchange execution.", 70, 589);
-  ctx.textAlign = "right"; ctx.fillText("TIDELIGHT.APP", 1130, 584); ctx.textAlign = "left";
+
+  ctx.fillStyle = p.line; ctx.fillRect(730, 146, 1, 430);
+  ctx.fillStyle = p.muted; ctx.font = "10px ui-monospace, monospace"; ctx.letterSpacing = "2px"; ctx.fillText("THE TIDELIGHT METHOD", 770, 181);
+  ctx.fillStyle = p.ink; ctx.font = "500 24px Inter, Avenir Next, system-ui, sans-serif"; ctx.letterSpacing = "-.5px";
+  ctx.fillText("Event", 770, 221); ctx.fillStyle = p.accent; ctx.fillText("→", 838, 221);
+  ctx.fillStyle = p.ink; ctx.fillText("Evidence", 864, 221);
+  ctx.fillStyle = p.muted; ctx.font = "15px Inter, Avenir Next, system-ui, sans-serif"; ctx.letterSpacing = "0px";
+  ctx.fillText(details.status === "OPEN" ? "A live paper mark." : "A recorded paper close.", 770, 259);
+  ctx.fillText("A clear view of exposure", 770, 284); ctx.fillText("before the next decision.", 770, 308);
+  ctx.fillStyle = p.muted; ctx.font = "10px ui-monospace, monospace"; ctx.letterSpacing = "1.1px";
+  ctx.fillText("EXPOSURE  ·  SCENARIO  ·  REVIEW", 770, 333);
+  rounded(880, 336, 234, 234, 8); ctx.fillStyle = "#ffffff"; ctx.fill();
+  ctx.drawImage(qr, 886, 342, 222, 222);
+  ctx.fillStyle = p.ink; ctx.font = "12px ui-monospace, monospace"; ctx.letterSpacing = "1px"; ctx.fillText("SCAN · TIDELIGHT.APP", 770, 580);
+  ctx.fillStyle = p.accent; ctx.fillRect(770, 587, 338, 2);
 }
 
 export default function PnlShareCard({ details, label = "Share P&L" }: { details: PnlCardDetails; label?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState("");
+  const [theme, setTheme] = useState<Theme>("daylight");
+
+  function openCard() {
+    const currentTheme = document.documentElement.dataset.theme;
+    setTheme(currentTheme === "night" || currentTheme === "blue" ? currentTheme : "daylight");
+    setNotice("");
+    setOpen(true);
+  }
 
   useEffect(() => {
     if (!open) return;
-    if (canvasRef.current) drawCard(canvasRef.current, details);
     const initialOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
     return () => { document.body.style.overflow = initialOverflow; window.removeEventListener("keydown", closeOnEscape); };
-  }, [open, details]);
+  }, [open]);
+
+  useEffect(() => {
+    if (open && canvasRef.current) void drawCard(canvasRef.current, details, theme).catch(() => setNotice("The card artwork could not be loaded. Please try again."));
+  }, [open, details, theme]);
 
   async function exportCard(share: boolean) {
     const canvas = canvasRef.current;
@@ -121,10 +176,11 @@ export default function PnlShareCard({ details, label = "Share P&L" }: { details
   }
 
   return <>
-    <button type="button" className="pnl-share-trigger" onClick={() => { setNotice(""); setOpen(true); }} aria-label={`${label} for ${details.ticker}`}>{label}<svg aria-hidden="true" viewBox="0 0 12 12"><path d="M2 10 10 2M3 2h7v7"/></svg></button>
+    <button type="button" className="pnl-share-trigger" onClick={openCard} aria-label={`${label} for ${details.ticker}`}>{label}<svg aria-hidden="true" viewBox="0 0 12 12"><path d="M2 10 10 2M3 2h7v7"/></svg></button>
     {open ? <div className="pnl-share-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
       <section className="pnl-share-dialog" role="dialog" aria-modal="true" aria-labelledby="pnl-share-title">
         <header><div><span className="eyebrow small-eyebrow">A TIDELIGHT TRADE CARD</span><h2 id="pnl-share-title">Share your {details.status.toLowerCase()} position.</h2></div><button type="button" className="pnl-share-close" autoFocus onClick={() => setOpen(false)} aria-label="Close share card">×</button></header>
+        <div className="pnl-share-theme-picker" role="group" aria-label="Choose card theme">{themes.map((option) => <button type="button" key={option.id} className={theme === option.id ? "selected" : ""} aria-pressed={theme === option.id} onClick={() => { setNotice(""); setTheme(option.id); }}>{option.label}</button>)}</div>
         <canvas ref={canvasRef} className="pnl-share-canvas" aria-label={`${details.ticker} ${details.status.toLowerCase()} P&L card`} />
         <p className="pnl-share-caption">This card is created on your device. Personal account details are never included.</p>
         <div className="pnl-share-actions"><button type="button" className="pnl-share-download" onClick={() => void exportCard(false)}>Download PNG</button><button type="button" className="pnl-share-send" onClick={() => void exportCard(true)}>Share card <svg aria-hidden="true" viewBox="0 0 12 12"><path d="M2 10 10 2M3 2h7v7"/></svg></button></div>

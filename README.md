@@ -119,3 +119,5 @@ Tidelight is being built with a simple standard: show the evidence, label assump
   <br /><br />
   <a href="https://tidelight.app">Made for the hours between headlines · Tidelight ↗</a>
 </div>
+
+For technical contributions or responsible security reports, contact [security@tidelight.app](mailto:security@tidelight.app).

@@ -1,0 +1,13 @@
+.language-choice{display:flex;align-items:center;gap:7px;margin-top:14px}
+.language-choice button,.landing-language-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 13px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--muted);font:600 11px var(--font);cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.language-choice button:hover,.landing-language-toggle:hover{border-color:var(--mint-2);color:var(--text)}
+.language-choice button.selected{border-color:var(--mint-2);background:color-mix(in srgb,var(--mint-2) 13%,var(--panel));color:var(--text)}
+.landing-language-toggle{min-height:32px;padding:0 10px;border-color:color-mix(in srgb,var(--mint) 34%,var(--line));background:transparent;color:var(--mint);font-size:10px}
+:root[data-theme="daylight"] .landing-language-toggle{border-color:#a7c9ae;color:#286a4d}
+:root[data-theme="blue"] .landing-language-toggle{border-color:#6476ad;color:#c1d0ff}
+[data-language="zh-CN"] .landing-nav-actions{gap:12px}
+[data-language="zh-CN"] .landing-nav-links{font-size:11px}
+[data-language="zh-CN"] .eyebrow,[data-language="zh-CN"] .workspace-label,[data-language="zh-CN"] .breadcrumb,[data-language="zh-CN"] .brand small,[data-language="zh-CN"] .workspace-label{letter-spacing:.04em}
+[data-language="zh-CN"] .settings-card p,[data-language="zh-CN"] .page-heading p,[data-language="zh-CN"] .landing-page p{line-height:1.8}
+@media(max-width:800px){.landing-nav-actions{gap:6px}.landing-language-toggle{min-height:30px;padding:0 8px}.language-choice{flex-wrap:wrap}}
+@media(max-width:360px){.landing-language-toggle{padding:0 6px;font-size:9px}.landing-nav-actions{gap:4px}}

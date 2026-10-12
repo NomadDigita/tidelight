@@ -9,6 +9,8 @@
     <a href="https://tidelight.app/markets">Browse markets</a>
     &nbsp; · &nbsp;
     <a href="https://tidelight.app/research">Start a research brief</a>
+    &nbsp; · &nbsp;
+    <a href="./README.zh-CN.md">简体中文</a>
   </p>
 </div>
 

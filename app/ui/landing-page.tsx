@@ -3,6 +3,7 @@ import Image from "next/image";
 import LandingDocsEmbed from "@/app/ui/landing-docs-embed";
 import { NavigationTrail } from "@/app/ui/navigation-icon";
 import { ThemeQuickSwitch } from "@/app/ui/theme-provider";
+import { LanguageToggle } from "@/app/ui/language-provider";
 
 const capabilities = [
   ["Research", "Turn a plain-language question into a source-led market brief."],
@@ -17,6 +18,7 @@ export default function LandingPage() {
       <div className="landing-nav-actions">
         <div className="landing-nav-links"><a href="#method">The method</a><a href="#handbook">Docs <NavigationTrail className="landing-arrow" /></a></div>
         <ThemeQuickSwitch />
+        <LanguageToggle className="landing-language-toggle" />
         <Link className="landing-nav-workspace" href="/overview">Open workspace</Link>
       </div>
     </nav>

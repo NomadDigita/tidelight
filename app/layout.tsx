@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import "./theme-polish.css";
 import "./nightwatch.css";
 import { createClient } from "@/lib/supabase/server";
 import WorkspaceShell from "./ui/workspace-shell";
 import { ThemeProvider } from "./ui/theme-provider";
+import { LanguageProvider } from "./ui/language-provider";
 import SupportCompanion from "./ui/support-companion";
 import "./support-companion.css";
 import "./landing.css";
 import "./mobile-polish.css";
 import "./stock-market.css";
+import "./language.css";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   metadataBase: new URL("https://tidelight.app"),
   alternates: { canonical: "https://tidelight.app" },
   title: "Tidelight — See the signal between sessions",
@@ -39,7 +42,21 @@ export const metadata: Metadata = {
   },
 };
 
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  if (cookieStore.get("tidelight-language")?.value !== "zh-CN") return baseMetadata;
+  return {
+    ...baseMetadata,
+    title: "Tidelight — 看清交易时段之间的市场信号",
+    description: "面向代币化美股的市场研究工作台。沿着市场事件、证据、影响敞口和情景，做出更清晰的判断。",
+    openGraph: { ...baseMetadata.openGraph, title: "Tidelight — 看清交易时段之间的市场信号", description: "清晰、以来源为依据的研究，助你看懂永不休眠的市场。" },
+    twitter: { ...baseMetadata.twitter, title: "Tidelight — 看清交易时段之间的市场信号", description: "面向代币化美股的市场研究工作台。沿着市场事件、证据、影响敞口和情景，做出更清晰的判断。" },
+  };
+}
+
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const language = cookieStore.get("tidelight-language")?.value === "zh-CN" ? "zh-CN" : "en";
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = user
@@ -54,6 +71,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     || user?.email?.split("@")[0]
     || null;
 
-  return <html lang="en" data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell><SupportCompanion /></ThemeProvider></body></html>;
+  return <html lang={language} data-language={language} data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><LanguageProvider initialLanguage={language}><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell><SupportCompanion /></LanguageProvider></ThemeProvider></body></html>;
 }
 

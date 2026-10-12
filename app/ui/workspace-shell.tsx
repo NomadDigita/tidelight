@@ -8,7 +8,6 @@ import { signOut } from "@/app/actions";
 import { useExperience } from "@/app/ui/theme-provider";
 import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
 import { NavigationIcon, NavigationTrail, type NavigationIconName } from "@/app/ui/navigation-icon";
-import { IntelligenceProvider } from "@/app/ui/intelligence-provider";
 
 const navigation: { href: string; label: string; icon: NavigationIconName; technical?: boolean }[] = [
   { href: "/overview", label: "Overview", icon: "overview" },
@@ -107,7 +106,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
   if (pathname.startsWith("/login") || pathname.startsWith("/auth/") || pathname === "/") return children;
 
   return (
-    <IntelligenceProvider><div className="app-shell" data-experience={mode}>
+    <div className="app-shell" data-experience={mode}>
       <aside className="sidebar" aria-label="Main navigation">
         <Link className="brand" href="/" aria-label="Tidelight home">
           <Image src="/tidelight-mark.svg" alt="" width={36} height={36} priority />
@@ -149,7 +148,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
         <footer className="page-footer"><span>© 2026 Tidelight Research</span><span><b>Clarity when the bell is quiet.</b> <i>Built for markets that never sleep.</i></span><nav className="legal-footer-links" aria-label="Legal and account links"><Link href="/terms">TERMS</Link><Link href="/privacy">PRIVACY</Link><Link href="/settings">SETTINGS <span className="footer-dot">●</span></Link></nav></footer>
       </main>
       {mobileMenuOpen ? <div className="mobile-drawer-backdrop" onClick={() => setMobileMenuPath(null)}><aside className="mobile-workspace-drawer" id="mobile-workspace-drawer" aria-label="Workspace navigation" onClick={(event) => event.stopPropagation()}><div className="mobile-drawer-head"><span>YOUR WORKSPACE</span><button type="button" aria-label="Close menu" onClick={() => setMobileMenuPath(null)}>×</button></div><nav className="mobile-drawer-links">{visibleNavigation.map((item) => { const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href); return <Link key={item.href} data-technical={item.technical ? "true" : undefined} className={`mobile-drawer-link${isActive ? " active" : ""}`} href={item.href} onClick={() => setMobileMenuPath(null)} aria-current={isActive ? "page" : undefined}><span className="mobile-drawer-icon"><NavigationIcon name={item.icon} /></span>{item.label}<NavigationTrail /></Link>; })}<Link className="mobile-drawer-link" href="/settings" onClick={() => setMobileMenuPath(null)}><span className="mobile-drawer-icon"><NavigationIcon name="settings" /></span>Settings<NavigationTrail /></Link></nav><div className="mobile-drawer-foot"><div className="mobile-profile-avatar">{avatarUrl ? <Image src={avatarUrl} alt={profileLabel + " profile photo"} width={30} height={30} unoptimized /> : <span>{profileInitial}</span>}</div><span><b>{email ? profileLabel : "Your Tidelight desk"}</b><small>{email ?? "Sign in to save your research"}</small></span>{email ? <form action={signOut}><button className="mobile-signout" aria-label="Sign out" title="Sign out">↪</button></form> : <Link className="mobile-signin" href="/login">Sign in</Link>}</div></aside></div> : null}
-    </div></IntelligenceProvider>
+    </div>
   );
 }
 

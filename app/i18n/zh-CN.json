@@ -3932,5 +3932,19 @@
   "Research community.": "研究社区",
   "research community": "研究社区",
   "Tidelight handbook": "Tidelight 产品手册",
-  "Markets & watchlists": "市场与自选列表"
+  "Markets & watchlists": "市场与自选列表",
+  "EMAIL DELIVERY · OPTIONAL": "邮件通知 · 可选",
+  "Email me Nightwatch signals": "通过邮件接收 Nightwatch 信号",
+  "Email me paper fills": "通过邮件接收模拟成交通知",
+  "Email risk reviews": "通过邮件接收风险评估",
+  "Email linked research briefs": "通过邮件接收关联研究简报",
+  "Email my daily summary": "通过邮件接收每日摘要",
+  "Signal alerts in workspace": "工作区内的信号提醒",
+  "Paper-fill alerts in workspace": "工作区内的模拟成交提醒",
+  "Daily summary in workspace": "工作区内的每日摘要",
+  "Email delivery is not configured.": "邮件发送服务尚未配置。",
+  "Review account security": "查看账户安全",
+  "A new passkey was added to your Tidelight account. If you did not add it, remove unfamiliar passkeys and review your account security.": "新的通行密钥已添加到你的 Tidelight 账户。如果不是你本人操作，请移除陌生的通行密钥并检查账户安全。",
+  "A passkey was removed from your Tidelight account. If you did not make this change, review your account security and sign-in methods.": "通行密钥已从你的 Tidelight 账户中移除。如果不是你本人操作，请检查账户安全和登录方式。",
+  "Email delivery will be available when the Resend server key is configured.": "配置 Resend 服务器密钥后即可启用邮件发送。"
 }

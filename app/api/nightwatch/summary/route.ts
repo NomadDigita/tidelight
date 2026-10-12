@@ -1,5 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { enqueueNightwatchEmail } from "@/lib/email/nightwatch";
+import { drainEmailQueue } from "@/lib/email/delivery";
 
 export async function POST() {
   const supabase = await createClient();
@@ -19,5 +22,7 @@ export async function POST() {
     : supabase.from("nightwatch_alerts").insert({ user_id: user.id, kind: "summary", title: "Nightwatch daily summary", body });
   const { data: alert, error: insertError } = await mutation.select("id, kind, title, body, read_at, created_at").single();
   if (insertError) return NextResponse.json({ error: "Could not save today's summary." }, { status: 500 });
+  try { const admin = createAdminClient(); await enqueueNightwatchEmail({ admin, userId: user.id, eventKey: `nightwatch-summary:${user.id}:${start.toISOString().slice(0, 10)}`, kind: "nightwatch_summary", title: alert.title, body: alert.body }); after(async () => { try { await drainEmailQueue(admin); } catch { console.error("Nightwatch summary email delivery deferred"); } }); }
+  catch (queueError) { console.error("Nightwatch summary email enqueue failed", queueError instanceof Error && "code" in queueError ? queueError.code : "queue_unavailable"); }
   return NextResponse.json({ alert });
 }

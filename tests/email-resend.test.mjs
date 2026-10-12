@@ -17,12 +17,13 @@ test("Resend requests remain server-side, branded, and idempotent", async () => 
     return new Response(JSON.stringify({ id: "mail_123" }), { status: 200, headers: { "Content-Type": "application/json" } });
   };
   try {
-    const result = await sendWithResend({ from: "Tidelight <alerts@tidelight.app>", to: "safe@example.test", subject: "Nightwatch signal", html: "<p>Paper only</p>", idempotencyKey: "nightwatch:run-1:signal" });
+    const result = await sendWithResend({ from: "Tidelight <alerts@tidelight.app>", to: "safe@example.test", replyTo: "owner@example.test", subject: "Nightwatch signal", html: "<p>Paper only</p>", idempotencyKey: "nightwatch:run-1:signal" });
     assert.deepEqual(result, { id: "mail_123" });
     assert.equal(captured.url, "https://api.resend.com/emails");
     assert.equal(captured.options.headers.Authorization, "Bearer resend-test-key");
     assert.equal(captured.options.headers["Idempotency-Key"], "nightwatch:run-1:signal");
     assert.deepEqual(JSON.parse(captured.options.body).to, ["safe@example.test"]);
+    assert.equal(JSON.parse(captured.options.body).reply_to, "owner@example.test");
   } finally {
     globalThis.fetch = originalFetch;
     if (originalKey === undefined) delete process.env.RESEND_API_KEY;

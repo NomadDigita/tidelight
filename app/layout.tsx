@@ -8,11 +8,13 @@ import WorkspaceShell from "./ui/workspace-shell";
 import { ThemeProvider } from "./ui/theme-provider";
 import { LanguageProvider } from "./ui/language-provider";
 import SupportCompanion from "./ui/support-companion";
+import ProductQuickActions from "./ui/product-quick-actions";
 import "./support-companion.css";
 import "./landing.css";
 import "./mobile-polish.css";
 import "./stock-market.css";
 import "./language.css";
+import "./product-quick-actions.css";
 
 const baseMetadata: Metadata = {
   metadataBase: new URL("https://tidelight.app"),
@@ -71,6 +73,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     || user?.email?.split("@")[0]
     || null;
 
-  return <html lang={language} data-language={language} data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><LanguageProvider initialLanguage={language}><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell><SupportCompanion /></LanguageProvider></ThemeProvider></body></html>;
+  return <html lang={language} data-language={language} data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><LanguageProvider initialLanguage={language}><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell><SupportCompanion /><ProductQuickActions /></LanguageProvider></ThemeProvider></body></html>;
 }
 

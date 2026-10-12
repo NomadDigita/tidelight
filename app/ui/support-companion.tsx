@@ -121,8 +121,15 @@ export default function SupportCompanion() {
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
   useEffect(() => {
     const closeGuide = () => { setOpen(false); setHistoryOpen(false); };
+    const openGuide = (event: Event) => {
+      const prompt = (event as CustomEvent<{ prompt?: unknown }>).detail?.prompt;
+      if (typeof prompt === "string") setDraft(prompt.slice(0, 800));
+      setHistoryOpen(false);
+      setOpen(true);
+    };
     window.addEventListener("tidelight:close-guide", closeGuide);
-    return () => window.removeEventListener("tidelight:close-guide", closeGuide);
+    window.addEventListener("tidelight:open-guide", openGuide);
+    return () => { window.removeEventListener("tidelight:close-guide", closeGuide); window.removeEventListener("tidelight:open-guide", openGuide); };
   }, []);
   useEffect(() => { if (open) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy, open]);
   useEffect(() => () => requestRef.current?.abort(), []);

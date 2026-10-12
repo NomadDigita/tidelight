@@ -54,8 +54,11 @@ export async function POST(request: Request) {
         try { controller.enqueue(encoder.encode(event(type, payload))); } catch { /* Reader disconnected. Finish the private record. */ }
       };
       const stage = (agent: string, status: Stage["status"], title: string, detail: string, asset?: string) => {
-        const item = { id: crypto.randomUUID(), agent, status, title, detail, at: new Date().toISOString(), ...(asset ? { asset } : {}) };
-        trace.push(item); push("stage", item);
+        const activeIndex = trace.findIndex(item => item.agent === agent && (item.asset ?? "") === (asset ?? "") && item.status === "running");
+        const item = { id: activeIndex >= 0 ? trace[activeIndex].id : crypto.randomUUID(), agent, status, title, detail, at: new Date().toISOString(), ...(asset ? { asset } : {}) };
+        if (activeIndex >= 0) trace[activeIndex] = item;
+        else trace.push(item);
+        push("stage", item);
       };
       try {
         stage("Coordinator", "complete", "Question framed", `Comparing ${tickers.join(" and ")} across evidence, verified Bitget markets, Alpha Factory, and risk gates.`);

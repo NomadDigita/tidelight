@@ -142,7 +142,17 @@ export default function AgentFlowDesk({ initialQuestion }: { initialQuestion: st
     </section>
 
     {(busy || stages.length > 0) ? <section className="flow-glass" aria-label="Agent activity"><div className="flow-section-head"><div><span className="flow-kicker">THE VISIBLE WORKFLOW</span><h2>What the agents are checking.</h2><p>Operational checkpoints appear as the work runs. Private model reasoning and unverified claims are not displayed.</p></div><span className={`flow-state ${busy ? "flow-state-live" : ""}`}>{busy ? "● IN PROGRESS" : error ? "PAUSED" : "COMPLETE"}</span></div>
-      <div className="flow-trace" aria-live="polite" aria-relevant="additions text">{stages.map((stage, index) => <article className={`flow-stage flow-stage-${stage.status === "running" && !busy ? error ? "blocked" : "complete" : stage.status}`} key={stage.id}><div className="flow-stage-rail"><span>{String(index + 1).padStart(2, "0")}</span><i /></div><div className="flow-stage-body"><div><span>{stage.agent}{stage.asset ? ` · ${stage.asset}` : ""}</span><small>{stage.at ? new Date(stage.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</small></div><h3>{stage.title}</h3><p>{stage.detail}</p></div><span className="flow-stage-status">{stage.status === "running" ? busy ? "Checking" : error ? "Paused" : "Called" : stage.status === "blocked" ? "Paused" : "Checked"}</span></article>)}{busy && stages.length === 0 ? <div className="flow-wait"><i /> Connecting the research agents…</div> : null}</div>
+      <div className="flow-trace" aria-live="polite" aria-relevant="additions text" role="list">{stages.map((stage, index) => {
+        const effectiveStatus = stage.status === "running" && !busy ? error ? "blocked" : "complete" : stage.status;
+        const statusLabel = effectiveStatus === "running" ? "In progress" : effectiveStatus === "blocked" ? "On hold" : index < stages.length - 1 ? "Passed forward" : "Captured";
+        return <article className={`flow-stage flow-stage-${effectiveStatus}`} key={stage.id} role="listitem">
+          <div className="flow-stage-node"><span aria-hidden="true">{effectiveStatus === "complete" ? "✓" : effectiveStatus === "blocked" ? "!" : String(index + 1).padStart(2, "0")}</span><i aria-hidden="true" /></div>
+          <div className="flow-stage-body"><div className="flow-stage-meta"><span>{stage.agent}{stage.asset ? ` · ${stage.asset}` : ""}</span><small>{stage.at ? new Date(stage.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</small></div><h3>{stage.title}</h3>
+            <span className="flow-stage-status">{statusLabel}</span>
+            <details className="flow-stage-detail"><summary>What was checked</summary><p>{stage.detail}</p></details>
+          </div>
+        </article>;
+      })}{busy && stages.length === 0 ? <div className="flow-wait"><i /> Connecting the research agents…</div> : null}</div>
     </section> : null}
 
     {error ? <div className="flow-error" role="alert"><b>Research paused</b><span>{error}</span>{error.toLowerCase().includes("sign in") ? <Link href="/login">Sign in ↗</Link> : <button type="button" onClick={() => void runFlow()} disabled={busy}>Try again ↗</button>}</div> : null}

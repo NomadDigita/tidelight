@@ -7,6 +7,8 @@ Tidelight uses Resend in two separate, server-side paths:
 
 No email is sent directly from a browser. Nightwatch email is off by default; a person must enable each class in the Nightwatch control surface. Security notifications are transactional and do not include unsubscribe links. Queue rows contain an event key, category, minimal rendered content, attempts and Resend message ID; they never contain provider credentials. Queue rows are private to the server role. Retries are bounded and use Resend idempotency keys; a lease allows recovery if a worker stops while sending.
 
+The product feedback control sends a user-submitted note from `no-reply@tidelight.app` to `feedback@tidelight.app`. The message is sent only by the authenticated same-origin server route, rate-limited by keyed IP/account fingerprints, and includes a reply-to address only when the user supplies one. Make sure `feedback@tidelight.app` is routed through the existing ImprovMX receiving setup to the intended team inbox; this does not require changing DNS records.
+
 ## Secrets and provider setup
 
 1. Create or reuse a Resend API key with only the email sending permission for the verified `tidelight.app` domain. Add it to the **Vercel project** as the server-only `RESEND_API_KEY` in Production, Preview and Development as appropriate. Do not prefix it with `NEXT_PUBLIC_` and do not commit it.

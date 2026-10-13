@@ -210,7 +210,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
           <label><input type="checkbox" checked={preferences.alert_on_fill} onChange={(event) => void savePreferences({ alert_on_fill: event.target.checked })} disabled={!signedIn || savingPreferences}/> Paper-fill alerts</label>
           <label><input type="checkbox" checked={preferences.daily_summary} onChange={(event) => void savePreferences({ daily_summary: event.target.checked })} disabled={!signedIn || savingPreferences}/> Daily summary</label>
         </div>
-        <div className="nw-email-preferences">
+        <div className="nw-email-preferences" id="email-preferences">
           <span>EMAIL DELIVERY · OPTIONAL</span>
           {!emailDeliveryAvailable ? <small>Email delivery will be available when the Resend server key is configured.</small> : null}
           <label><input type="checkbox" checked={preferences.nightwatch_signals} onChange={(event) => void savePreferences({ nightwatch_signals: event.target.checked })} disabled={!signedIn || savingPreferences || !emailDeliveryAvailable}/> Email me Nightwatch signals</label>

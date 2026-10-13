@@ -1,0 +1,10 @@
+import Link from "next/link";
+const questions = [
+  ["What is Tidelight?", "Tidelight is a research desk for tokenized US equities. It connects market context, source-led research, issuer exposure, scenarios, and paper-first trading controls."],
+  ["Where do I edit my profile?", "Open Account Center → My info to update your display name, profile photo, and community username."],
+  ["How do I protect my account?", "Open Account Center → Security to set up authenticator MFA and review passkey availability. Sensitive live actions have additional checks."],
+  ["Can Tide place trades or change settings?", "No. Tide can explain product features and point you to the right page. You remain responsible for every trading decision and order confirmation."],
+  ["How do I delete saved research?", "Use the relevant workspace, such as Saved briefs or Watchlist, to manage account-saved records. Storage management clears only local browser data."],
+  ["Where can I learn the full workflow?", "Read the Tidelight handbook for detailed walkthroughs and feature documentation."],
+];
+export default function HelpPage() { return <main className="content-wrap inner-page account-info-page"><div className="account-info-hero"><span className="eyebrow">TIDELIGHT HELP CENTER</span><h1>A clearer next step starts here.</h1><p>Find your way around the desk, your account, and the research workflow.</p><div className="account-info-actions"><Link className="primary-link" href="https://docs.tidelight.app" target="_blank">Open the handbook <span>↗</span></Link><Link className="secondary-account-link" href="/contact">Contact support <span>↗</span></Link></div></div><section className="account-info-section"><div className="account-info-heading"><span className="eyebrow">QUICK ANSWERS</span><h2>Common questions</h2></div><div className="help-faq-list">{questions.map(([question,answer]) => <details key={question}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}</div></section><div className="account-info-bottom"><span>Still need a hand?</span><Link href="/contact">Talk to the Tidelight team <b>↗</b></Link></div></main>; }

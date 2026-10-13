@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 export type NavigationIconName = "overview" | "guide" | "research" | "flow" | "community" | "markets" | "strategies" | "nightwatch" | "futures" | "trading" | "watchlist" | "briefs" | "demo" | "systems" | "settings";
 
 export function NavigationIcon({ name, className }: { name: NavigationIconName; className?: string }) {
-  if (name === "trading") return <img className={`navigation-icon-image${className ? ` ${className}` : ""}`} src="/bitget-mark.png" alt="" aria-hidden="true" />;
   const shared = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   const paths: Record<NavigationIconName, ReactNode> = {
     overview: <><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></>,
@@ -19,7 +18,7 @@ export function NavigationIcon({ name, className }: { name: NavigationIconName; 
     watchlist: <path d="M5 3.5h14v17l-7-4.5-7 4.5v-17Z"/>,
     briefs: <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></>,
     demo: <><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></>,
-    systems: <><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M8 7.5 10.8 16m5.2-8.5L13.2 16M8 6h8"/></>,
+    systems: <><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01M12 7h5m-5 10h5"/></>,
     settings: <><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--bg)"/><circle cx="16" cy="12" r="2" fill="var(--bg)"/><circle cx="10" cy="18" r="2" fill="var(--bg)"/></>,
   };
   return <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...shared}>{paths[name]}</svg>;

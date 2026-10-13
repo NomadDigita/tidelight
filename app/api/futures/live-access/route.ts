@@ -44,12 +44,14 @@ export async function POST(request: Request) {
     if (error) throw error;
     await enqueueFuturesAccessEmail({ admin, userId: user.id, eventKey: "futures-live-request-user:" + user.id + ":" + Date.parse(requestedAt), kind: "futures_access_submitted", title: "Request received", body: "Your live US stock perpetual access request is in the operator review queue. Review usually takes a few minutes to a few hours. You can continue using your $10,000 paper account in the meantime." });
     try {
-      const { data: usersPage } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const reviewers = (usersPage?.users ?? []).filter(candidate => {
-        const roles = candidate.app_metadata?.roles;
-        return candidate.app_metadata?.role === "admin" || candidate.app_metadata?.role === "operator" || (Array.isArray(roles) && (roles.includes("admin") || roles.includes("operator")));
+      await enqueueFuturesAccessEmail({
+        admin,
+        userId: user.id,
+        eventKey: "futures-live-request-operator:" + user.id + ":" + Date.parse(requestedAt),
+        kind: "futures_access_request",
+        title: "New live access request",
+        body: "A user submitted a live US stock perpetual access request. Open the authenticated Tidelight operator review queue to inspect the accepted terms and make an auditable decision. Request reference: " + user.id + ".",
       });
-      await Promise.all(reviewers.map(candidate => enqueueFuturesAccessEmail({ admin, userId: candidate.id, eventKey: "futures-live-request-reviewer:" + user.id + ":" + candidate.id + ":" + Date.parse(requestedAt), kind: "futures_access_request", title: "New live access request", body: "A user submitted a live US stock perpetual access request. Open the authenticated Tidelight operator review queue to inspect the accepted terms and make an auditable decision. Request reference: " + user.id + "." })));
       if (process.env.RESEND_API_KEY) await drainEmailQueue(admin);
     } catch { /* The committed request remains pending; the protected retry worker will deliver queued mail. */ }
     return NextResponse.json({ status: "pending", requestedAt }, { headers: { "Cache-Control": "no-store" } });

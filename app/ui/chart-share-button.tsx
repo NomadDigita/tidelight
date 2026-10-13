@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import "./chart-share-button.css";
 
 export type ShareCandle = { timestamp:number; open:number; high:number; low:number; close:number; volume?:number|null };
 export type ShareMarker = { side:"B"|"S"; timestamp:number; price:number };

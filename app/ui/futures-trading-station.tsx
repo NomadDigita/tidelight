@@ -79,6 +79,9 @@ function LiveTradePanel({symbol,price}:{symbol:string;price:number|null}){
   const [margin,setMargin]=useState("50");
   const [action,setAction]=useState<"open_long"|"open_short"|"close"|null>(null);
   const [acknowledged,setAcknowledged]=useState(false);
+  const [mfaCode,setMfaCode]=useState("");
+  const [mfaVerified,setMfaVerified]=useState(false);
+  const [mfaBusy,setMfaBusy]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
@@ -90,6 +93,23 @@ function LiveTradePanel({symbol,price}:{symbol:string;price:number|null}){
   },[symbol]);
   const position=account?.positions[0]??null;
   const quantity=price&&Number(margin)>0?Math.floor((Number(margin)/price)*1e6)/1e6:0;
+  async function verifyAuthenticator(){
+    if(!/^\d{6}$/.test(mfaCode)){setError("Enter the six-digit code from your authenticator app.");return;}
+    setMfaBusy(true);setError("");
+    try{
+      const client=createClient();
+      const {data,error:factorError}=await client.auth.mfa.listFactors();
+      if(factorError)throw factorError;
+      const factor=data.totp.find(item=>item.status==="verified");
+      if(!factor)throw new Error("Add and verify an authenticator in Settings before trading live.");
+      const {data:challenge,error:challengeError}=await client.auth.mfa.challenge({factorId:factor.id});
+      if(challengeError)throw challengeError;
+      const {error:verifyError}=await client.auth.mfa.verify({factorId:factor.id,challengeId:challenge.id,code:mfaCode});
+      if(verifyError)throw verifyError;
+      setMfaVerified(true);setError("");
+    }catch(cause){setError(cause instanceof Error?cause.message:"Authenticator verification failed.");}
+    finally{setMfaBusy(false);}
+  }
   async function submit(){
     if(!action||!acknowledged||!mfaVerified)return;
     setBusy(true);setError("");setNotice("");
@@ -112,7 +132,7 @@ function LiveTradePanel({symbol,price}:{symbol:string;price:number|null}){
     <p className="station-risk-note">Every live order requires a separate confirmation. New positions are capped at $250 isolated margin and set to 1×. Check your Bitget positions and order history after execution.</p>
     {accountError?<p className="station-error" role="alert">{accountError}</p>:null}{error?<p className="station-error" role="alert">{error}</p>:null}{notice?<p className="station-notice" role="status">{notice}</p>:null}
     <div className="station-live-footer"><span>Live position snapshot refreshes every 10 seconds</span><a href="/settings">API connection settings ↗</a></div>
-    {action?<div className="station-modal-backdrop"><section className="station-terms-modal station-live-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="live-order-confirm-title"><button className="station-modal-close" type="button" aria-label="Cancel live order" onClick={()=>{setAction(null);setMfaCode("");setMfaVerified(false);}}>×</button><span className="station-eyebrow">BITGET · LIVE ORDER CONFIRMATION</span><h2 id="live-order-confirm-title">{action==="close"?"Close live position":action==="open_long"?"Open live long":"Open live short"} · {symbol}</h2><div className="station-live-order-summary"><div><span>Execution</span><b>Market order</b></div><div><span>Reference price</span><b>{price?usd(price,4)+" USDT":"—"}</b></div><div><span>{action==="close"?"Position quantity":"Estimated quantity"}</span><b>{action==="close"?(position?.quantity??0).toFixed(6)+" "+symbol.replace("USDT",""):quantity.toFixed(6)+" "+symbol.replace("USDT","")}</b></div><div><span>{action==="close"?"Account margin":"Isolated margin · 1×"}</span><b>{action==="close"?"Bitget position":usd(Number(margin))}</b></div></div><p className="station-terms-note">This submits a real order to Bitget. The final fill price may differ from the quote. Verify the contract, direction and size. Tidelight never requests withdrawal permission.</p><label className="station-live-check"><input type="checkbox" checked={acknowledged} onChange={event=>setAcknowledged(event.target.checked)}/><span>I reviewed this live order and authorize Bitget to submit it.</span></label><div className="station-mfa-stepup"><label htmlFor="live-order-totp">Authenticator code · required for each live order</label><div><input id="live-order-totp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={mfaCode} onChange={event=>{setMfaCode(event.target.value.replace(/\\D/g,""));setMfaVerified(false);}} placeholder="000000"/><button type="button" disabled={mfaBusy||mfaCode.length!==6} onClick={()=>void verifyAuthenticator()}>{mfaBusy?"Verifying…":mfaVerified?"Verified ✓":"Verify code"}</button></div></div>{error?<p className="station-error" role="alert">{error}</p>:null}<div className="station-terms-actions"><button type="button" className="station-cancel" onClick={()=>{setAction(null);setMfaCode("");setMfaVerified(false);}}>Cancel order</button><button type="button" className="station-accept" disabled={!acknowledged||!mfaVerified||busy||!price} onClick={()=>void submit()}>{busy?"Submitting…":"Confirm & send live order"}</button></div></section></div>:null}
+    {action?<div className="station-modal-backdrop"><section className="station-terms-modal station-live-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="live-order-confirm-title"><button className="station-modal-close" type="button" aria-label="Cancel live order" onClick={()=>{setAction(null);setMfaCode("");setMfaVerified(false);}}>×</button><span className="station-eyebrow">BITGET · LIVE ORDER CONFIRMATION</span><h2 id="live-order-confirm-title">{action==="close"?"Close live position":action==="open_long"?"Open live long":"Open live short"} · {symbol}</h2><div className="station-live-order-summary"><div><span>Execution</span><b>Market order</b></div><div><span>Reference price</span><b>{price?usd(price,4)+" USDT":"—"}</b></div><div><span>{action==="close"?"Position quantity":"Estimated quantity"}</span><b>{action==="close"?(position?.quantity??0).toFixed(6)+" "+symbol.replace("USDT",""):quantity.toFixed(6)+" "+symbol.replace("USDT","")}</b></div><div><span>{action==="close"?"Account margin":"Isolated margin · 1×"}</span><b>{action==="close"?"Bitget position":usd(Number(margin))}</b></div></div><p className="station-terms-note">This submits a real order to Bitget. The final fill price may differ from the quote. Verify the contract, direction and size. Tidelight never requests withdrawal permission.</p><label className="station-live-check"><input type="checkbox" checked={acknowledged} onChange={event=>setAcknowledged(event.target.checked)}/><span>I reviewed this live order and authorize Bitget to submit it.</span></label><div className="station-mfa-stepup"><label htmlFor="live-order-totp">Authenticator code · required for each live order</label><div><input id="live-order-totp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={mfaCode} onChange={event=>{setMfaCode(event.target.value.replace(/\D/g,""));setMfaVerified(false);}} placeholder="000000"/><button type="button" disabled={mfaBusy||mfaCode.length!==6} onClick={()=>void verifyAuthenticator()}>{mfaBusy?"Verifying…":mfaVerified?"Verified ✓":"Verify code"}</button></div></div>{error?<p className="station-error" role="alert">{error}</p>:null}<div className="station-terms-actions"><button type="button" className="station-cancel" onClick={()=>{setAction(null);setMfaCode("");setMfaVerified(false);}}>Cancel order</button><button type="button" className="station-accept" disabled={!acknowledged||!mfaVerified||busy||!price} onClick={()=>void submit()}>{busy?"Submitting…":"Confirm & send live order"}</button></div></section></div>:null}
   </section>;
 }
 

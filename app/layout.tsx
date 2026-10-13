@@ -4,6 +4,7 @@ import "./globals.css";
 import "./theme-polish.css";
 import "./nightwatch.css";
 import { createClient } from "@/lib/supabase/server";
+import { isTidelightOperator } from "@/lib/auth/operator-access";
 import WorkspaceShell from "./ui/workspace-shell";
 import { ThemeProvider } from "./ui/theme-provider";
 import { LanguageProvider } from "./ui/language-provider";
@@ -76,6 +77,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     || user?.email?.split("@")[0]
     || null;
 
-  return <html lang={language} data-language={language} data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><LanguageProvider initialLanguage={language}><IntelligenceProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName}>{children}</WorkspaceShell><SupportCompanion /><ProductQuickActions /></IntelligenceProvider></LanguageProvider></ThemeProvider></body></html>;
+  return <html lang={language} data-language={language} data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><LanguageProvider initialLanguage={language}><IntelligenceProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName} isOperator={isTidelightOperator(user)}>{children}</WorkspaceShell><SupportCompanion /><ProductQuickActions /></IntelligenceProvider></LanguageProvider></ThemeProvider></body></html>;
 }
 

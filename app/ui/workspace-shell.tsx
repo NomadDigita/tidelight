@@ -79,20 +79,21 @@ function BrandStoryTypewriter() {
   </div>;
 }
 
-export default function WorkspaceShell({ children, email, avatarUrl, displayName }: { children: ReactNode; email: string | null; avatarUrl: string | null; displayName: string | null }) {
+export default function WorkspaceShell({ children, email, avatarUrl, displayName, isOperator }: { children: ReactNode; email: string | null; avatarUrl: string | null; displayName: string | null; isOperator: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { mode } = useExperience();
-  const visibleNavigation = mode === "mini" ? navigation.filter((item) => !item.technical) : navigation;
+  const operatorNavigation = isOperator ? [...navigation, { href: "/operator", label: "Operator console", icon: "settings" as NavigationIconName, technical: true }] : navigation;
+  const visibleNavigation = mode === "mini" ? operatorNavigation.filter((item) => !item.technical) : operatorNavigation;
   const profileLabel = displayName?.trim() || (email ? email.split("@")[0] : "Guest workspace");
   const profileInitial = profileLabel.slice(0, 1).toUpperCase() || "T";
   const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
   const mobileMenuOpen = mobileMenuPath === pathname;
-  const active = navigation.find((item) => item.href === pathname) ?? navigation[0];
+  const active = operatorNavigation.find((item) => item.href === pathname) ?? navigation[0];
 
   useEffect(() => {
     if (mode !== "mini") return;
-    const isTechnicalRoute = navigation.some((item) => item.technical && (pathname === item.href || pathname.startsWith(`${item.href}/`)));
+    const isTechnicalRoute = operatorNavigation.some((item) => item.technical && (pathname === item.href || pathname.startsWith(`${item.href}/`)));
     if (isTechnicalRoute) router.replace("/");
   }, [mode, pathname, router]);
 

@@ -52,6 +52,7 @@ export default function AnalyticsConsent() {
     window.localStorage.setItem(CONSENT_KEY, next);
     setOpen(false);
     if (next === "accepted") enableAnalytics();
+    else window.gtag?.("consent", "update", { analytics_storage: "denied" });
   }, []);
 
   return <>

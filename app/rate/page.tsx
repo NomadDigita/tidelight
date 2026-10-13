@@ -10,7 +10,7 @@ export default function RatePage() {
       <div className="account-info-hero">
         <span className="eyebrow">YOUR VOICE SHAPES THE DESK</span>
         <h1>Share your Tidelight experience.</h1>
-        <p>Help other people discover Tidelight. Leave an honest public review on Trustpilot, or send private feedback directly to our team.</p>
+        <p>Help other people discover Tidelight. Leave an honest public review on Google or Trustpilot, or send private feedback directly to our team.</p>
       </div>
 
       <section className="trustpilot-review-card" aria-labelledby="trustpilot-heading">

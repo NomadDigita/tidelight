@@ -15,7 +15,7 @@ const controls = [
 export default async function OperatorConsolePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!isTidelightOperator(user)) redirect("/overview");
+  if (!user || !isTidelightOperator(user)) redirect("/overview");
 
   return <main className="content-wrap inner-page">
     <section className="page-heading compact-heading">

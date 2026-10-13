@@ -172,7 +172,7 @@ export function useLanguage() {
 export function LanguageToggle({ className = "" }: { className?: string }) {
   const { language, setLanguage } = useLanguage();
   const next: Language = language === "en" ? "zh-CN" : "en";
-  const label = language === "en" ? "切换为简体中文" : "Switch to English";
+  const label = language === "en" ? "Switch to Simplified Chinese" : "Switch to English";
   return <button type="button" className={className} aria-label={label} title={label} onClick={() => setLanguage(next)}>{language === "en" ? "中文" : "EN"}</button>;
 }
 

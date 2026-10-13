@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import styles from "./market-session-indicator.module.css";
 
 type SessionItem = { state: string; timeZone: string; startTime: string; endTime: string };
 type MarketSchedule = { market: string; daylightType: string | null; schedule: SessionItem[] } | null;
@@ -74,8 +75,46 @@ export default function MarketSessionIndicator({ session, status = "unavailable"
     else if (active.state === "after_hours") nextText = `Ends in ${duration(wallClockAt(date, 0, hm(active.endTime)).getTime() - date.getTime())}`;
     else { const dayOffset = timeParts(date).minute >= hm(active.startTime) ? 1 : 0; const premarket = schedule.find((item) => item.state === "pre_market"); nextText = premarket ? `Pre-market in ${duration(wallClockAt(date, dayOffset, hm(premarket.startTime)).getTime() - date.getTime())}` : "Pre-market later"; }
   } else if (next && date) nextText = `${next.item.state === "overnight" ? "Overnight" : "Pre-market"} opens in ${duration(next.at.getTime() - date.getTime())}`;
-  return <details className={`market-session-indicator${active?.state === "regular" ? " is-open" : ""}`}>
-    <summary aria-label={`US equity reference session: ${label}. ${nextText}`}><span className="market-session-light"/><span className="market-session-main"><b>{label}</b><small>{now ? nextText : "Eastern Time · syncing"}</small></span><span className="market-session-clock">{date ? new Intl.DateTimeFormat("en-US", { timeZone: zone, hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(date) : "ET"}</span><i aria-hidden="true">⌄</i></summary>
-    <div className="market-session-popover"><b>US equity reference</b><p>This follows Bitget Reality’s published US session schedule in Eastern Time. It describes the underlying equity session; token trading and liquidity can differ. Exchange holidays may change these hours.</p>{schedule.map((item) => <div key={item.state} className={active?.state === item.state ? "current" : ""}><span>{sessionCopy[item.state] ?? item.state.replaceAll("_", " ")}</span><b>{item.startTime}–{item.endTime} ET</b></div>)}</div>
+  const clock = (minute: number) => {
+    const value = new Date(Date.UTC(2020, 0, 1, Math.floor(minute / 60), minute % 60));
+    return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(value);
+  };
+  const etMinute = date ? timeParts(date).minute : 0;
+  const sessionSegments = schedule.flatMap((item) => {
+    const start = hm(item.startTime), end = hm(item.endTime);
+    const colorState = item.state === "regular" ? "regular" : item.state;
+    return end > start
+      ? [{ start, end, state: colorState }]
+      : [{ start: 0, end, state: colorState }, { start, end: 1440, state: colorState }];
+  });
+  const localClock = (minute: number) => {
+    const at = date ? wallClockAt(date, minute < etMinute ? 1 : 0, minute) : null;
+    return at ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(at) : "—";
+  };
+  return <details className={styles.shell}>
+    <summary className={styles.summary} aria-label={`US equity reference session: ${label}. ${nextText}`}>
+      <span className={styles.liveMark} data-open={active?.state === "regular"} aria-hidden="true" />
+      <span className={styles.summaryCopy}><b>{label}</b><small>{now ? nextText : "Eastern Time · syncing"}</small></span>
+      <span className={styles.clock}>{date ? new Intl.DateTimeFormat("en-US", { timeZone: zone, hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(date) : "ET"}</span>
+      <span className={styles.chevron} aria-hidden="true">⌄</span>
+    </summary>
+    <div className={styles.popover}>
+      <div className={styles.popoverHead}><div><span className={styles.kicker}>MARKET HOURS</span><h3>US equity sessions</h3></div><span className={styles.zonePill}>ET · {date ? new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" }).formatToParts(date).find((part) => part.type === "timeZoneName")?.value : "ET"}</span></div>
+      <p className={styles.note}>Underlying equity schedule from Bitget Reality. Token trading remains available outside these hours; liquidity and spreads can change. Exchange holidays may alter the schedule.</p>
+      <div className={styles.timelineHead}><b>Session timeline</b><span>{date ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(date) : "Local time"} · your local time</span></div>
+      <div className={styles.timeline} role="img" aria-label="US equity session timeline in Eastern Time">
+        <div className={styles.track}>{sessionSegments.map((segment, index) => <span key={`${segment.state}-${index}`} data-state={segment.state} className={styles.segment} style={{ left: `${segment.start / 14.4}%`, width: `${(segment.end - segment.start) / 14.4}%` }} />)}{date ? <i className={styles.nowMarker} style={{ left: `${etMinute / 14.4}%` }} /> : null}</div>
+        <div className={styles.axis}><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></div>
+      </div>
+      <div className={styles.sessionList}>{schedule.map((item) => {
+        const start = hm(item.startTime), end = hm(item.endTime);
+        return <article key={item.state} className={styles.sessionRow} data-current={active?.state === item.state}>
+          <span className={styles.sessionGlyph} data-state={item.state} aria-hidden="true">{item.state === "regular" ? "●" : item.state === "pre_market" ? "◒" : item.state === "after_hours" ? "◓" : "◐"}</span>
+          <span className={styles.sessionName}><b>{sessionCopy[item.state] ?? item.state.replaceAll("_", " ")}</b><small>{item.state === "regular" ? "Highest reference liquidity" : item.state === "overnight" ? "Overnight reference session" : "Extended-hours reference session"}</small></span>
+          <span className={styles.sessionTimes}><b>{item.startTime}–{item.endTime} ET</b><small>{clock(start)}–{clock(end)} ET · {localClock(start)}–{localClock(end)} local</small></span>
+        </article>;
+      })}</div>
+      <div className={styles.footer}><span><i /> Live session estimate</span><span>Exchange holidays may vary</span></div>
+    </div>
   </details>;
 }

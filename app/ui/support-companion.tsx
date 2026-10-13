@@ -104,7 +104,8 @@ export default function SupportCompanion() {
   }, []);
 
   useEffect(() => {
-    const bounds = viewportBounds();\n    let restored: { x: number; y: number } = { x: bounds.maxX, y: bounds.maxY };
+    const bounds = viewportBounds();
+    let restored: { x: number; y: number } = { x: bounds.maxX, y: bounds.maxY };
     try {
       const saved = window.localStorage.getItem("tidelight-tide-position");
       if (saved) {
@@ -176,7 +177,8 @@ export default function SupportCompanion() {
   function startDrag(event: ReactPointerEvent<HTMLButtonElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    const bounds = viewportBounds();\n    const origin = positionRef.current ?? { x: bounds.maxX, y: bounds.maxY };
+    const bounds = viewportBounds();
+    const origin = positionRef.current ?? { x: bounds.maxX, y: bounds.maxY };
     dragRef.current = { startX: event.clientX, startY: event.clientY, originX: origin.x, originY: origin.y };
     draggedRef.current = false;
   }

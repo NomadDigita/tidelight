@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import Link from "next/link";
 import AccountCopyButton from "@/app/ui/account-copy-button";
 
@@ -35,12 +35,25 @@ export default function AccountTabs({ groups, userId }: { groups: AccountGroup[]
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function handleTabKey(event: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
+    let nextIndex: number | undefined;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % groups.length;
+    if (event.key === "ArrowLeft") nextIndex = (index - 1 + groups.length) % groups.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = groups.length - 1;
+    if (nextIndex === undefined) return;
+    event.preventDefault();
+    const next = groups[nextIndex];
+    selectTab(next.id);
+    document.getElementById(`tab-${next.id}`)?.focus();
+  }
+
   const group = groups.find(item => item.id === selectedId) ?? groups[0];
   if (!group) return null;
 
   return <>
     <div className="account-center-tabs" role="tablist" aria-label="Account sections">
-      {groups.map(item => <button className="account-center-tab" type="button" role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={selectedId === item.id} tabIndex={selectedId === item.id ? 0 : -1} key={item.id} onClick={() => selectTab(item.id)}>{item.title}</button>)}
+      {groups.map((item, index) => <button className="account-center-tab" type="button" role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={selectedId === item.id} tabIndex={selectedId === item.id ? 0 : -1} key={item.id} onClick={() => selectTab(item.id)} onKeyDown={event => handleTabKey(event, index)}>{item.title}</button>)}
     </div>
     <section className="account-center-group" id={`panel-${group.id}`} role="tabpanel" aria-labelledby={`tab-${group.id}`} tabIndex={0}>
       <div className="account-center-group-head"><div><span className="eyebrow">ACCOUNT CENTER</span><h2>{group.title}</h2></div><p>{group.intro}</p></div>

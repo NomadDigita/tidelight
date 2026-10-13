@@ -150,3 +150,25 @@
   .station-market-strip{gap:5px}
   .station-chart-canvas svg{min-height:210px}
 }
+
+
+/* Tidelight DYOR liquid-glass statement — theme colors inherit from the active workspace palette. */
+.station-dyor-glass{position:relative;isolation:isolate;display:grid;grid-template-columns:92px minmax(0,1fr) auto;align-items:center;gap:20px;min-height:154px;overflow:hidden;padding:24px 28px;border:1px solid color-mix(in srgb,var(--mint) 32%,var(--line));border-radius:20px;background:linear-gradient(112deg,color-mix(in srgb,var(--panel) 78%,transparent),color-mix(in srgb,var(--panel-2) 84%,transparent) 52%,color-mix(in srgb,var(--panel) 77%,transparent));box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 11%,transparent),0 20px 48px color-mix(in srgb,var(--mint) 9%,transparent);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%)}
+.station-dyor-glass:before{position:absolute;z-index:-2;inset:-45% 18% -85% 12%;content:"";background:radial-gradient(ellipse at 50% 48%,color-mix(in srgb,var(--mint) 28%,transparent),transparent 64%);filter:blur(25px);opacity:.54;animation:station-dyor-breathe 5.4s ease-in-out infinite alternate;pointer-events:none}
+.station-dyor-glass:after{position:absolute;z-index:-1;inset:0;content:"";border-radius:inherit;background:linear-gradient(118deg,transparent 10%,color-mix(in srgb,var(--text) 5%,transparent) 28%,transparent 46%);transform:translateX(-110%);animation:station-dyor-sheen 8s ease-in-out infinite;pointer-events:none}
+.station-dyor-orbit{position:relative;display:grid;place-items:center;width:76px;height:76px;margin:auto;border:1px solid color-mix(in srgb,var(--mint) 36%,var(--line));border-radius:50%;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--mint) 18%,var(--panel)) 0,color-mix(in srgb,var(--panel) 72%,transparent) 57%,transparent 72%);box-shadow:0 0 24px color-mix(in srgb,var(--mint) 22%,transparent),inset 0 0 20px color-mix(in srgb,var(--mint) 11%,transparent);animation:station-dyor-pulse 4.6s ease-in-out infinite}
+.station-dyor-orbit:before,.station-dyor-orbit:after{position:absolute;inset:8px;content:"";border:1px solid color-mix(in srgb,var(--mint) 24%,transparent);border-radius:50%;transform:rotate(-28deg) scaleX(.72)}
+.station-dyor-orbit:after{inset:1px;transform:rotate(38deg) scaleX(.8);opacity:.55}
+.station-dyor-orbit i{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px var(--mint)}
+.station-dyor-orbit i:first-child{top:12px;right:14px}.station-dyor-orbit i:nth-child(2){bottom:15px;left:12px;width:3px;height:3px;opacity:.7}
+.station-dyor-orbit b{color:var(--mint);font:700 10px var(--mono);letter-spacing:.14em;text-shadow:0 0 16px color-mix(in srgb,var(--mint) 65%,transparent)}
+.station-dyor-copy{min-width:0}
+.station-dyor-eyebrow{color:var(--mint);font:600 8px var(--mono);letter-spacing:.2em}
+.station-dyor-copy h2{margin:8px 0 5px;color:var(--text);font:650 clamp(18px,2vw,23px)/1.15 var(--display);letter-spacing:-.045em}
+.station-dyor-copy p{max-width:720px;margin:0;color:var(--muted);font:11px/1.65 var(--font)}
+.station-dyor-foot{align-self:end;padding:7px 9px;border:1px solid color-mix(in srgb,var(--mint) 20%,var(--line));border-radius:999px;background:color-mix(in srgb,var(--panel) 55%,transparent);color:var(--faint);font:7px var(--mono);letter-spacing:.12em;white-space:nowrap}
+@keyframes station-dyor-breathe{from{opacity:.34;transform:scale(.88)}to{opacity:.76;transform:scale(1.08)}}
+@keyframes station-dyor-pulse{0%,100%{box-shadow:0 0 18px color-mix(in srgb,var(--mint) 16%,transparent),inset 0 0 14px color-mix(in srgb,var(--mint) 8%,transparent)}50%{box-shadow:0 0 34px color-mix(in srgb,var(--mint) 36%,transparent),inset 0 0 24px color-mix(in srgb,var(--mint) 16%,transparent)}}
+@keyframes station-dyor-sheen{0%,24%{transform:translateX(-110%)}48%,100%{transform:translateX(110%)}}
+@media(max-width:760px){.station-dyor-glass{grid-template-columns:54px minmax(0,1fr);gap:12px;min-height:0;padding:16px 14px;border-radius:15px}.station-dyor-orbit{width:48px;height:48px}.station-dyor-orbit:before{inset:5px}.station-dyor-orbit:after{inset:0}.station-dyor-orbit b{font-size:7px}.station-dyor-orbit i{width:4px;height:4px}.station-dyor-copy h2{margin:6px 0 4px;font-size:17px}.station-dyor-copy p{font-size:10px;line-height:1.55}.station-dyor-eyebrow{font-size:7px;letter-spacing:.15em}.station-dyor-foot{grid-column:2;justify-self:start;align-self:auto;padding:5px 7px;font-size:6px}}
+@media(prefers-reduced-motion:reduce){.station-dyor-glass:before,.station-dyor-glass:after,.station-dyor-orbit{animation:none}}

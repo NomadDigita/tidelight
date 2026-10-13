@@ -24,7 +24,7 @@ export async function enqueueFuturesAccessEmail(input: {
 export function renderFuturesAccessEmail(kind: FuturesAccessEmailKind, title: string, body: string) {
   const reviewer = kind === "futures_access_request";
   return {
-    from: emailSenders.alerts,
+    from: emailSenders.security,
     subject: (reviewer ? "Futures access review · " : kind === "futures_access_submitted" ? "Futures access request · " : "Futures access update · ") + title,
     html: emailFrame({
       eyebrow: reviewer ? "US stock perpetuals · operator review" : kind === "futures_access_submitted" ? "US stock perpetuals · request received" : "US stock perpetuals · account update",

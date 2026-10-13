@@ -35,7 +35,7 @@ export function renderFuturesAccessEmail(kind: FuturesAccessEmailKind, title: st
         : { label: "Open Futures desk", url: "https://tidelight.app/futures" },
       footer: reviewer
         ? "Review and decide in the authenticated Tidelight operator queue. Email does not approve access."
-        : "Live access changes only after an operator decision in Tidelight. Email links cannot approve access.",
+        : kind === "futures_access_submitted" ? "Your request remains pending until an operator reviews it in Tidelight." : "Live access changes only after an operator decision in Tidelight. Email links cannot approve access.",
     }),
   };
 }

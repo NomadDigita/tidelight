@@ -29,7 +29,8 @@ export async function PATCH(request:Request){
   if(!user||!isReviewer(user))return NextResponse.json({error:"Operator access required."},{status:403});
   let body:{userId?:unknown;status?:unknown;note?:unknown};
   try{body=await request.json();}catch{return NextResponse.json({error:"Send a valid review decision."},{status:400});}
-  if(typeof body.userId!=="string"||!/^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/.test(body.userId)||!(body.status==="approved"||body.status==="rejected"))return NextResponse.json({error:"Choose an access request and valid decision."},{status:400});
+  if(typeof body.userId!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.userId)||!(body.status==="approved"||body.status==="rejected"))return NextResponse.json({error:"Choose an access request and valid decision."},{status:400});
+  if(body.userId===user.id)return NextResponse.json({error:"Operators cannot review their own live access request."},{status:403});
   const note=typeof body.note==="string"?body.note.trim().slice(0,500):"";
   try{
     const admin=createAdminClient();

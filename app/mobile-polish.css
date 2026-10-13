@@ -1,4 +1,5 @@
 /* Final mobile safety layer. Keep every route inside the device viewport. */
+.mobile-language-toggle { display:none; }
 @media (max-width: 780px) {
   html, body { max-width: 100%; overflow-x: hidden; }
   body { -webkit-text-size-adjust: 100%; }
@@ -6,9 +7,10 @@
   .main-area, .route-content { overflow-x: clip; }
   .content-wrap { width: 100%; padding: 24px 14px 28px; }
   .sidebar .nav-list { display: none !important; }
-  .topbar { grid-template-columns: 112px minmax(0, 1fr) !important; grid-template-rows: 30px 30px !important; padding-inline: 12px !important; }
+  .topbar { grid-template-columns: 112px minmax(0, 1fr) 48px !important; grid-template-rows: 30px 30px !important; padding-inline: 12px !important; }
   .mobile-brand { grid-column: 1; grid-row: 1; }
   .mobile-brand-story { display: grid !important; grid-column: 2; grid-row: 1; min-width: 0; height: 30px; }
+  .mobile-language-toggle { display:grid; place-items:center; grid-column: 3; grid-row: 1; justify-self: end; align-self: center; min-width: 42px; height: 28px; padding: 0 7px; border: 1px solid color-mix(in srgb,var(--brand-teal) 35%,var(--line)); border-radius: 999px; background: color-mix(in srgb,var(--brand-teal) 8%,var(--panel)); color: var(--brand-teal); font: 650 10px var(--mono); letter-spacing: .04em; cursor: pointer; }
   .mobile-utility { grid-column: 1 / -1; grid-row: 2; }
   .mobile-utility > b { max-width: 35vw; }
   .mobile-utility-controls { max-width: 70vw; }
@@ -88,7 +90,7 @@
 }
 
 @media (max-width: 380px) {
-  .topbar { grid-template-columns: 104px minmax(0, 1fr) !important; padding-inline: 9px !important; }
+  .topbar { grid-template-columns: 104px minmax(0, 1fr) 42px !important; padding-inline: 9px !important; }
   .mobile-brand { font-size: 14px; }
   .mobile-brand img { width: 28px !important; height: 28px !important; flex-basis: 28px; }
   .mobile-utility > b { max-width: 29vw; font-size: 7px !important; }

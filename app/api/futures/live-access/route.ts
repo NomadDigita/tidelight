@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BitgetRequestError, bitgetPrivateRequest, getBitgetCredentials } from "@/lib/bitget-private";
+import { enqueueFuturesAccessEmail } from "@/lib/email/futures-access";
+import { drainEmailQueue } from "@/lib/email/delivery";
 
 export const dynamic = "force-dynamic";
 const TERMS_VERSION = "2026-10-13";
@@ -37,9 +39,22 @@ export async function POST(request: Request) {
     const { data: current } = await admin.from("futures_live_access_requests").select("status").eq("user_id", user.id).maybeSingle();
     if (current?.status === "approved") return NextResponse.json({ error: "Live access is already approved." }, { status: 409 });
     if (current?.status === "pending") return NextResponse.json({ error: "Your live access request is already under review." }, { status: 409 });
-    const { error } = await admin.from("futures_live_access_requests").upsert({ user_id: user.id, status: "pending", terms_version: TERMS_VERSION, accepted_terms: Object.fromEntries(REQUIRED.map(key => [key, true])), requested_at: new Date().toISOString(), reviewed_at: null, review_note: null }, { onConflict: "user_id" });
+    const requestedAt = new Date().toISOString();
+    const { error } = await admin.from("futures_live_access_requests").upsert({ user_id: user.id, status: "pending", terms_version: TERMS_VERSION, accepted_terms: Object.fromEntries(REQUIRED.map(key => [key, true])), requested_at: requestedAt, reviewed_at: null, review_note: null }, { onConflict: "user_id" });
     if (error) throw error;
-    return NextResponse.json({ status: "pending", requestedAt: new Date().toISOString() }, { headers: { "Cache-Control": "no-store" } });
+    await enqueueFuturesAccessEmail({ admin, userId: user.id, eventKey: "futures-live-request-user:" + user.id + ":" + Date.parse(requestedAt), kind: "futures_access_submitted", title: "Request received", body: "Your live US stock perpetual access request is in the operator review queue. Review usually takes a few minutes to a few hours. You can continue using your $10,000 paper account in the meantime." });
+    try {
+      await enqueueFuturesAccessEmail({
+        admin,
+        userId: user.id,
+        eventKey: "futures-live-request-operator:" + user.id + ":" + Date.parse(requestedAt),
+        kind: "futures_access_request",
+        title: "New live access request",
+        body: "A user submitted a live US stock perpetual access request. Open the authenticated Tidelight operator review queue to inspect the accepted terms and make an auditable decision. Request reference: " + user.id + ".",
+      });
+      if (process.env.RESEND_API_KEY) await drainEmailQueue(admin);
+    } catch { /* The committed request remains pending; the protected retry worker will deliver queued mail. */ }
+    return NextResponse.json({ status: "pending", requestedAt }, { headers: { "Cache-Control": "no-store" } });
   } catch (cause) {
     if (cause instanceof BitgetRequestError) return NextResponse.json({ error: "Bitget could not verify USDT futures account access. Check that the saved live API key has futures account read permission and an allowed IP." }, { status: 422 });
     return NextResponse.json({ error: "Could not submit the live access request. Try again shortly." }, { status: 503 });

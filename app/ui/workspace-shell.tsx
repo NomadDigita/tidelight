@@ -9,6 +9,7 @@ import { useExperience } from "@/app/ui/theme-provider";
 import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
 import { NavigationIcon, NavigationTrail, type NavigationIconName } from "@/app/ui/navigation-icon";
 import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
+import { LanguageToggle } from "@/app/ui/language-provider";
 
 const navigation: { href: string; label: string; icon: NavigationIconName; technical?: boolean }[] = [
   { href: "/overview", label: "Overview", icon: "overview" },
@@ -140,7 +141,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
       </aside>
       <main className="main-area">
         <header className="topbar">
-          <Link className="mobile-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={36} height={36} priority /><span>tide<span className="brand-light">light</span></span></Link><BrandStoryTypewriter />
+          <Link className="mobile-brand" href="/"><Image src="/tidelight-mark.svg" alt="" width={36} height={36} priority /><span>tide<span className="brand-light">light</span></span></Link><BrandStoryTypewriter /><LanguageToggle className="mobile-language-toggle" />
           <div className="breadcrumb">Workspace <span>/</span> {active.label}</div><div className="mobile-utility"><button type="button" className="mobile-menu-toggle" aria-label={mobileMenuOpen ? "Close workspace navigation" : "Open workspace navigation"} aria-expanded={mobileMenuOpen} aria-controls="mobile-workspace-drawer" onClick={() => setMobileMenuPath(mobileMenuOpen ? null : pathname)}><i/><i/><i/></button><b>{active.label}</b><div className="mobile-utility-controls"><ExperienceSwitch /><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div></div>
           <div className="top-actions"><span className="market-clock"><i /> AFTER HOURS <b>RESEARCH MODE</b></span><ExperienceSwitch /><ThemeQuickSwitch /><Link className="top-signin" href={email ? "/settings" : "/login"}>{email ? "ACCOUNT" : "SIGN IN"}</Link></div>
         </header>

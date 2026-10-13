@@ -10,6 +10,7 @@ import { ThemeProvider } from "./ui/theme-provider";
 import { LanguageProvider } from "./ui/language-provider";
 import SupportCompanion from "./ui/support-companion";
 import ProductQuickActions from "./ui/product-quick-actions";
+import AnalyticsConsent from "./ui/analytics-consent";
 import { IntelligenceProvider } from "./ui/intelligence-provider";
 import "./support-companion.css";
 import "./landing.css";
@@ -78,6 +79,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     || user?.email?.split("@")[0]
     || null;
 
-  return <html lang={language} data-language={language} data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><LanguageProvider initialLanguage={language}><IntelligenceProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName} isOperator={isTidelightOperator(user)}>{children}</WorkspaceShell><SupportCompanion /><ProductQuickActions /></IntelligenceProvider></LanguageProvider></ThemeProvider></body></html>;
+  return <html lang={language} data-language={language} data-theme="daylight" suppressHydrationWarning><body><ThemeProvider><LanguageProvider initialLanguage={language}><IntelligenceProvider><WorkspaceShell email={user?.email ?? null} avatarUrl={profile?.avatar_url ?? metadataAvatar} displayName={displayName} isOperator={isTidelightOperator(user)}>{children}</WorkspaceShell><SupportCompanion /><ProductQuickActions /><AnalyticsConsent /></IntelligenceProvider></LanguageProvider></ThemeProvider></body></html>;
 }
 

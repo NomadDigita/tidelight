@@ -1,8 +1,8 @@
-import Link from "next/link";
 import ProductRating from "@/app/ui/product-rating";
 import "./rate.css";
 
 const TRUSTPILOT_URL = "https://www.trustpilot.com/review/tidelight.app";
+const GOOGLE_REVIEW_URL = "https://g.page/r/CR1HF6_vRb5HECE/review";
 
 export default function RatePage() {
   return (
@@ -26,6 +26,18 @@ export default function RatePage() {
         <a className="trustpilot-review-secondary" href={TRUSTPILOT_URL} target="_blank" rel="noopener noreferrer">View Tidelight’s Trustpilot profile</a>
       </section>
 
+      <section className="trustpilot-review-card google-review-card" aria-labelledby="google-review-heading">
+        <div className="trustpilot-review-mark" aria-hidden="true">G</div>
+        <div className="trustpilot-review-copy">
+          <span className="eyebrow">PUBLIC REVIEW · GOOGLE</span>
+          <h2 id="google-review-heading">Share a Google review</h2>
+          <p>Tell people about your genuine experience with Tidelight. Your review will appear on our Google profile.</p>
+        </div>
+        <a className="trustpilot-review-button" href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer">
+          Write a Google review <span aria-hidden="true">↗</span>
+        </a>
+      </section>
+
       <section className="rating-panel" aria-labelledby="private-feedback-heading">
         <div className="rating-panel-intro">
           <span className="rating-orbit" aria-hidden="true">✦</span>
@@ -38,11 +50,6 @@ export default function RatePage() {
         <ProductRating />
       </section>
 
-      <div className="account-info-note trustpilot-review-note">
-        <b>Google reviews are still pending verification.</b>
-        <p>Once Tidelight’s Google verification is complete and Google provides an eligible review link, we can add it here alongside Trustpilot.</p>
-        <Link href="/contact">Contact Tidelight support <span>↗</span></Link>
-      </div>
     </main>
   );
 }

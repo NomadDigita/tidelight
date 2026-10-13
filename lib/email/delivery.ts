@@ -23,9 +23,10 @@ export async function drainEmailQueue(admin: SupabaseClient) {
         continue;
       }
       const { data: userResult, error: userError } = await admin.auth.admin.getUserById(job.user_id);
-      const recipient = userResult.user?.email;
+      const isOperatorReview = job.category === "futures_access_request";
+      const recipient = isOperatorReview ? "admin@tidelight.com" : userResult.user?.email;
       if (userError || !recipient) throw Object.assign(new Error("Email recipient is unavailable."), { code: "recipient_unavailable" });
-      if (!userResult.user?.email_confirmed_at) {
+      if (!isOperatorReview && !userResult.user?.email_confirmed_at) {
         await admin.from("email_delivery_queue").update({ state: "suppressed", last_error_code: "unverified_recipient" }).eq("id", job.id);
         suppressed++;
         continue;

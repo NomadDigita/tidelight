@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBitgetStockPerp, STOCK_PERP_UNIVERSE } from "@/lib/bitget-market";
+import { enqueueFuturesTradeEmail } from "@/lib/email/futures-trade";
+import { drainEmailQueue } from "@/lib/email/delivery";
 
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
@@ -27,7 +29,44 @@ export async function POST(request: Request) {
       console.error("Futures paper order RPC failed", error.code);
       return NextResponse.json({ error: error.message?.includes("stale") ? "Bitget's contract mark is stale. Try again." : "Paper order could not be accepted." }, { status: 503 });
     }
-    const result = data as { action: string; outcome: string; reason: string; fillPrice?: number; quantity?: number; realizedPnl?: number };
+    const result = data as { id?: string; action: string; outcome: string; reason: string; fillPrice?: number; quantity?: number; realizedPnl?: number };
+    if (result.outcome === "filled" && result.id) {
+      try {
+        const { data: fill, error: fillError } = await admin.from("futures_paper_fills")
+          .select("id,symbol,action,direction,quantity,fill_price,notional,fee,realized_pnl")
+          .eq("decision_id", result.id)
+          .maybeSingle();
+        if (fillError) throw fillError;
+        if (fill) {
+          const closed = fill.action === "close";
+          const side = fill.direction === "long" ? "Long" : "Short";
+          const title = fill.symbol + " · " + side + (closed ? " position closed" : " position opened");
+          const money = (value: number) => Number(value).toFixed(2);
+          const bodyText = [
+            "Your simulated US stock perpetual paper trade was filled. No live Bitget order was sent.",
+            "Contract: " + fill.symbol,
+            "Action: " + side + (closed ? " position closed" : " position opened"),
+            "Filled quantity: " + Number(fill.quantity).toFixed(8) + " " + fill.symbol.replace("USDT", ""),
+            "Fill price: " + Number(fill.fill_price).toFixed(4) + " USDT",
+            "Notional: " + money(Number(fill.notional)) + " USDT",
+            "Trading fee: " + money(Number(fill.fee)) + " USDT",
+            closed ? "Realized P&L after fee: " + (Number(fill.realized_pnl) >= 0 ? "+" : "") + money(Number(fill.realized_pnl)) + " USDT" : "Realized P&L: Not realized; the position is open.",
+            "Fill reference: " + fill.id,
+          ].join("\n");
+          await enqueueFuturesTradeEmail({
+            admin,
+            userId: user.id,
+            eventKey: "futures-paper-trade:" + fill.id,
+            title,
+            body: bodyText,
+          });
+          if (process.env.RESEND_API_KEY) await drainEmailQueue(admin);
+        }
+      } catch (emailError) {
+        const code = emailError instanceof Error && "code" in emailError ? String(emailError.code).slice(0, 64) : "delivery_queue_failed";
+        console.error("Futures paper fill email queued for retry or recovery", code);
+      }
+    }
     return NextResponse.json({ result }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Bitget market data or paper execution is temporarily unavailable." }, { status: 503 });

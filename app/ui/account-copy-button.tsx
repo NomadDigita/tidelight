@@ -3,15 +3,15 @@
 import { useState } from "react";
 
 export default function AccountCopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState("");
   async function copy() {
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      setStatus("Copied");
     } catch {
-      setCopied(false);
+      setStatus("Select ID to copy");
     }
+    window.setTimeout(() => setStatus(""), 4000);
   }
-  return <button type="button" className="account-center-copy" onClick={() => void copy()} aria-label="Copy Tidelight UID">{copied ? "Copied" : "Copy ID"}</button>;
+  return <><span className="account-center-row-value account-center-uid" title={value}>{value}</span><button type="button" className="account-center-copy" onClick={() => void copy()} aria-label="Copy Tidelight UID">{status || "Copy ID"}</button><span className="account-center-copy-status" role="status" aria-live="polite">{status}</span></>;
 }

@@ -225,7 +225,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
           <div className="station-chart-foot"><span>{payload?.candles.length??0} candles · {interval} · Bitget USDT-FUTURES</span><span>Prices in USDT · completed and current market bars</span></div>
         </section>
         <OrderBook payload={payload} tab={depthTab} setTab={setDepthTab}/>
-        <section className="station-panel station-history"><div className="station-panel-head"><div><span className="station-eyebrow">PRIVATE SIMULATED EXECUTION</span><h2>Recent fills</h2></div><span className="station-subtle">{fills.length} recorded</span></div>{fills.length?<div className="station-fill-table"><div className="station-table-labels"><span>Side</span><span>Contract</span><span>Fill price</span><span>Quantity</span><span>Time</span></div>{fills.slice(0,8).map(fill=><div className="station-fill-row" key={fill.id}><b className={tradeSide(fill)==="B"?"buy":"sell"}>{tradeSide(fill)} · {fill.action.replaceAll("_"," ")}</b><span>{fill.symbol}</span><span>{usd(fill.fill_price,4)}</span><span>{Number(fill.quantity).toFixed(5)}</span><small>{time(fill.created_at)}</small></div>)}</div>:<p className="station-empty">Your paper fills appear here after an order is submitted.</p>}</section>
+        {!liveMode?        <section className="station-panel station-history"><div className="station-panel-head"><div><span className="station-eyebrow">PRIVATE SIMULATED EXECUTION</span><h2>Recent fills</h2></div><span className="station-subtle">{fills.length} recorded</span></div>{fills.length?<div className="station-fill-table"><div className="station-table-labels"><span>Side</span><span>Contract</span><span>Fill price</span><span>Quantity</span><span>Time</span></div>{fills.slice(0,8).map(fill=><div className="station-fill-row" key={fill.id}><b className={tradeSide(fill)==="B"?"buy":"sell"}>{tradeSide(fill)} · {fill.action.replaceAll("_"," ")}</b><span>{fill.symbol}</span><span>{usd(fill.fill_price,4)}</span><span>{Number(fill.quantity).toFixed(5)}</span><small>{time(fill.created_at)}</small></div>)}</div>:<p className="station-empty">Your paper fills appear here after an order is submitted.</p>}</section>:null}
       </main>
       <aside className="station-aside">
         {!liveMode?<section className="station-panel station-ticket">
@@ -250,7 +250,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
           <label>Playbook<select value={playbook} onChange={event=>setPlaybook(event.target.value as StrategyKey)}>{Object.entries(ALPHA_STRATEGIES).map(([key,item])=><option key={key} value={key}>{item.label}</option>)}</select></label>
           <button type="button" onClick={()=>void runAgent()} disabled={busy||!signedIn}>{busy?"Reviewing…":"Run strategy check"}</button>
           {decisions.slice(0,3).map(item=><div className="station-decision" key={item.id}><span>{item.symbol} · {item.action.replaceAll("_"," ")} · {item.outcome}</span><small>{item.reason}</small></div>)}
-        </details>
+        </details>:null}
       </aside>
     </div>
     <p className="station-boundary">{liveMode?"Approved live mode routes individually confirmed USDT perpetual orders to Bitget. Paper capital remains separate.":"Paper mode uses Bitget public market data and Tidelight paper execution. No real orders are sent."}</p>

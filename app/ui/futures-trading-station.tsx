@@ -6,6 +6,7 @@ import { ALPHA_STRATEGIES, BACKTEST_STRATEGY, type StrategyKey } from "@/lib/bac
 import { STOCK_PERP_UNIVERSE } from "@/lib/bitget-market";
 import ChartShareButton, { type ShareCandle, type ShareMarker } from "@/app/ui/chart-share-button";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/app/ui/language-provider";
 
 type PaperPosition={symbol:string;direction:"long"|"short";quantity:number;entry_fill:number;margin:number;entry_fee:number;opened_at:string};
 type Fill={id:string;symbol:string;action:string;direction:string;quantity:number;fill_price:number;notional:number;fee:number;realized_pnl:number;created_at:string};
@@ -138,6 +139,8 @@ function LiveTradePanel({symbol,price}:{symbol:string;price:number|null}){
 
 export default function FuturesTradingStation({signedIn,initialSymbol,researchRunId,cash,paused,position,decisions,fills,liveStatus,liveRequestedAt,liveReviewNote,liveKeyConfigured}:{signedIn:boolean;initialSymbol?:string;researchRunId?:string;cash:number;paused:boolean;position:PaperPosition|null;decisions:Decision[];fills:Fill[];liveStatus:AccessStatus;liveRequestedAt:string|null;liveReviewNote:string|null;liveKeyConfigured:boolean}){
   const router=useRouter();
+  const {language}=useLanguage();
+  const chinese=language==="zh-CN";
   const [symbol,setSymbol]=useState(initialSymbol??position?.symbol??"NVDAUSDT");
   const [interval,setInterval]=useState<Interval>("15m");
   const [payload,setPayload]=useState<MarketPayload|null>(null);
@@ -227,7 +230,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
   const spread=bestAsk&&bestBid?((bestAsk-bestBid)/((bestAsk+bestBid)/2))*10000:null;
   const freshness=payload?.market.providerTimestamp?Math.max(0,Math.floor((Date.now()-payload.market.providerTimestamp)/1000)):null;
   return <div className="content-wrap inner-page futures-station">
-    <header className="station-heading"><div><span className="station-eyebrow">TIDELIGHT · BITGET USDT FUTURES</span><h1>US stock <span>perpetuals</span></h1><p>Bitget’s live market, a funded $10,000 paper account, and a gated live access path.</p></div><div className="station-mode"><i/>{liveMode?"LIVE ACCESS APPROVED":"PAPER ACCOUNT"}<span>{liveMode?"LIVE MODE":"SIMULATED EXECUTION"}</span><div className="station-mode-switch" role="group" aria-label="Execution mode"><button type="button" aria-pressed={!liveMode} onClick={()=>setLiveMode(false)}>Paper</button><button type="button" aria-pressed={liveMode} onClick={switchToLive}>Live</button></div></div></header>
+    <header className="station-heading"><div><span className="station-eyebrow">TIDELIGHT · {chinese?"BITGET 美股永续合约":"BITGET USDT FUTURES"}</span><h1>{chinese?<>美股 <span>永续合约</span></>:<>US stock <span>perpetuals</span></>}</h1><p>{chinese?"Bitget 实时行情、10,000 USDT 模拟账户，以及经过审批的实盘权限流程。":"Bitget’s live market, a funded $10,000 paper account, and a gated live access path."}</p></div><div className="station-mode"><i/>{liveMode?"LIVE ACCESS APPROVED":"PAPER ACCOUNT"}<span>{liveMode?"LIVE MODE":"SIMULATED EXECUTION"}</span><div className="station-mode-switch" role="group" aria-label="Execution mode"><button type="button" aria-pressed={!liveMode} onClick={()=>setLiveMode(false)}>Paper</button><button type="button" aria-pressed={liveMode} onClick={switchToLive}>Live</button></div></div></header>
     {liveStatus==="pending"?<section className="station-live-status pending"><b>Live access review in progress</b><span>Your request is securely queued for review. Reviews typically take minutes to a few hours. You can continue using paper mode while we review it.</span>{liveRequestedAt?<time>{time(liveRequestedAt)}</time>:null}</section>:null}
     {liveStatus==="rejected"?<section className="station-live-status rejected"><b>Live access needs attention</b><span>Review the operator note below, update your Bitget connection if requested, then submit a new request.</span>{liveReviewNote?<small>{liveReviewNote}</small>:null}</section>:null}
     {liveMode?<section className="station-live-status approved"><b>Live trading access approved</b><span>Live orders affect your Bitget account. Review the contract, quantity and estimated margin before each submission.</span><button type="button" onClick={()=>router.push("/settings")}>Connection settings ↗</button></section>:null}
@@ -240,7 +243,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
     <div className="station-workspace">
       <main className="station-main">
         <section className="station-panel station-chart-panel">
-          <div className="station-chart-head"><div><span className="station-eyebrow">BITGET · OHLCV</span><h2>{symbol}<small> / USDT PERPETUAL</small></h2></div><div className="station-chart-tools"><div className="station-intervals" role="group" aria-label="Chart interval">{intervals.map(item=><button type="button" key={item} aria-pressed={interval===item} onClick={()=>setInterval(item)}>{item}</button>)}</div><ChartShareButton symbol={symbol} interval={interval} candles={payload?.candles??[]} markers={fillsOnChart} market="BITGET USDT FUTURES"/></div></div>
+          <div className="station-chart-head"><div><span className="station-eyebrow">{chinese?"BITGET · K线":"BITGET · OHLCV"}</span><h2>{symbol}<small> / USDT PERPETUAL</small></h2></div><div className="station-chart-tools"><div className="station-intervals" role="group" aria-label="Chart interval">{intervals.map(item=><button type="button" key={item} aria-pressed={interval===item} onClick={()=>setInterval(item)}>{item}</button>)}</div><ChartShareButton symbol={symbol} interval={interval} candles={payload?.candles??[]} markers={fillsOnChart} market="BITGET USDT FUTURES"/></div></div>
           <div className="station-ohlc"><span>O <b>{payload?.candles.at(-1)?.open.toLocaleString(undefined,{maximumFractionDigits:4})??"—"}</b></span><span>H <b>{payload?.candles.at(-1)?.high.toLocaleString(undefined,{maximumFractionDigits:4})??"—"}</b></span><span>L <b>{payload?.candles.at(-1)?.low.toLocaleString(undefined,{maximumFractionDigits:4})??"—"}</b></span><span>C <b>{payload?.candles.at(-1)?.close.toLocaleString(undefined,{maximumFractionDigits:4})??"—"}</b></span><span className="station-volume-read">VOL <b>{payload?.candles.at(-1)?.volume?compact(payload.candles.at(-1)!.volume!):"—"}</b></span></div>
           {payload?.candles.length?<CandlestickChart candles={payload.candles} symbol={symbol} lastPrice={price} interval={interval} fills={fills} position={position}/>:<div className="station-chart-empty" role="status">{dataError||"Loading verified Bitget candlesticks…"}</div>}
           <div className="station-chart-foot"><span>{payload?.candles.length??0} candles · {interval} · Bitget USDT-FUTURES</span><span>Prices in USDT · completed and current market bars</span></div>
@@ -250,7 +253,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
       </main>
       <aside className="station-aside">
         {!liveMode?<section className="station-panel station-ticket">
-          <div className="station-panel-head"><div><span className="station-eyebrow">ORDER ENTRY · MARKET</span><h2>Trade {symbol}</h2></div><span className="station-leverage">ISOLATED · 1×</span></div>
+          <div className="station-panel-head"><div><span className="station-eyebrow">{chinese?"下单 · 市价":"ORDER ENTRY · MARKET"}</span><h2>Trade {symbol}</h2></div><span className="station-leverage">ISOLATED · 1×</span></div>
           <div className="station-ticket-switch"><button type="button" className="buy" disabled={!!position||busy||isPaused||!signedIn} onClick={()=>void place("open_long")}>Buy / Long</button><button type="button" className="sell" disabled={!!position||busy||isPaused||!signedIn} onClick={()=>void place("open_short")}>Sell / Short</button></div>
           <label className="station-size-field"><span>Margin size <small>USDT</small></span><span className="station-size-input"><input type="number" min="10" max="250" step="1" value={size} onChange={event=>setSize(event.target.value)} disabled={!!position}/><button type="button" onClick={()=>setSize("250")} disabled={!!position}>MAX</button></span></label>
           <div className="station-size-rail" aria-hidden="true"><i style={{width:Math.max(0,Math.min(100,(Number(size)||0)/250*100))+"%"}}/></div>
@@ -261,9 +264,9 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
           {error?<p className="station-error" role="alert">{error}</p>:null}{notice?<p className="station-notice" role="status">{notice}</p>:null}
         </section> : <LiveTradePanel symbol={symbol} price={price}/> }
         {!liveMode?<section className="station-panel station-account">
-          <div className="station-panel-head"><div><span className="station-eyebrow">YOUR PAPER ACCOUNT</span><h2>Risk & collateral</h2></div><button type="button" className="station-pause" onClick={()=>void setAccountPause()} disabled={busy||!signedIn}>{isPaused?"Resume entries":"Pause entries"}</button></div>
+          <div className="station-panel-head"><div><span className="station-eyebrow">{chinese?"您的模拟账户":"YOUR PAPER ACCOUNT"}</span><h2>Risk & collateral</h2></div><button type="button" className="station-pause" onClick={()=>void setAccountPause()} disabled={busy||!signedIn}>{isPaused?"Resume entries":"Pause entries"}</button></div>
           <div className="station-account-grid"><div><span>Equity</span><b>{usd(equity)}</b></div><div><span>Available cash</span><b>{usd(cash)}</b></div><div><span>Reserved margin</span><b>{usd(position?.margin??0)}</b></div><div><span>Unrealized P&L</span><b className={unrealized>=0?"positive":"negative"}>{usd(unrealized)}</b></div></div>
-          <p className="station-account-foot">Paper capital only · isolated position · daily loss circuit $200 · up to 5 fills per day</p>
+          <p className="station-account-foot">{chinese?"仅使用模拟资金 · 独立保证金 · 每日亏损熔断 200 美元 · 每天最多 5 笔成交":"Paper capital only · isolated position · daily loss circuit $200 · up to 5 fills per day"}</p>
         </section> : null}
         {!liveMode?<details className="station-panel station-agent">
           <summary><span><span className="station-eyebrow">ALPHA FACTORY · OPTIONAL AGENT CHECK</span><b>Review this market with a strategy</b></span><i>⌄</i></summary>
@@ -275,9 +278,9 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
       </aside>
     </div>
     {!liveMode?<div className="station-mobile-tradebar" role="group" aria-label="Paper trading controls">
-      <button type="button" className="mobile-long" disabled={!!position||busy||isPaused||!price} onClick={()=>void place("open_long")}><span>Long</span><b>{price?price.toLocaleString(undefined,{maximumFractionDigits:4}):"—"}</b></button>
+      <button type="button" className="mobile-long" disabled={!!position||busy||isPaused||!price} onClick={()=>void place("open_long")}><span>{chinese?"做多":"Long"}</span><b>{price?price.toLocaleString(undefined,{maximumFractionDigits:4}):"—"}</b></button>
       <label className="mobile-size"><span>Margin · USDT</span><input type="number" min="10" max="250" step="1" inputMode="decimal" aria-label="Paper margin in USDT" value={size} onChange={event=>setSize(event.target.value)} disabled={!!position}/></label>
-      <button type="button" className="mobile-short" disabled={!!position||busy||isPaused||!price} onClick={()=>void place("open_short")}><span>Short</span><b>{price?price.toLocaleString(undefined,{maximumFractionDigits:4}):"—"}</b></button>
+      <button type="button" className="mobile-short" disabled={!!position||busy||isPaused||!price} onClick={()=>void place("open_short")}><span>{chinese?"做空":"Short"}</span><b>{price?price.toLocaleString(undefined,{maximumFractionDigits:4}):"—"}</b></button>
     </div>:null}
     <p className="station-boundary">{liveMode?"Approved live mode routes individually confirmed USDT perpetual orders to Bitget. Paper capital remains separate.":"Paper mode uses Bitget public market data and Tidelight paper execution. No real orders are sent."}</p>
   </div>;

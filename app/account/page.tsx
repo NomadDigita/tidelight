@@ -30,9 +30,9 @@ export default async function AccountPage() {
     ] },
     { id: "security", title: "Security", intro: "Protect sign-in, account data, and any trading action you authorize.", rows: [
       { label: "Sign-in email", detail: "Your verified account identity", icon: "✉", value: user?.email ?? "Guest" },
-      { label: "Authenticator & passkeys", detail: "Step-up checks and device-bound sign-in", href: user ? "/settings#account-security" : "/login", icon: "⌑", value: user ? "Manage" : "Sign in" },
+      { label: "Authenticator MFA", detail: "Protect sensitive controls and each live Bitget order", href: user ? "/settings#account-security" : "/login", icon: "⌑", value: user ? "Manage" : "Sign in" },
       { label: "Recent security activity", detail: "Review account checks and protected actions", href: user ? "/settings#account-security-activity" : "/login", icon: "◷", value: "View" },
-      { label: "Trusted sign-in devices", detail: "Manage passkeys registered with your devices", href: user ? "/settings#account-security" : "/login", icon: "▣", value: "Passkeys" },
+      { label: "Passkeys & trusted devices", detail: "Passkey enrollment is not enabled for this deployment", icon: "▣", state: "Unavailable" },
       { label: "Anti-phishing code", detail: "Tidelight does not offer a personal email code yet", icon: "⌑", state: "Not available" },
       { label: "Live order protection", detail: "MFA, risk limits, and per-order confirmation", href: "/futures", icon: "◇", state: "Protected" },
       { label: "Bitget connection", detail: "Review connected exchange credentials and permissions", href: "/trading?intent=live", icon: "↗", value: "Manage" },
@@ -41,7 +41,8 @@ export default async function AccountPage() {
     { id: "preference", title: "Preference", intro: "Tune how Tidelight presents research and sends product updates.", rows: [
       { label: "Currency display", detail: "US equity and paper-trading values are quoted in US dollars", icon: "$", state: "USD" },
       { label: "Color theme", detail: "Choose Daylight, Night Tide, or Blue Hour", href: "/settings#account-appearance", icon: "◐", value: "Change" },
-      { label: "Language & research lens", detail: "Choose your language and research risk profile", href: "/settings#account-preferences", icon: "文", value: "Manage" },
+      { label: "Language", detail: "Choose the display language for your workspace", href: "/settings#account-preferences", icon: "文", value: "Manage" },
+      { label: "Research lens", detail: "Set your account’s default research risk profile", href: "/settings#account-profile", icon: "⌁", value: "Manage" },
       { label: "Withdrawal address & limits", detail: "Manage these only in your Bitget account; Tidelight cannot withdraw", href: "/trading", icon: "⌑", state: "Bitget only" },
       { label: "Deposit routing", detail: "Tidelight does not accept deposits or hold customer balances", icon: "↪", state: "Not offered" },
       { label: "Notifications & email subscriptions", detail: "Nightwatch alerts, fills, risks, research, and daily brief", href: "/nightwatch#email-preferences", icon: "♧", value: "Manage" },

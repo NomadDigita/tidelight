@@ -24,13 +24,13 @@ export async function GET(request: Request) {
       publicData("/market/fills?" + new URLSearchParams({ ...Object.fromEntries(params), limit: "30" })).catch(() => ({ data: [] as unknown })),
     ]);
     if (!asset) return Response.json({ error: "This stock perpetual is not currently available from Bitget." }, { status: 503, headers: { "Cache-Control": "no-store" } });
-    const depth = depthResult.data as { asks?: string[][]; bids?: string[][]; ts?: string } | undefined;
+    const depth = depthResult.data as { a?: string[][]; b?: string[][]; ts?: string } | undefined;
     const fills = tradesResult.data as Array<{ tradeId?: string; execId?: string; price?: string; size?: string; side?: string; ts?: string }> | undefined;
     return Response.json({
       provider: "Bitget", category: "USDT-FUTURES", interval,
       market: { symbol, lastPrice: asset.lastPrice, change24h: asset.change24h, high24h: asset.high24h, low24h: asset.low24h, open24h: asset.open24h, volume24h: asset.volume24h, turnover24h: asset.turnover24h, providerTimestamp: asset.providerTimestamp },
       candles: candles.slice(-120).map(({ timestamp, open, high, low, close, volume }) => ({ timestamp, open, high, low, close, volume })),
-      orderbook: { asks: (depth?.asks ?? []).slice(0,12).map(([price,size])=>({price:Number(price),size:Number(size)})).filter(row=>Number.isFinite(row.price)&&Number.isFinite(row.size)), bids: (depth?.bids ?? []).slice(0,12).map(([price,size])=>({price:Number(price),size:Number(size)})).filter(row=>Number.isFinite(row.price)&&Number.isFinite(row.size)), timestamp: Number(depth?.ts) || null },
+      orderbook: { asks: (depth?.a ?? []).slice(0,12).map(([price,size])=>({price:Number(price),size:Number(size)})).filter(row=>Number.isFinite(row.price)&&Number.isFinite(row.size)), bids: (depth?.b ?? []).slice(0,12).map(([price,size])=>({price:Number(price),size:Number(size)})).filter(row=>Number.isFinite(row.price)&&Number.isFinite(row.size)), timestamp: Number(depth?.ts) || null },
       trades: (fills ?? []).map((trade,index)=>({id:trade.tradeId??trade.execId??String(index),price:Number(trade.price),size:Number(trade.size),side:String(trade.side).toLowerCase()==="buy"?"buy" as const:"sell" as const,timestamp:Number(trade.ts)})).filter(trade=>Number.isFinite(trade.price)&&Number.isFinite(trade.size)&&Number.isFinite(trade.timestamp)).slice(0,30),
     }, { headers: { "Cache-Control": "public, s-maxage=5, stale-while-revalidate=10" } });
   } catch {

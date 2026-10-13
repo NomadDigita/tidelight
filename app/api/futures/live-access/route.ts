@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   try {
     const credentials = await getBitgetCredentials(user.id);
     if (!credentials || credentials.mode !== "live") return NextResponse.json({ error: "Configure and verify a live Bitget API connection in Tidelight Settings first." }, { status: 409 });
-    await bitgetPrivateRequest(credentials, "GET", "/api/v3/account/account?category=USDT-FUTURES");
+    await bitgetPrivateRequest(credentials, "GET", "/api/v3/account/assets?category=USDT-FUTURES");
     const admin = createAdminClient();
     const { data: current } = await admin.from("futures_live_access_requests").select("status").eq("user_id", user.id).maybeSingle();
     if (current?.status === "approved") return NextResponse.json({ error: "Live access is already approved." }, { status: 409 });

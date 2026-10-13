@@ -13,15 +13,14 @@ import TidelightAnimatedMark from "@/app/ui/tidelight-animated-mark";
 const navigation: { href: string; label: string; icon: NavigationIconName; technical?: boolean }[] = [
   { href: "/overview", label: "Overview", icon: "overview" },
   { href: "/guide", label: "Start here", icon: "guide" },
-  { href: "/research", label: "Research desk", icon: "research" },
   { href: "/flow", label: "Agent flow", icon: "flow" },
-  { href: "/community", label: "Research community", icon: "community" },
   { href: "/markets", label: "Market map", icon: "markets" },
+  { href: "/watchlist", label: "Watchlist", icon: "watchlist" },
+  { href: "/community", label: "Research community", icon: "community" },
   { href: "/strategies", label: "Strategy lab", icon: "strategies", technical: true },
   { href: "/nightwatch", label: "Nightwatch agent", icon: "nightwatch", technical: true },
   { href: "/futures", label: "Futures paper desk", icon: "futures", technical: true },
   { href: "/trading", label: "Bitget trading", icon: "trading", technical: true },
-  { href: "/watchlist", label: "Watchlist", icon: "watchlist" },
   { href: "/briefs", label: "Saved briefs", icon: "briefs", technical: true },
   { href: "/demo", label: "Product walkthrough", icon: "demo", technical: true },
   { href: "/systems", label: "Research systems", icon: "systems", technical: true },
@@ -126,7 +125,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
           <div className="promo-mark"><TidelightAnimatedMark /></div>
           <b>Markets don’t keep office hours.</b>
           <p>Follow the facts across the quiet hours.</p>
-          <Link href="/research">Open research desk <NavigationTrail /></Link>
+          <Link href="/overview">Open overview <NavigationTrail /></Link>
         </div>
         <div className="sidebar-bottom">
           <Link className="data-status" href="/settings">

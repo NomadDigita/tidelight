@@ -45,11 +45,10 @@ export async function PATCH(request:Request){
       const reviewBody = data.status === "approved"
         ? "An operator approved your live US stock perpetual access request. Sign in to Tidelight to review the updated Futures desk. Live orders still require a separate review and authenticator confirmation for every order."
         : "An operator reviewed your live US stock perpetual access request and it was not approved. Sign in to Tidelight to read the operator note and review your next steps.";
-      await enqueueFuturesAccessEmail({ admin, userId: data.user_id, eventKey: "futures-live-decision:" + data.user_id + ":" + data.reviewed_at, kind: "futures_access_decision", title: "Access " + outcome, body: reviewBody + (note ? "\\n\\nOperator note: " + note : "") });
-      if (process.env.RESEND_API_KEY) {
-        try { await drainEmailQueue(admin); } catch { /* Queued notification retries through the protected email worker. */ }
-      }
-    }
+      try {
+        await enqueueFuturesAccessEmail({ admin, userId: data.user_id, eventKey: "futures-live-decision:" + data.user_id + ":" + data.reviewed_at, kind: "futures_access_decision", title: "Access " + outcome, body: reviewBody + (note ? " Operator note: " + note : "") });
+        if (process.env.RESEND_API_KEY) await drainEmailQueue(admin);
+      } catch { /* The decision is committed; any queued notification is retried by the protected worker. */ }
     return NextResponse.json({review:data},{headers:{"Cache-Control":"no-store"}});
   }catch{return NextResponse.json({error:"The review decision could not be saved."},{status:503});}
 }

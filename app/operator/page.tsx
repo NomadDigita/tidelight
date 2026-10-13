@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isTidelightOperator } from "@/lib/auth/operator-access";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Operator console | Tidelight" };
@@ -17,6 +18,18 @@ export default async function OperatorConsolePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !isTidelightOperator(user)) redirect("/overview");
 
+  let pendingRequests: number | null = null;
+  try {
+    const admin = createAdminClient();
+    const { count, error } = await admin
+      .from("futures_live_access_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending");
+    if (!error) pendingRequests = count ?? 0;
+  } catch {
+    // Keep the console available if the operational count is temporarily unavailable.
+  }
+
   return <main className="content-wrap inner-page">
     <section className="page-heading compact-heading">
       <div><div className="eyebrow"><span className="eyebrow-line" /> PRIVATE OPERATIONS</div><h1>Operator <span>console.</span></h1><p>Restricted Tidelight controls for authorized operators. Your access is verified on the server.</p></div>
@@ -28,7 +41,7 @@ export default async function OperatorConsolePage() {
     </section>
     <div className="settings-layout" style={{ marginTop: 20 }}>
       {controls.map((control) => <section className="settings-card" key={control.href}>
-        <div className="eyebrow small-eyebrow">{control.eyebrow}</div><h2>{control.title}</h2><p>{control.detail}</p>
+        <div className="eyebrow small-eyebrow">{control.eyebrow}</div><h2>{control.title}</h2><p>{control.detail}</p>{control.href === "/settings/futures-access" ? <div className="connection-row"><span><i className="pending-dot" /> Pending review requests</span><b>{pendingRequests === null ? "UNAVAILABLE" : pendingRequests}</b></div> : null}
         <Link className="primary-link" href={control.href}>{control.action} <span>↗</span></Link>
       </section>)}
     </div>

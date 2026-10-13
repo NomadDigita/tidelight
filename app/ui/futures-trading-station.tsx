@@ -240,6 +240,15 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
       <div className="station-last"><span>LAST PRICE <small>USDT</small></span><b>{price?usd(price,4):"—"}</b><small className={payload?.market.change24h!==null&&payload?.market.change24h!==undefined&&payload.market.change24h>=0?"positive":"negative"}>{payload?.market.change24h===null||payload?.market.change24h===undefined?"24h change —":(payload.market.change24h>=0?"+":"")+(payload.market.change24h*100).toFixed(2)+"% · 24h"}</small></div>
       <div className="station-stat"><span>24H HIGH</span><b>{payload?.market.high24h?usd(payload.market.high24h,4):"—"}</b></div><div className="station-stat"><span>24H LOW</span><b>{payload?.market.low24h?usd(payload.market.low24h,4):"—"}</b></div><div className="station-stat"><span>TURNOVER</span><b>{payload?.market.turnover24h?compact(payload.market.turnover24h)+" USDT":"—"}</b></div><div className="station-feed"><i/>{freshness===null?(chinese?"等待 Bitget 数据":"Waiting for Bitget"):freshness<60?(chinese?"Bitget 报价 · "+freshness+" 秒前":"Bitget quote · "+freshness+"s ago"):(chinese?"报价已过 "+Math.floor(freshness/60)+" 分钟":"Quote is "+Math.floor(freshness/60)+"m old")}</div>
     </section>
+    <section className="station-dyor-glass" aria-label={chinese?"交易前独立研究提示":"Do your own research reminder"}>
+      <span className="station-dyor-orbit" aria-hidden="true"><i/><i/><b>DYOR</b></span>
+      <div className="station-dyor-copy">
+        <span className="station-dyor-eyebrow">{chinese?"TIDELIGHT · 研究标准":"TIDELIGHT · RESEARCH STANDARD"}</span>
+        <h2>{chinese?"先看证据，再做交易。":"DYOR. Trade with context."}</h2>
+        <p>{chinese?"行情只是一个信号。下单前，请核实标的、流动性、交易时段和仓位风险。":"A quote is one input. Before placing an order, check the underlying asset, liquidity, market session and position risk."}</p>
+      </div>
+      <span className="station-dyor-foot">{chinese?"研究 · 风险 · 决策":"RESEARCH · RISK · DECISION"}</span>
+    </section>
     <div className="station-workspace">
       <main className="station-main">
         <section className="station-panel station-chart-panel">

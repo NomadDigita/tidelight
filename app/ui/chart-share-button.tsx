@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import "./chart-share-button.css";
+import styles from "./chart-share-button.module.css";
 
 export type ShareCandle = { timestamp:number; open:number; high:number; low:number; close:number; volume?:number|null };
 export type ShareMarker = { side:"B"|"S"; timestamp:number; price:number };
@@ -38,5 +38,5 @@ export default function ChartShareButton({symbol,interval,candles,markers=[],mar
     } catch(error) { if(!(error instanceof DOMException&&error.name==="AbortError"))setNotice("Could not share chart. Try again."); }
     finally {setBusy(false);}
   }
-  return <span className="chart-share-wrap"><button type="button" className="chart-share-button" onClick={()=>void share()} aria-label="Share chart" title="Share chart" disabled={busy||candles.length<2}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2"/></svg></button>{notice?<span className="chart-share-toast" role="status">{notice}</span>:null}</span>;
+  return <span className={styles.wrap}><button type="button" className={styles.button} onClick={()=>void share()} aria-label="Share chart" title="Share chart" disabled={busy||candles.length<2}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2"/></svg></button>{notice?<span className={styles.toast} role="status">{notice}</span>:null}</span>;
 }

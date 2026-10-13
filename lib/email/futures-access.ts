@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { emailFrame, emailSenders } from "./brand";
 
-export type FuturesAccessEmailKind = "futures_access_request" | "futures_access_decision";
+export type FuturesAccessEmailKind = "futures_access_request" | "futures_access_submitted" | "futures_access_decision";
 
 export async function enqueueFuturesAccessEmail(input: {
   admin: SupabaseClient;
@@ -25,9 +25,9 @@ export function renderFuturesAccessEmail(kind: FuturesAccessEmailKind, title: st
   const reviewer = kind === "futures_access_request";
   return {
     from: emailSenders.alerts,
-    subject: (reviewer ? "Futures access review · " : "Futures access update · ") + title,
+    subject: (reviewer ? "Futures access review · " : kind === "futures_access_submitted" ? "Futures access request · " : "Futures access update · ") + title,
     html: emailFrame({
-      eyebrow: reviewer ? "US stock perpetuals · operator review" : "US stock perpetuals · account update",
+      eyebrow: reviewer ? "US stock perpetuals · operator review" : kind === "futures_access_submitted" ? "US stock perpetuals · request received" : "US stock perpetuals · account update",
       title,
       body,
       action: reviewer

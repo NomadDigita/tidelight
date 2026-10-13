@@ -4,7 +4,7 @@ Tidelight uses Resend in two separate, server-side paths:
 
 - Supabase Auth sends signup confirmation, sign-in links and codes, password recovery, reauthentication and enabled account notifications through the configured Resend SMTP connection.
 - The Tidelight server sends explicitly opted-in Nightwatch signals, paper fills, risk reviews, linked research briefs and daily summaries through the Resend API. Passkey changes use the transactional `security@tidelight.app` identity.
-- Live futures access requests send a receipt to the requester and a review alert to authenticated admin/operator accounts with verified email. Operator approval or rejection sends the requester a decision notice. These messages use the retryable queue; they never approve access from an email link or place an order.
+- Live futures access receipts and approval or rejection notices go to the requester from `Tidelight Security <security@tidelight.app>`. Each new request sends an operator review alert to `admin@tidelight.com`. These messages use the retryable queue; only an authenticated operator decision changes access, and email links never approve access or place an order.
 
 No email is sent directly from a browser. Nightwatch email is off by default; a person must enable each class in the Nightwatch control surface. Security notifications are transactional and do not include unsubscribe links. Queue rows contain an event key, category, minimal rendered content, attempts and Resend message ID; they never contain provider credentials. Queue rows are private to the server role. Retries are bounded and use Resend idempotency keys; a lease allows recovery if a worker stops while sending.
 

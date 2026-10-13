@@ -69,6 +69,7 @@ export default function SupportCompanion() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<AbortController | null>(null);
   const conversationIdRef = useRef<string>("new");
@@ -90,7 +91,7 @@ export default function SupportCompanion() {
   }, []);
 
   useEffect(() => {
-    let restored: { x: number; y: number } = { x: window.innerWidth - 156, y: window.innerHeight - 78 };
+    let restored: { x: number; y: number } = { x: window.innerWidth - (launcherRef.current?.getBoundingClientRect().width ?? 120) - 8, y: window.innerHeight - 78 };
     try {
       const saved = window.localStorage.getItem("tidelight-tide-position");
       if (saved) {
@@ -101,7 +102,7 @@ export default function SupportCompanion() {
         if (Number.isFinite(oldBottom) && oldBottom > 0) restored.y = window.innerHeight - oldBottom - 52;
       }
     } catch { /* Invalid saved placement falls back to the lower-right corner. */ }
-    restored = { x: Math.max(8, Math.min(restored.x, window.innerWidth - 148)), y: Math.max(8, Math.min(restored.y, window.innerHeight - 52)) };
+    restored = { x: Math.max(8, Math.min(restored.x, window.innerWidth - (launcherRef.current?.getBoundingClientRect().width ?? 120) - 8)), y: Math.max(8, Math.min(restored.y, window.innerHeight - 52)) };
     const timer = window.setTimeout(() => { positionRef.current = restored; setPosition(restored); }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -257,6 +258,6 @@ export default function SupportCompanion() {
       <form className="tide-guide-composer" onSubmit={(event) => { event.preventDefault(); if (view === "research") void research(draft); else void ask(draft, Date.now()); }}><label htmlFor="tide-guide-question" className="sr-only">{view === "research" ? "Ask the Tidelight research agents" : "Ask Tide a question"}</label><input id="tide-guide-question" ref={inputRef} value={draft} maxLength={view === "research" ? 500 : 800} onChange={(event) => setDraft(event.target.value)} placeholder={view === "research" ? "Ask about a supported market…" : "Ask about Tidelight…"} disabled={view === "research" ? intelligence.busy : busy} /><button type="submit" disabled={!draft.trim() || (view === "research" ? intelligence.busy : busy)} aria-label="Send question">↗</button></form>
       <small className="tide-guide-note">{view === "research" ? "Research interpretation, not a trade instruction. All trading actions require your review." : "Product guidance. Check sources and confirm trading choices yourself."}</small>
     </section> : null}
-    <button type="button" className="tide-guide-launcher" aria-label={open ? "Close Tide guide" : "Ask Tide for help"} aria-expanded={open} aria-describedby="tide-guide-move-hint" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onClick={() => { if (draggedRef.current) { draggedRef.current = false; return; } if (!open) window.dispatchEvent(new Event("tidelight:close-navigation")); setOpen((previous) => !previous); }}><TideGuideMark /><span>{open ? "Close guide" : "Ask Tide"}</span><i aria-hidden="true">⋮⋮</i></button><span id="tide-guide-move-hint" className="sr-only">Drag this button anywhere on the screen to move it.</span>
+    <button ref={launcherRef} type="button" className="tide-guide-launcher" aria-label={open ? "Close Tide guide" : "Ask Tide for help"} aria-expanded={open} aria-describedby="tide-guide-move-hint" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onClick={() => { if (draggedRef.current) { draggedRef.current = false; return; } if (!open) window.dispatchEvent(new Event("tidelight:close-navigation")); setOpen((previous) => !previous); }}><TideGuideMark /><span>{open ? "Close guide" : "Ask Tide"}</span><i aria-hidden="true">⋮⋮</i></button><span id="tide-guide-move-hint" className="sr-only">Drag this button anywhere on the screen to move it.</span>
   </div>;
 }

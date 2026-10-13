@@ -49,6 +49,7 @@ export async function PATCH(request:Request){
         await enqueueFuturesAccessEmail({ admin, userId: data.user_id, eventKey: "futures-live-decision:" + data.user_id + ":" + data.reviewed_at, kind: "futures_access_decision", title: "Access " + outcome, body: reviewBody + (note ? " Operator note: " + note : "") });
         if (process.env.RESEND_API_KEY) await drainEmailQueue(admin);
       } catch { /* The decision is committed; any queued notification is retried by the protected worker. */ }
+    }
     return NextResponse.json({review:data},{headers:{"Cache-Control":"no-store"}});
   }catch{return NextResponse.json({error:"The review decision could not be saved."},{status:503});}
 }

@@ -1,26 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "@/app/actions";
-import AccountCopyButton from "@/app/ui/account-copy-button";
+import AccountTabs, { type AccountGroup } from "@/app/ui/account-tabs";
 import { createClient } from "@/lib/supabase/server";
-
-type AccountRow = { label: string; detail: string; href?: string; value?: string; icon: string; state?: string };
-
-function Row({ item }: { item: AccountRow }) {
-  const content = <><span className="account-center-icon" aria-hidden="true">{item.icon}</span><span className="account-center-row-copy"><b>{item.label}</b><small>{item.detail}</small></span>{item.value ? <span className="account-center-row-value">{item.value}</span> : null}{item.state ? <span className="account-center-row-state">{item.state}</span> : null}{item.href ? <span className="account-center-arrow" aria-hidden="true">→</span> : null}</>;
-  return item.href ? <Link className="account-center-row" href={item.href}>{content}</Link> : <div className="account-center-row account-center-row-static">{content}</div>;
-}
 
 export default async function AccountPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = user ? await supabase.from("community_profiles").select("handle,display_name,avatar_url").eq("id", user.id).maybeSingle() : { data: null };
   const name = profile?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Tidelight guest";
-  const groups: { id: string; title: string; intro: string; rows: AccountRow[] }[] = [
+  const groups: AccountGroup[] = [
     { id: "my-info", title: "My info", intro: "Your Tidelight identity and connected workspace.", rows: [
       { label: "Profile picture", detail: "Update the photo shown on your community profile", href: "/settings#account-profile", icon: "◉", value: "↗" },
       { label: "Nickname & handle", detail: "Your display name and community username", href: "/settings#account-profile", icon: "▤", value: profile?.handle ? `@${profile.handle}` : "Set up" },
-      ...(user ? [{ label: "Tidelight UID", detail: "Private account reference · tap to copy", icon: "ID", value: user.id } as AccountRow] : []),
+      ...(user ? [{ label: "Tidelight UID", detail: "Private account reference · tap to copy", icon: "ID", value: user.id }] : []),
       { label: "Identity verification", detail: "Tidelight does not hold customer funds or provide exchange KYC", href: "/settings#account-connections", icon: "✓", state: "Not required" },
       { label: "Tidelight plan", detail: "Your research workspace access · no paid tier configured", href: "/about", icon: "✦", state: "Core" },
       { label: "Trading fees", detail: "Execution fees are set by Bitget and shown by the exchange", href: "/trading", icon: "%", value: "Bitget" },
@@ -59,8 +52,7 @@ export default async function AccountPage() {
   ];
   return <main className="content-wrap inner-page account-center">
     <header className="account-center-hero"><div className="account-center-identity"><div className="account-center-avatar">{profile?.avatar_url ? <Image src={profile.avatar_url} alt="" width={70} height={70} unoptimized /> : name.slice(0,1).toUpperCase()}</div><div><span className="eyebrow">TIDELIGHT ACCOUNT</span><h1>{name}</h1><p>{user?.email ?? "Sign in to save preferences and secure your research."}{profile?.handle ? ` · @${profile.handle}` : ""}</p></div></div><Link className="account-center-edit" href={user ? "/settings#account-profile" : "/login"}>{user ? "Edit profile" : "Sign in"}<span>↗</span></Link></header>
-    <nav className="account-center-tabs" aria-label="Account sections">{groups.map(group => <a href={`#${group.id}`} key={group.id}>{group.title}</a>)}</nav>
-    {groups.map(group => <section className="account-center-group" id={group.id} key={group.id}><div className="account-center-group-head"><div><span className="eyebrow">ACCOUNT CENTER</span><h2>{group.title}</h2></div><p>{group.intro}</p></div><div className="account-center-list">{group.rows.map(item => item.label === "Tidelight UID" && user ? <div className="account-center-row account-center-row-static" key={item.label}><span className="account-center-icon" aria-hidden="true">{item.icon}</span><span className="account-center-row-copy"><b>{item.label}</b><small>{item.detail}</small></span><AccountCopyButton value={user.id} /></div> : <Row item={item} key={item.label} />)}</div></section>)}
+    <AccountTabs groups={groups} userId={user?.id} />
     <footer className="account-center-footer"><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link>{user ? <form action={signOut}><button className="account-center-logout" type="submit">Log out</button></form> : null}<span>Clarity when the bell is quiet.</span></footer>
   </main>;
 }

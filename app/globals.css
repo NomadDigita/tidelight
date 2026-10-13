@@ -1998,3 +1998,6 @@ button.primary-link,.primary-link,.nw-run-button,.strategy-run-button {
 .nw-market-select-row .asset-picker-current small{font-size:8px}
 .tw-order-form>.asset-search-picker{grid-column:1/-1}
 @media(max-width:650px){.asset-picker-popover{right:0;width:min(540px,calc(100vw - 30px))}.tw-order-form>.asset-search-picker{grid-column:auto}.asset-picker-results{max-height:min(54dvh,420px)}}
+
+.asset-chart-panel .asset-panel-head{gap:12px}.asset-chart-actions{display:flex;align-items:center;gap:8px}.asset-chart-actions .asset-intervals{display:flex;align-items:center}
+@media(max-width:520px){.asset-chart-panel .asset-panel-head{align-items:flex-start}.asset-chart-actions{gap:5px}.asset-chart-actions .asset-intervals button{padding-inline:8px}}

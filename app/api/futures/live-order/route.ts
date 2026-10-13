@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { bitgetPrivateRequest, getBitgetCredentials, BitgetRequestError } from "@/lib/bitget-private";
 import { getBitgetStockPerp, STOCK_PERP_UNIVERSE } from "@/lib/bitget-market";
+import { MAX_ORDER_ATTEMPTS_PER_HOUR } from "@/lib/bitget-order-policy";
 
 export const dynamic = "force-dynamic";
 const MAX_MARGIN = 250;
@@ -19,7 +20,7 @@ export async function POST(request:Request) {
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user)return NextResponse.json({error:"Sign in to send a live futures order."},{status:401});
-  let body:{symbol?:unknown;action?:unknown;margin?:unknown};
+  let body:{symbol?:unknown;action?:unknown;margin?:unknown;confirmation?:unknown};
   try{body=await request.json();}catch{return NextResponse.json({error:"Review the order and try again."},{status:400});}
   const symbol=typeof body.symbol==="string"?body.symbol.toUpperCase():"";
   const action=body.action;
@@ -33,6 +34,13 @@ export async function POST(request:Request) {
       getBitgetCredentials(user.id),
     ]);
     if(access?.status!=="approved"||!access.accepted_terms||!credentials||credentials.mode!=="live")return NextResponse.json({error:"Live futures access, accepted terms and a verified live Bitget key are required."},{status:403});
+    if(body.confirmation!=="PLACE LIVE FUTURES ORDER")return NextResponse.json({error:"Confirm the live futures order before sending it."},{status:400});
+    const {data:assurance}=await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if(assurance?.currentLevel!=="aal2")return NextResponse.json({error:"Complete an authenticator check before placing a live futures order.",mfaRequired:true},{status:403});
+    const hourAgo=new Date(Date.now()-60*60*1000).toISOString();
+    const {count:attempts,error:auditReadError}=await supabase.from("security_events").select("id",{count:"exact",head:true}).eq("user_id",user.id).eq("event_type","bitget_order_attempt").gte("created_at",hourAgo);
+    if(auditReadError)return NextResponse.json({error:"Could not check the live order safety limit. No order was sent."},{status:503});
+    if((attempts??0)>=MAX_ORDER_ATTEMPTS_PER_HOUR)return NextResponse.json({error:"This account has reached the five order attempts per hour safety limit."},{status:429});
     const [market,settingsResult,positionsResult,assetsResult]=await Promise.all([
       getBitgetStockPerp(symbol),
       bitgetPrivateRequest(credentials,"GET","/api/v3/account/settings"),
@@ -74,6 +82,8 @@ export async function POST(request:Request) {
     const payload:Record<string,string>={category:"USDT-FUTURES",symbol,qty:qty.toFixed(8).replace(/0+$/,"").replace(/\.$/,""),side,orderType:"market",marginMode:"isolated",clientOid};
     if(posSide)payload.posSide=posSide;
     if(reduceOnly)payload.reduceOnly=reduceOnly;
+    const {error:auditWriteError}=await supabase.from("security_events").insert({user_id:user.id,event_type:"bitget_order_attempt",metadata:{mode:"live",product:"USDT-FUTURES",symbol,action,margin:action==="close"?null:margin,quantity:qty,createdAt:new Date().toISOString()}});
+    if(auditWriteError)return NextResponse.json({error:"Could not write the live order audit record. No order was sent."},{status:503});
     const order=await bitgetPrivateRequest(credentials,"POST","/api/v3/trade/place-order",payload);
     const result=order.data as {orderId?:string;clientOid?:string};
     return NextResponse.json({accepted:true,symbol,action,side,quantity:qty,referencePrice:market.lastPrice,margin:action==="close"?null:margin,orderId:result?.orderId??null,clientOid:result?.clientOid??clientOid},{headers:{"Cache-Control":"no-store"}});

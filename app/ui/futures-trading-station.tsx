@@ -18,6 +18,14 @@ const compact=(value:number)=>new Intl.NumberFormat("en-US",{notation:"compact",
 const time=(value:string|number)=>new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date(value));
 const intervals=["15m","1H","4H","1D"] as const;
 type Interval=typeof intervals[number];
+type AccessStatus="not_requested"|"pending"|"approved"|"rejected";
+const LIVE_TERMS=[
+  {key:"market_risk",title:"Market and liquidation risk",body:"US stock perpetuals are leveraged derivatives. Price gaps, volatility and liquidation can rapidly reduce or eliminate the margin you commit; weekend and overnight liquidity can be thin."},
+  {key:"liquidation",title:"Margin, fees and execution",body:"Market orders can fill at a different price than the quote shown. Funding, trading fees, slippage and exchange risk controls affect results. You are responsible for maintaining margin and monitoring positions."},
+  {key:"api_permissions",title:"Exchange account and permissions",body:"You must own and be authorized to use the connected Bitget account, comply with Bitget terms and local law, and grant only the API permissions needed for trading. Never enable withdrawals for a trading key."},
+  {key:"key_security",title:"Credential security",body:"Tidelight stores API credentials encrypted server-side. You remain responsible for key scope, IP allowlisting, rotation and revocation. Do not share keys or paste them into chat."},
+  {key:"manual_orders",title:"Your order responsibility",body:"You will review each live order and its size before submission. Research, charts and agent analysis are informational and do not guarantee outcomes or make decisions on your behalf."},
+] as const;
 const tradeSide=(fill:Fill):"B"|"S"=>fill.action==="open_long"||(fill.action==="close"&&fill.direction==="short")?"B":"S";
 
 function CandlestickChart({candles,symbol,lastPrice,interval,fills,position}:{candles:Candle[];symbol:string;lastPrice:number|null;interval:string;fills:Fill[];position:PaperPosition|null}){
@@ -62,7 +70,7 @@ function OrderBook({payload,tab,setTab}:{payload:MarketPayload|null;tab:"book"|"
   </section>;
 }
 
-export default function FuturesTradingStation({signedIn,initialSymbol,researchRunId,cash,paused,position,decisions,fills}:{signedIn:boolean;initialSymbol?:string;researchRunId?:string;cash:number;paused:boolean;position:PaperPosition|null;decisions:Decision[];fills:Fill[]}){
+export default function FuturesTradingStation({signedIn,initialSymbol,researchRunId,cash,paused,position,decisions,fills,liveStatus,liveRequestedAt,liveKeyConfigured}:{signedIn:boolean;initialSymbol?:string;researchRunId?:string;cash:number;paused:boolean;position:PaperPosition|null;decisions:Decision[];fills:Fill[];liveStatus:AccessStatus;liveRequestedAt:string|null;liveKeyConfigured:boolean}){
   const router=useRouter();
   const [symbol,setSymbol]=useState(initialSymbol??position?.symbol??"NVDAUSDT");
   const [interval,setInterval]=useState<Interval>("15m");
@@ -73,9 +81,15 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
+  const [liveMode,setLiveMode]=useState(false);
+  const [termsOpen,setTermsOpen]=useState(false);
+  const [terms,setTerms]=useState<Record<string,boolean>>({market_risk:false,liquidation:false,api_permissions:false,key_security:false,manual_orders:false});
+  const [accessBusy,setAccessBusy]=useState(false);
+  const [accessError,setAccessError]=useState("");
   const [isPaused,setPaused]=useState(paused);
   const [playbook,setPlaybook]=useState<StrategyKey>(BACKTEST_STRATEGY);
   const activePosition=position?.symbol===symbol?position:null;
+  const allTermsAccepted=LIVE_TERMS.every(item=>terms[item.key]);
   const price=payload?.market.lastPrice??null;
   const quantity=price?Math.max(0,Number(size)||0)/price:0;
   const unrealized=activePosition&&price?activePosition.quantity*(price-activePosition.entry_fill)*(activePosition.direction==="long"?1:-1):0;
@@ -94,6 +108,24 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
     void refresh();const timer=window.setInterval(()=>void refresh(),8000);
     return()=>{active=false;controller.abort();window.clearInterval(timer);};
   },[symbol,interval]);
+  function switchToLive(){
+    if(!signedIn){router.push("/login");return;}
+    if(liveStatus==="approved"&&liveKeyConfigured){setLiveMode(true);return;}
+    if(!liveKeyConfigured){router.push("/settings?setup=futures-live");return;}
+    setAccessError("");setTermsOpen(true);
+  }
+  async function requestLiveAccess(){
+    if(!allTermsAccepted)return;
+    setAccessBusy(true);setAccessError("");
+    try{
+      const accepted=Object.fromEntries(LIVE_TERMS.map(item=>[item.key,true]));
+      const response=await fetch("/api/futures/live-access",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({termsVersion:"2026-10-13",accepted})});
+      const result=await response.json() as {status?:AccessStatus;error?:string};
+      if(!response.ok)throw new Error(result.error??"Could not submit live access request.");
+      setTermsOpen(false);setNotice("LIVE ACCESS REQUEST · SUBMITTED FOR REVIEW");router.refresh();
+    }catch(cause){setAccessError(cause instanceof Error?cause.message:"Could not submit live access request.");}
+    finally{setAccessBusy(false);}
+  }
   async function place(action:"open_long"|"open_short"|"close"){
     if(!signedIn){router.push("/login");return;}
     if(!payload?.market.lastPrice){setError("Wait for a verified Bitget quote before placing a paper order.");return;}
@@ -129,7 +161,11 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
   const spread=bestAsk&&bestBid?((bestAsk-bestBid)/((bestAsk+bestBid)/2))*10000:null;
   const freshness=payload?.market.providerTimestamp?Math.max(0,Math.floor((Date.now()-payload.market.providerTimestamp)/1000)):null;
   return <div className="content-wrap inner-page futures-station">
-    <header className="station-heading"><div><span className="station-eyebrow">TIDELIGHT · BITGET USDT FUTURES</span><h1>US stock <span>perpetuals</span></h1><p>Live Bitget market data with a private, risk limited paper execution account.</p></div><div className="station-mode"><i/>PAPER EXECUTION<span>LIVE ORDERS NOT CONNECTED</span></div></header>
+    <header className="station-heading"><div><span className="station-eyebrow">TIDELIGHT · BITGET USDT FUTURES</span><h1>US stock <span>perpetuals</span></h1><p>Bitget’s live market, a funded $10,000 paper account, and a gated live access path.</p></div><div className="station-mode"><i/>{liveMode?"LIVE ACCESS APPROVED":"PAPER ACCOUNT"}<span>{liveMode?"LIVE MODE":"SIMULATED EXECUTION"}</span><div className="station-mode-switch" role="group" aria-label="Execution mode"><button type="button" aria-pressed={!liveMode} onClick={()=>setLiveMode(false)}>Paper</button><button type="button" aria-pressed={liveMode} onClick={switchToLive}>Live</button></div></div></header>
+    {liveStatus==="pending"?<section className="station-live-status pending"><b>Live access review in progress</b><span>Your request is securely queued for review. Reviews typically take minutes to a few hours. You can continue using paper mode while we review it.</span>{liveRequestedAt?<time>{time(liveRequestedAt)}</time>:null}</section>:null}
+    {liveStatus==="rejected"?<section className="station-live-status rejected"><b>Live access needs attention</b><span>Review the decision note in Settings, update your Bitget connection if requested, then submit a new request.</span></section>:null}
+    {liveMode?<section className="station-live-status approved"><b>Live trading access approved</b><span>Live orders affect your Bitget account. Review the contract, quantity and estimated margin before each submission.</span><button type="button" onClick={()=>router.push("/settings")}>Connection settings ↗</button></section>:null}
+    {termsOpen?<div className="station-modal-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setTermsOpen(false);}}><section className="station-terms-modal" role="dialog" aria-modal="true" aria-labelledby="live-terms-title"><button className="station-modal-close" type="button" aria-label="Close live access terms" onClick={()=>setTermsOpen(false)}>×</button><span className="station-eyebrow">TIDELIGHT · LIVE ACCESS REVIEW</span><h2 id="live-terms-title">Before you enable live futures</h2><p className="station-terms-intro">Read and acknowledge each item. This requests access; it does not immediately place an order. Your Bitget futures permissions are checked before the request enters review.</p><div className="station-terms-list">{LIVE_TERMS.map(item=><label key={item.key}><input type="checkbox" checked={!!terms[item.key]} onChange={event=>setTerms(value=>({...value,[item.key]:event.target.checked}))}/><span><b>{item.title}</b><small>{item.body}</small></span></label>)}</div><p className="station-terms-note">Live access requires a verified Bitget live connection and operator approval. Approval can take minutes to hours. Your paper account remains available during review.</p>{accessError?<p className="station-error" role="alert">{accessError}</p>:null}<div className="station-terms-actions"><button type="button" className="station-cancel" onClick={()=>setTermsOpen(false)}>Cancel</button><button type="button" className="station-accept" disabled={!allTermsAccepted||accessBusy||liveStatus==="pending"} onClick={()=>void requestLiveAccess()}>{accessBusy?"Checking connection…":"Accept terms & request access"}</button></div></section></div>:null}
     <section className="station-market-strip">
       <label className="station-symbol"><span>CONTRACT</span><select value={symbol} onChange={event=>setSymbol(event.target.value)}>{STOCK_PERP_UNIVERSE.map(item=><option value={item} key={item}>{item}</option>)}</select></label>
       <div className="station-last"><span>LAST PRICE <small>USDT</small></span><b>{price?usd(price,4):"—"}</b><small className={payload?.market.change24h!==null&&payload?.market.change24h!==undefined&&payload.market.change24h>=0?"positive":"negative"}>{payload?.market.change24h===null||payload?.market.change24h===undefined?"24h change —":(payload.market.change24h>=0?"+":"")+(payload.market.change24h*100).toFixed(2)+"% · 24h"}</small></div>

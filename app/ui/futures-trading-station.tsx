@@ -274,6 +274,11 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
         </details>:null}
       </aside>
     </div>
+    {!liveMode?<div className="station-mobile-tradebar" role="group" aria-label="Paper trading controls">
+      <button type="button" className="mobile-long" disabled={!!position||busy||isPaused||!price} onClick={()=>void place("open_long")}><span>Long</span><b>{price?price.toLocaleString(undefined,{maximumFractionDigits:4}):"—"}</b></button>
+      <label className="mobile-size"><span>Margin · USDT</span><input type="number" min="10" max="250" step="1" inputMode="decimal" aria-label="Paper margin in USDT" value={size} onChange={event=>setSize(event.target.value)} disabled={!!position}/></label>
+      <button type="button" className="mobile-short" disabled={!!position||busy||isPaused||!price} onClick={()=>void place("open_short")}><span>Short</span><b>{price?price.toLocaleString(undefined,{maximumFractionDigits:4}):"—"}</b></button>
+    </div>:null}
     <p className="station-boundary">{liveMode?"Approved live mode routes individually confirmed USDT perpetual orders to Bitget. Paper capital remains separate.":"Paper mode uses Bitget public market data and Tidelight paper execution. No real orders are sent."}</p>
   </div>;
 }

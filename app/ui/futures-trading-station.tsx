@@ -93,7 +93,7 @@ function LiveTradePanel({symbol,price}:{symbol:string;price:number|null}){
     if(!action||!acknowledged)return;
     setBusy(true);setError("");setNotice("");
     try{
-      const response=await fetch("/api/futures/live-order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({symbol,action,margin:action==="close"?0:Number(margin)})});
+      const response=await fetch("/api/futures/live-order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({symbol,action,margin:action==="close"?0:Number(margin),confirmation:"PLACE LIVE FUTURES ORDER"})});
       const result=await response.json() as {accepted?:boolean;orderId?:string|null;clientOid?:string;error?:string};
       if(!response.ok||!result.accepted)throw new Error(result.error??"Bitget did not confirm this order.");
       setNotice("Bitget accepted the live order · "+(result.orderId?"Order "+result.orderId:"Ref "+result.clientOid));

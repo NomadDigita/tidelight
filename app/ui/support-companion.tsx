@@ -77,6 +77,19 @@ export default function SupportCompanion() {
   const positionRef = useRef<{ x: number; y: number } | null>(null);
   const draggedRef = useRef(false);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  function viewportBounds() {
+    const viewport = window.visualViewport;
+    const width = Math.max(1, Math.floor(viewport?.width ?? document.documentElement.clientWidth ?? window.innerWidth));
+    const height = Math.max(1, Math.floor(viewport?.height ?? document.documentElement.clientHeight ?? window.innerHeight));
+    const launcher = launcherRef.current?.getBoundingClientRect();
+    const buttonWidth = Math.max(46, launcher?.width ?? 46);
+    const buttonHeight = Math.max(46, launcher?.height ?? 46);
+    return { maxX: Math.max(4, width - buttonWidth - 4), maxY: Math.max(4, height - buttonHeight - 4) };
+  }
+  function clampPosition(point: { x: number; y: number }) {
+    const bounds = viewportBounds();
+    return { x: Math.max(4, Math.min(point.x, bounds.maxX)), y: Math.max(4, Math.min(point.y, bounds.maxY)) };
+  }
   const suggestions = starts[Object.keys(starts).find((path) => pathname.startsWith(path)) ?? ""] ?? defaultStarts;
 
   useEffect(() => {
@@ -91,7 +104,8 @@ export default function SupportCompanion() {
   }, []);
 
   useEffect(() => {
-    let restored: { x: number; y: number } = { x: window.innerWidth - (launcherRef.current?.getBoundingClientRect().width ?? 120) - 8, y: window.innerHeight - 78 };
+    const bounds = viewportBounds();
+    let restored: { x: number; y: number } = { x: bounds.maxX, y: bounds.maxY };
     try {
       const saved = window.localStorage.getItem("tidelight-tide-position");
       if (saved) {
@@ -99,10 +113,10 @@ export default function SupportCompanion() {
         if (value && typeof value === "object" && "x" in value && "y" in value && typeof value.x === "number" && typeof value.y === "number") restored = { x: value.x, y: value.y };
       } else {
         const oldBottom = Number(window.localStorage.getItem("tidelight-tide-bottom"));
-        if (Number.isFinite(oldBottom) && oldBottom > 0) restored.y = window.innerHeight - oldBottom - 52;
+        if (Number.isFinite(oldBottom) && oldBottom > 0) restored.y = bounds.maxY;
       }
     } catch { /* Invalid saved placement falls back to the lower-right corner. */ }
-    restored = { x: Math.max(8, Math.min(restored.x, window.innerWidth - (launcherRef.current?.getBoundingClientRect().width ?? 120) - 8)), y: Math.max(8, Math.min(restored.y, window.innerHeight - 52)) };
+    restored = clampPosition(restored);
     const timer = window.setTimeout(() => { positionRef.current = restored; setPosition(restored); }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -153,7 +167,7 @@ export default function SupportCompanion() {
     const clamp = () => {
       const current = positionRef.current;
       if (!current) return;
-      const bounded = { x: Math.max(8, Math.min(current.x, window.innerWidth - 148)), y: Math.max(8, Math.min(current.y, window.innerHeight - 52)) };
+      const bounded = clampPosition(current);
       positionRef.current = bounded;
       setPosition(bounded);
     };
@@ -163,14 +177,15 @@ export default function SupportCompanion() {
   function startDrag(event: ReactPointerEvent<HTMLButtonElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    const origin = positionRef.current ?? { x: window.innerWidth - 156, y: window.innerHeight - 78 };
+    const bounds = viewportBounds();
+    const origin = positionRef.current ?? { x: bounds.maxX, y: bounds.maxY };
     dragRef.current = { startX: event.clientX, startY: event.clientY, originX: origin.x, originY: origin.y };
     draggedRef.current = false;
   }
   function moveDrag(event: ReactPointerEvent<HTMLButtonElement>) {
     if (!dragRef.current) return;
     if (Math.hypot(event.clientX - dragRef.current.startX, event.clientY - dragRef.current.startY) > 5) draggedRef.current = true;
-    const next = { x: Math.max(8, Math.min(dragRef.current.originX + event.clientX - dragRef.current.startX, window.innerWidth - 148)), y: Math.max(8, Math.min(dragRef.current.originY + event.clientY - dragRef.current.startY, window.innerHeight - 52)) };
+    const next = clampPosition({ x: dragRef.current.originX + event.clientX - dragRef.current.startX, y: dragRef.current.originY + event.clientY - dragRef.current.startY });
     positionRef.current = next;
     setPosition(next);
   }

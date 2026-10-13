@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getBitgetStockPerp, STOCK_PERP_UNIVERSE } from "@/lib/bitget-market";
-import FuturesPaperDesk from "@/app/ui/futures-paper-desk";
+import FuturesTradingStation from "@/app/ui/futures-trading-station";
 import "./paper.css";
 
 export const dynamic = "force-dynamic";
@@ -11,13 +12,24 @@ export default async function FuturesPage({ searchParams }: { searchParams: Prom
   const researchRunId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(params.researchRunId ?? "") ? params.researchRunId : undefined;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const [account, position, decisions, fills] = user ? await Promise.all([
+  if (user) {
+    const admin = createAdminClient();
+    await admin.from("futures_paper_accounts").upsert({ user_id: user.id }, { onConflict: "user_id", ignoreDuplicates: true });
+  }
+  const [account, position, decisions, fills, access] = user ? await Promise.all([
     supabase.from("futures_paper_accounts").select("cash_balance,paused").maybeSingle(),
     supabase.from("futures_paper_positions").select("symbol,direction,quantity,entry_fill,margin,entry_fee,opened_at").maybeSingle(),
     supabase.from("futures_paper_decisions").select("id,symbol,as_of,action,outcome,reason,reference_price,realized_pnl,snapshot,created_at").order("created_at",{ ascending: false }).limit(30),
     supabase.from("futures_paper_fills").select("id,symbol,action,direction,quantity,fill_price,notional,fee,realized_pnl,created_at").order("created_at",{ ascending: false }).limit(30),
-  ]) : [{ data: null }, { data: null }, { data: [] }, { data: [] }, { data: [] }];
+    supabase.from("futures_live_access_requests").select("status,requested_at,reviewed_at,review_note").maybeSingle(),
+  ]) : [{ data: null }, { data: null }, { data: [] }, { data: [] }, { data: null }];
   const open = position.data as { symbol: string; direction: "long" | "short"; quantity: number; entry_fill: number; margin: number; entry_fee: number; opened_at: string } | null;
   const mark = open && STOCK_PERP_UNIVERSE.some(symbol => symbol === open.symbol) ? await getBitgetStockPerp(open.symbol).catch(() => null) : null;
-  return <FuturesPaperDesk signedIn={Boolean(user)} initialSymbol={STOCK_PERP_UNIVERSE.some(symbol => symbol === requestedSymbol) ? requestedSymbol : undefined} researchRunId={researchRunId} cash={Number(account.data?.cash_balance ?? 10000)} paused={Boolean(account.data?.paused)} position={open} mark={mark?.lastPrice ?? null} markAsOf={mark?.providerTimestamp ?? null} decisions={(decisions.data ?? []) as never} fills={(fills.data ?? []) as never} />;
+  let connection: { mode: string; live_enabled: boolean; last_validated_at: string | null } | null = null;
+  if (user) {
+    const admin = createAdminClient();
+    const result = await admin.from("bitget_connections").select("mode,live_enabled,last_validated_at").eq("user_id", user.id).maybeSingle();
+    connection = result.data;
+  }
+  return <FuturesTradingStation signedIn={Boolean(user)} liveStatus={access.data?.status ?? "not_requested"} liveRequestedAt={access.data?.requested_at ?? null} liveReviewNote={access.data?.review_note ?? null} liveKeyConfigured={connection?.mode === "live" && Boolean(connection.live_enabled && connection.last_validated_at)} initialSymbol={STOCK_PERP_UNIVERSE.some(symbol => symbol === requestedSymbol) ? requestedSymbol : undefined} researchRunId={researchRunId} cash={Number(account.data?.cash_balance ?? 10000)} paused={Boolean(account.data?.paused)} position={open} decisions={(decisions.data ?? []) as never} fills={(fills.data ?? []) as never} />;
 }

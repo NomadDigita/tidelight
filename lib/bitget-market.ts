@@ -60,7 +60,7 @@ export type MarketAsset = {
   logoUrl: string | null;
 };
 
-export type CandleInterval = "1H" | "4H" | "1D";
+export type CandleInterval = "15m" | "1H" | "4H" | "1D";
 export type AlphaMarketCategory = "SPOT" | "USDT-FUTURES";
 export const STOCK_PERP_UNIVERSE = ["NVDAUSDT", "AMDUSDT", "MSFTUSDT", "AAPLUSDT", "METAUSDT", "AMZNUSDT", "GOOGLUSDT", "TSLAUSDT", "INTCUSDT", "ASMLUSDT", "QCOMUSDT", "MUUSDT"] as const;
 export type MarketCandle = {
@@ -331,7 +331,7 @@ export async function getBitgetStockPerp(symbol: string): Promise<MarketAsset | 
 export async function getBitgetCandles(symbol: string, interval: CandleInterval, limit = 240, category: AlphaMarketCategory = "SPOT"): Promise<MarketCandle[]> {
   const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit)));
   const query = new URLSearchParams({ category, symbol, interval, type: "market", limit: String(safeLimit) });
-  const response = await fetchBitget<string[][]>(`/market/candles?${query.toString()}`, interval === "1H" ? 30 : 120);
+  const response = await fetchBitget<string[][]>(`/market/candles?${query.toString()}`, interval === "15m" || interval === "1H" ? 15 : 120);
   return response.data.flatMap((row): MarketCandle[] => {
     if (row.length < 5) return [];
     const [timestamp, open, high, low, close, volume, turnover] = row.map((value) => numberOrNull(value));

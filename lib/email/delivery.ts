@@ -16,7 +16,7 @@ export async function drainEmailQueue(admin: SupabaseClient) {
   for (const job of (jobs ?? []) as Job[]) {
     try {
       const { data: preferences } = await admin.from("email_notification_preferences").select("nightwatch_signals,nightwatch_fills,nightwatch_risks,nightwatch_research,nightwatch_daily_summary").eq("user_id", job.user_id).maybeSingle();
-      const enabled = job.category === "nightwatch_signal" ? preferences?.nightwatch_signals : job.category === "nightwatch_fill" ? preferences?.nightwatch_fills : job.category === "nightwatch_risk" ? preferences?.nightwatch_risks : job.category === "nightwatch_research" ? preferences?.nightwatch_research : job.category === "nightwatch_summary" ? preferences?.nightwatch_daily_summary : job.category === "security" || job.category === "futures_access_request" || job.category === "futures_access_decision" ? true : false;
+      const enabled = job.category === "nightwatch_signal" ? preferences?.nightwatch_signals : job.category === "nightwatch_fill" ? preferences?.nightwatch_fills : job.category === "nightwatch_risk" ? preferences?.nightwatch_risks : job.category === "nightwatch_research" ? preferences?.nightwatch_research : job.category === "nightwatch_summary" ? preferences?.nightwatch_daily_summary : job.category === "security" || job.category === "futures_access_request" || job.category === "futures_access_submitted" || job.category === "futures_access_decision" ? true : false;
       if (!enabled) {
         await admin.from("email_delivery_queue").update({ state: "suppressed" }).eq("id", job.id);
         suppressed++;
@@ -32,7 +32,7 @@ export async function drainEmailQueue(admin: SupabaseClient) {
       }
       const title = typeof job.payload?.title === "string" ? job.payload.title.slice(0, 160) : "Nightwatch update";
       const body = typeof job.payload?.body === "string" ? job.payload.body.slice(0, 1000) : "A new Nightwatch update is available in your workspace.";
-      const rendered = job.category === "security" ? renderSecurityEmail(title, body) : job.category === "futures_access_request" || job.category === "futures_access_decision" ? renderFuturesAccessEmail(job.category as FuturesAccessEmailKind, title, body) : renderNightwatchEmail(job.category as NightwatchEmailKind, title, body);
+      const rendered = job.category === "security" ? renderSecurityEmail(title, body) : job.category === "futures_access_request" || job.category === "futures_access_submitted" || job.category === "futures_access_decision" ? renderFuturesAccessEmail(job.category as FuturesAccessEmailKind, title, body) : renderNightwatchEmail(job.category as NightwatchEmailKind, title, body);
       const result = await sendWithResend({ ...rendered, to: recipient, idempotencyKey: job.event_key });
       const { error: logError } = await admin.from("email_delivery_queue").update({ state: "sent", provider_message_id: result.id, sent_at: new Date().toISOString(), last_error_code: null }).eq("id", job.id);
       if (logError) throw Object.assign(new Error("Could not record email delivery."), { code: "delivery_log_failed" });

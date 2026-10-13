@@ -54,7 +54,7 @@ begin
     or p_as_of_ms is null or p_as_of_ms < 1 or p_action not in ('open_long','open_short','close')
     or (p_action in ('open_long','open_short') and (p_margin is null or p_margin < 10 or p_margin > 250))
   then raise exception 'Invalid workstation order.' using errcode = '22023'; end if;
-  v_as_of := to_timestamp(p_as_of_ms / 1000.0);
+  v_as_of := clock_timestamp();
   if v_as_of < now() - interval '60 seconds' or v_as_of > now() + interval '60 seconds'
   then raise exception 'Market mark is stale.' using errcode = '22023'; end if;
 

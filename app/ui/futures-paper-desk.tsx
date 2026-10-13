@@ -36,7 +36,7 @@ function FuturesMarketChart({ candles, symbol, fills, position }: { candles: Fut
       <path d={`M ${points.replaceAll(" ", " L ")} L 100 100 L 0 100 Z`} fill="url(#futures-chart-fill)"/>
       <polyline points={points} className="futures-chart-line"/>
       <circle cx="100" cy={79 - ((visible.at(-1)!.close - low) / span) * 62} r="1.4" className="futures-chart-last"/>
-      {markers.map((marker,index) => <g key={`${marker.timestamp}-${index}`} transform={`translate(${marker.x} ${Math.max(7,Math.min(92,marker.y + (index%2 ? 7 : -7))})`} className={marker.side === "B" ? "futures-trade-marker buy" : "futures-trade-marker sell"}><title>{marker.title}</title><rect x="-4" y="-4" width="8" height="8" rx="2"/><text textAnchor="middle" dominantBaseline="central">{marker.side}</text></g>)}
+      {markers.map((marker,index) => <g key={`${marker.timestamp}-${index}`} transform={`translate(${marker.x} ${Math.max(7,Math.min(92,marker.y + (index%2 ? 7 : -7)))})`} className={marker.side === "B" ? "futures-trade-marker buy" : "futures-trade-marker sell"}><title>{marker.title}</title><rect x="-4" y="-4" width="8" height="8" rx="2"/><text textAnchor="middle" dominantBaseline="central">{marker.side}</text></g>)}
     </svg>
   </div>;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./market-session-indicator.module.css";
 
 type SessionItem = { state: string; timeZone: string; startTime: string; endTime: string };
@@ -62,6 +62,16 @@ function duration(ms: number) {
 
 export default function MarketSessionIndicator({ session, status = "unavailable" }: { session: MarketSchedule; status?: string }) {
   const [now, setNow] = React.useState(0);
+  const [open, setOpen] = useState(false);
+  const shellRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const dismissOutside = (event: PointerEvent) => { if (event.target instanceof Node && !shellRef.current?.contains(event.target)) setOpen(false); };
+    const dismissEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", dismissOutside);
+    document.addEventListener("keydown", dismissEscape);
+    return () => { document.removeEventListener("pointerdown", dismissOutside); document.removeEventListener("keydown", dismissEscape); };
+  }, [open]);
   React.useEffect(() => { const start = window.setTimeout(() => setNow(Date.now()), 0); const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => { window.clearTimeout(start); window.clearInterval(timer); }; }, []);
   const date = now ? new Date(now) : null;
   const schedule = session?.schedule ?? [];
@@ -91,15 +101,15 @@ export default function MarketSessionIndicator({ session, status = "unavailable"
     const at = date ? wallClockAt(date, minute < etMinute ? 1 : 0, minute) : null;
     return at ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(at) : "—";
   };
-  return <details className={styles.shell}>
-    <summary className={styles.summary} aria-label={`US equity reference session: ${label}. ${nextText}`}>
+  return <details ref={shellRef} className={styles.shell} open={open}>
+    <summary className={styles.summary} aria-expanded={open} aria-label={`US equity reference session: ${label}. ${nextText}`} onClick={(event) => { event.preventDefault(); setOpen((value) => !value); }} onDoubleClick={(event) => { event.preventDefault(); setOpen(false); }}>
       <span className={styles.liveMark} data-open={active?.state === "regular"} aria-hidden="true" />
       <span className={styles.summaryCopy}><b>{label}</b><small>{now ? nextText : "Eastern Time · syncing"}</small></span>
       <span className={styles.clock}>{date ? new Intl.DateTimeFormat("en-US", { timeZone: zone, hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(date) : "ET"}</span>
       <span className={styles.chevron} aria-hidden="true">⌄</span>
     </summary>
     <div className={styles.popover}>
-      <div className={styles.popoverHead}><div><span className={styles.kicker}>MARKET HOURS</span><h3>US equity sessions</h3></div><span className={styles.zonePill}>ET · {date ? new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" }).formatToParts(date).find((part) => part.type === "timeZoneName")?.value : "ET"}</span></div>
+      <div className={styles.popoverHead}><div><span className={styles.kicker}>MARKET HOURS</span><h3>US equity sessions</h3></div><button type="button" className={styles.close} onClick={() => setOpen(false)} aria-label="Close session details">×</button><span className={styles.zonePill}>ET · {date ? new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" }).formatToParts(date).find((part) => part.type === "timeZoneName")?.value : "ET"}</span></div>
       <p className={styles.note}>Underlying equity schedule from Bitget Reality. Token trading remains available outside these hours; liquidity and spreads can change. Exchange holidays may alter the schedule.</p>
       <div className={styles.timelineHead}><b>Session timeline</b><span>{date ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(date) : "Local time"} · your local time</span></div>
       <div className={styles.timeline} role="img" aria-label="US equity session timeline in Eastern Time">

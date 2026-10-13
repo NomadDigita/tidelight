@@ -132,7 +132,7 @@
   .station-chart-canvas svg{min-height:240px;max-height:300px}
   .station-chart-foot{font-size:7px}
   .station-book-head,.station-book-row{padding:7px 2px;font-size:9px}
-  .station-mobile-tradebar{position:fixed;z-index:80;inset:auto 10px calc(10px + env(safe-area-inset-bottom)) 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(68px,.62fr) minmax(0,1fr);align-items:center;gap:7px;padding:8px;border:1px solid color-mix(in srgb,var(--brand-teal) 28%,var(--line));border-radius:19px;background:color-mix(in srgb,var(--panel) 95%,transparent);box-shadow:0 12px 36px #0008;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .station-mobile-tradebar{position:fixed;z-index:80;inset:auto 10px calc(68px + env(safe-area-inset-bottom)) 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(68px,.62fr) minmax(0,1fr);align-items:center;gap:7px;padding:8px;border:1px solid color-mix(in srgb,var(--brand-teal) 28%,var(--line));border-radius:19px;background:color-mix(in srgb,var(--panel) 95%,transparent);box-shadow:0 12px 36px #0008;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
   .station-mobile-tradebar>button{min-width:0;min-height:46px;display:grid;place-content:center;gap:2px;border:0;border-radius:14px;color:#f5fffb;cursor:pointer}
   .station-mobile-tradebar>button span{font:650 12px var(--font)}
   .station-mobile-tradebar>button b{font:550 9px var(--mono)}

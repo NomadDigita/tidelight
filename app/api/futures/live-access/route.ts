@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const requestedAt = new Date().toISOString();
     const { error } = await admin.from("futures_live_access_requests").upsert({ user_id: user.id, status: "pending", terms_version: TERMS_VERSION, accepted_terms: Object.fromEntries(REQUIRED.map(key => [key, true])), requested_at: requestedAt, reviewed_at: null, review_note: null }, { onConflict: "user_id" });
     if (error) throw error;
-    await enqueueFuturesAccessEmail({ admin, userId: user.id, eventKey: "futures-live-request-user:" + user.id + ":" + Date.parse(requestedAt), kind: "futures_access_request", title: "Request received", body: "Your live US stock perpetual access request is in the operator review queue. Review usually takes a few minutes to a few hours. You can continue using your $10,000 paper account in the meantime." });
+    await enqueueFuturesAccessEmail({ admin, userId: user.id, eventKey: "futures-live-request-user:" + user.id + ":" + Date.parse(requestedAt), kind: "futures_access_submitted", title: "Request received", body: "Your live US stock perpetual access request is in the operator review queue. Review usually takes a few minutes to a few hours. You can continue using your $10,000 paper account in the meantime." });
     try {
       const { data: usersPage } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
       const reviewers = (usersPage?.users ?? []).filter(candidate => {

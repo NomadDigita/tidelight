@@ -12,6 +12,7 @@ type Decision={id:string;symbol:string;action:string;outcome:string;reason:strin
 type Candle=ShareCandle;
 type Depth={price:number;size:number};
 type PublicTrade={id:string;price:number;size:number;side:"buy"|"sell";timestamp:number};
+type LiveAccount={availableUSDT:number;equityUSDT:number;holdMode:string;symbolSetting:{marginMode:string;leverage:string}|null;positions:Array<{symbol:string;side:string;quantity:number;entryPrice:number;markPrice:number;unrealizedPnl:number;leverage:number;marginMode:string}>};
 type MarketPayload={market:{symbol:string;lastPrice:number;change24h:number|null;high24h:number|null;low24h:number|null;open24h:number|null;volume24h:number|null;turnover24h:number|null;providerTimestamp:number|null};candles:Candle[];orderbook:{asks:Depth[];bids:Depth[];timestamp:number|null};trades:PublicTrade[];interval:string};
 const usd=(value:number,decimals=2)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:decimals,minimumFractionDigits:decimals}).format(value);
 const compact=(value:number)=>new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:2}).format(value);
@@ -67,6 +68,50 @@ function OrderBook({payload,tab,setTab}:{payload:MarketPayload|null;tab:"book"|"
   return <section className="station-panel station-depth">
     <div className="station-panel-head"><div><span className="station-eyebrow">BITGET · PUBLIC MARKET DATA</span><h2>Market depth</h2></div><div className="station-tabs"><button type="button" aria-pressed={tab==="book"} onClick={()=>setTab("book")}>Order book</button><button type="button" aria-pressed={tab==="trades"} onClick={()=>setTab("trades")}>Recent trades</button></div></div>
     {tab==="book"?<><div className="station-book-labels"><span>Price (USDT)</span><span>Size</span><span>Total</span></div><div className="station-book-asks">{asks.map((level,index)=><div className="station-book-row ask" key={"a"+index}><i style={{width:Math.max(2,level.size/maxSize*100)+"%"}}/><b>{level.price.toLocaleString(undefined,{maximumFractionDigits:4})}</b><span>{level.size.toFixed(4)}</span><small>{(level.price*level.size).toLocaleString(undefined,{maximumFractionDigits:2})}</small></div>)}</div><div className="station-spread"><b>{payload?usd(payload.market.lastPrice,4):"—"}</b><span>{spread===null?"Spread waiting":("Spread "+spread.toFixed(4)+" USDT")}</span></div><div className="station-book-bids">{bids.map((level,index)=><div className="station-book-row bid" key={"b"+index}><i style={{width:Math.max(2,level.size/maxSize*100)+"%"}}/><b>{level.price.toLocaleString(undefined,{maximumFractionDigits:4})}</b><span>{level.size.toFixed(4)}</span><small>{(level.price*level.size).toLocaleString(undefined,{maximumFractionDigits:2})}</small></div>)}</div><p className="station-data-note">Public depth from Bitget · refreshed with market snapshot</p></>:<div className="station-trades">{(payload?.trades??[]).slice(0,14).map(trade=><div className="station-trade-row" key={trade.id}><b className={trade.side==="buy"?"buy":"sell"}>{trade.price.toLocaleString(undefined,{maximumFractionDigits:4})}</b><span>{trade.size.toFixed(4)}</span><small>{time(trade.timestamp)}</small></div>)}</div>}
+  </section>;
+}
+
+function LiveTradePanel({symbol,price}:{symbol:string;price:number|null}){
+  const router=useRouter();
+  const [account,setAccount]=useState<LiveAccount|null>(null);
+  const [accountError,setAccountError]=useState("");
+  const [margin,setMargin]=useState("50");
+  const [action,setAction]=useState<"open_long"|"open_short"|"close"|null>(null);
+  const [acknowledged,setAcknowledged]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState("");
+  const [notice,setNotice]=useState("");
+  useEffect(()=>{
+    let active=true;const controller=new AbortController();
+    const refresh=async()=>{try{const response=await fetch("/api/futures/live-account?symbol="+encodeURIComponent(symbol),{cache:"no-store",signal:controller.signal});const next=await response.json() as LiveAccount&{error?:string};if(!response.ok)throw new Error(next.error??"Live account unavailable.");if(active){setAccount(next);setAccountError("");}}catch(cause){if(active&&!(cause instanceof DOMException&&cause.name==="AbortError"))setAccountError(cause instanceof Error?cause.message:"Live account unavailable.");}};
+    void refresh();const timer=window.setInterval(()=>void refresh(),10000);
+    return()=>{active=false;controller.abort();window.clearInterval(timer);};
+  },[symbol]);
+  const position=account?.positions[0]??null;
+  const quantity=price&&Number(margin)>0?Math.floor((Number(margin)/price)*1e6)/1e6:0;
+  async function submit(){
+    if(!action||!acknowledged)return;
+    setBusy(true);setError("");setNotice("");
+    try{
+      const response=await fetch("/api/futures/live-order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({symbol,action,margin:action==="close"?0:Number(margin)})});
+      const result=await response.json() as {accepted?:boolean;orderId?:string|null;clientOid?:string;error?:string};
+      if(!response.ok||!result.accepted)throw new Error(result.error??"Bitget did not confirm this order.");
+      setNotice("Bitget accepted the live order · "+(result.orderId?"Order "+result.orderId:"Ref "+result.clientOid));
+      setAction(null);setAcknowledged(false);
+      window.setTimeout(()=>router.refresh(),800);
+    }catch(cause){setError(cause instanceof Error?cause.message:"Live order could not be confirmed.");}
+    finally{setBusy(false);}
+  }
+  return <section className="station-panel station-live-ticket">
+    <div className="station-panel-head"><div><span className="station-eyebrow">LIVE EXECUTION · BITGET</span><h2>Trade {symbol}</h2></div><span className="station-leverage">ISOLATED · 1×</span></div>
+    <div className="station-live-wallet"><div><span>USDT equity</span><b>{account?usd(account.equityUSDT):"—"}</b></div><div><span>Available</span><b>{account?usd(account.availableUSDT):"—"}</b></div></div>
+    <label className="station-size-field"><span>Isolated margin <small>USDT · cap $250 per order</small></span><span className="station-size-input"><input type="number" min="10" max="250" step="1" value={margin} onChange={event=>setMargin(event.target.value)} disabled={!!position}/></span></label>
+    <div className="station-live-estimate"><span>Market execution</span><b>{price?usd(price,4)+" USDT":"Waiting for Bitget quote"}</b><span>Est. quantity · 1×</span><b>{quantity?quantity.toFixed(6)+" "+symbol.replace("USDT",""):"—"}</b><span>Account mode</span><b>{account?.holdMode?.replaceAll("_"," ")??"Loading…"}</b></div>
+    {!position?<div className="station-ticket-switch"><button type="button" className="buy" disabled={busy||!price||!!accountError||Number(margin)<10||Number(margin)>250||Number(margin)>(account?.availableUSDT??0)} onClick={()=>{setAction("open_long");setAcknowledged(false);setError("");}}>Open Long</button><button type="button" className="sell" disabled={busy||!price||!!accountError||Number(margin)<10||Number(margin)>250||Number(margin)>(account?.availableUSDT??0)} onClick={()=>{setAction("open_short");setAcknowledged(false);setError("");}}>Open Short</button></div>:<div className="station-open-position"><div><span>OPEN {position.side.toUpperCase()} · LIVE</span><b>{position.quantity.toFixed(6)} {symbol.replace("USDT","")}</b></div><div><small>Entry {usd(position.entryPrice,4)}</small><small>Unrealized {usd(position.unrealizedPnl)}</small></div><button type="button" className="station-close-button" disabled={busy||!position.quantity} onClick={()=>{setAction("close");setAcknowledged(false);setError("");}}>Close live position at market</button></div>}
+    <p className="station-risk-note">Every live order requires a separate confirmation. New positions are capped at $250 isolated margin and set to 1×. Check your Bitget positions and order history after execution.</p>
+    {accountError?<p className="station-error" role="alert">{accountError}</p>:null}{error?<p className="station-error" role="alert">{error}</p>:null}{notice?<p className="station-notice" role="status">{notice}</p>:null}
+    <div className="station-live-footer"><span>Live position snapshot refreshes every 10 seconds</span><a href="/settings">API connection settings ↗</a></div>
+    {action?<div className="station-modal-backdrop"><section className="station-terms-modal station-live-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="live-order-confirm-title"><button className="station-modal-close" type="button" aria-label="Cancel live order" onClick={()=>setAction(null)}>×</button><span className="station-eyebrow">BITGET · LIVE ORDER CONFIRMATION</span><h2 id="live-order-confirm-title">{action==="close"?"Close live position":action==="open_long"?"Open live long":"Open live short"} · {symbol}</h2><div className="station-live-order-summary"><div><span>Execution</span><b>Market order</b></div><div><span>Reference price</span><b>{price?usd(price,4)+" USDT":"—"}</b></div><div><span>{action==="close"?"Position quantity":"Estimated quantity"}</span><b>{action==="close"?(position?.quantity??0).toFixed(6)+" "+symbol.replace("USDT",""):quantity.toFixed(6)+" "+symbol.replace("USDT","")}</b></div><div><span>{action==="close"?"Account margin":"Isolated margin · 1×"}</span><b>{action==="close"?"Bitget position":usd(Number(margin))}</b></div></div><p className="station-terms-note">This submits a real order to Bitget. The final fill price may differ from the quote. Verify the contract, direction and size. Tidelight never requests withdrawal permission.</p><label className="station-live-check"><input type="checkbox" checked={acknowledged} onChange={event=>setAcknowledged(event.target.checked)}/><span>I reviewed this live order and authorize Bitget to submit it.</span></label>{error?<p className="station-error" role="alert">{error}</p>:null}<div className="station-terms-actions"><button type="button" className="station-cancel" onClick={()=>setAction(null)}>Cancel order</button><button type="button" className="station-accept" disabled={!acknowledged||busy||!price} onClick={()=>void submit()}>{busy?"Submitting…":"Confirm & send live order"}</button></div></section></div>:null}
   </section>;
 }
 
@@ -183,7 +228,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
         <section className="station-panel station-history"><div className="station-panel-head"><div><span className="station-eyebrow">PRIVATE SIMULATED EXECUTION</span><h2>Recent fills</h2></div><span className="station-subtle">{fills.length} recorded</span></div>{fills.length?<div className="station-fill-table"><div className="station-table-labels"><span>Side</span><span>Contract</span><span>Fill price</span><span>Quantity</span><span>Time</span></div>{fills.slice(0,8).map(fill=><div className="station-fill-row" key={fill.id}><b className={tradeSide(fill)==="B"?"buy":"sell"}>{tradeSide(fill)} · {fill.action.replaceAll("_"," ")}</b><span>{fill.symbol}</span><span>{usd(fill.fill_price,4)}</span><span>{Number(fill.quantity).toFixed(5)}</span><small>{time(fill.created_at)}</small></div>)}</div>:<p className="station-empty">Your paper fills appear here after an order is submitted.</p>}</section>
       </main>
       <aside className="station-aside">
-        <section className="station-panel station-ticket">
+        {!liveMode?<section className="station-panel station-ticket">
           <div className="station-panel-head"><div><span className="station-eyebrow">ORDER ENTRY · MARKET</span><h2>Trade {symbol}</h2></div><span className="station-leverage">ISOLATED · 1×</span></div>
           <div className="station-ticket-switch"><button type="button" className="buy" disabled={!!position||busy||isPaused||!signedIn} onClick={()=>void place("open_long")}>Buy / Long</button><button type="button" className="sell" disabled={!!position||busy||isPaused||!signedIn} onClick={()=>void place("open_short")}>Sell / Short</button></div>
           <label className="station-size-field"><span>Margin size <small>USDT</small></span><span className="station-size-input"><input type="number" min="10" max="250" step="1" value={size} onChange={event=>setSize(event.target.value)} disabled={!!position}/><button type="button" onClick={()=>setSize("250")} disabled={!!position}>MAX</button></span></label>
@@ -193,13 +238,13 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
           {!signedIn?<a className="station-signin" href="/login">Sign in to place paper orders</a>:isPaused?<button className="station-submit-muted" disabled>Entries paused · resume below</button>:null}
           {position&&position.symbol===symbol?<div className="station-open-position"><div><span>OPEN {position.direction.toUpperCase()}</span><b>{Number(position.quantity).toFixed(6)} {symbol.replace("USDT","")}</b></div><div><small>Entry {usd(Number(position.entry_fill),4)}</small><small>Unrealized {usd(unrealized)}</small></div><button type="button" className="station-close-button" disabled={busy} onClick={()=>void place("close")}>{busy?"Closing…":"Close position at market"}</button></div>:position?<p className="station-risk-note">You have an open {position.symbol} position. Close it before opening another contract.</p>:null}
           {error?<p className="station-error" role="alert">{error}</p>:null}{notice?<p className="station-notice" role="status">{notice}</p>:null}
-        </section>
-        <section className="station-panel station-account">
+        </section> : <LiveTradePanel symbol={symbol} price={price}/> }
+        {!liveMode?<section className="station-panel station-account">
           <div className="station-panel-head"><div><span className="station-eyebrow">YOUR PAPER ACCOUNT</span><h2>Risk & collateral</h2></div><button type="button" className="station-pause" onClick={()=>void setAccountPause()} disabled={busy||!signedIn}>{isPaused?"Resume entries":"Pause entries"}</button></div>
           <div className="station-account-grid"><div><span>Equity</span><b>{usd(equity)}</b></div><div><span>Available cash</span><b>{usd(cash)}</b></div><div><span>Reserved margin</span><b>{usd(position?.margin??0)}</b></div><div><span>Unrealized P&L</span><b className={unrealized>=0?"positive":"negative"}>{usd(unrealized)}</b></div></div>
           <p className="station-account-foot">Paper capital only · isolated position · daily loss circuit $200 · up to 5 fills per day</p>
-        </section>
-        <details className="station-panel station-agent">
+        </section> : null}
+        {!liveMode?<details className="station-panel station-agent">
           <summary><span><span className="station-eyebrow">ALPHA FACTORY · OPTIONAL AGENT CHECK</span><b>Review this market with a strategy</b></span><i>⌄</i></summary>
           <p>Runs the existing completed-candle strategy review separately from manual paper orders.</p>
           <label>Playbook<select value={playbook} onChange={event=>setPlaybook(event.target.value as StrategyKey)}>{Object.entries(ALPHA_STRATEGIES).map(([key,item])=><option key={key} value={key}>{item.label}</option>)}</select></label>
@@ -208,6 +253,6 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
         </details>
       </aside>
     </div>
-    <p className="station-boundary">This workstation uses Bitget public market data and Tidelight paper execution. It does not send real exchange orders. Live US-stock perpetual execution is not connected.</p>
+    <p className="station-boundary">{liveMode?"Approved live mode routes individually confirmed USDT perpetual orders to Bitget. Paper capital remains separate.":"Paper mode uses Bitget public market data and Tidelight paper execution. No real orders are sent."}</p>
   </div>;
 }

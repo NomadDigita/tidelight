@@ -313,3 +313,29 @@ export async function getBitgetStockPerp(symbol: string): Promise<MarketAsset | 
   ]);
   const instrument = instruments.data.find(item => item.symbol.toUpperCase() === symbol && item.category.toUpperCase() === "USDT-FUTURES" && item.status?.toLowerCase() === "online" && item.type?.toLowerCase() === "perpetual");
   const ticker = tickers.data.find(item => item.symbol.toUpperCase() === symbol);
+  const price = ticker ? numberOrNull(ticker.lastPrice) : null;
+  if (!instrument || !ticker || price === null || price <= 0 || instrument.quoteCoin !== "USDT") return null;
+  const underlying = symbol.slice(0, -4);
+  return {
+    symbol, baseCoin: instrument.baseCoin, quoteCoin: "USDT", name: issuerNames[underlying] ?? underlying,
+    underlyingTicker: underlying, kind: "rtoken", isReality: false, isRwa: false,
+    weekendTradable: null, tradingSessions: [], lastPrice: price, open24h: numberOrNull(ticker.openPrice24h),
+    marketSession: null, marketSessionStatus: "unavailable",
+    change24h: numberOrNull(ticker.price24hPcnt), high24h: numberOrNull(ticker.highPrice24h),
+    low24h: numberOrNull(ticker.lowPrice24h), volume24h: numberOrNull(ticker.volume24h),
+    turnover24h: numberOrNull(ticker.turnover24h), providerTimestamp: numberOrNull(ticker.ts),
+    logoUrl: getLogo(underlying, underlying, true),
+  };
+}
+
+export async function getBitgetCandles(symbol: string, interval: CandleInterval, limit = 240, category: AlphaMarketCategory = "SPOT"): Promise<MarketCandle[]> {
+  const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit)));
+  const query = new URLSearchParams({ category, symbol, interval, type: "market", limit: String(safeLimit) });
+  const response = await fetchBitget<string[][]>(`/market/candles?${query.toString()}`, interval === "15m" || interval === "1H" ? 15 : 120);
+  return response.data.flatMap((row): MarketCandle[] => {
+    if (row.length < 5) return [];
+    const [timestamp, open, high, low, close, volume, turnover] = row.map((value) => numberOrNull(value));
+    if (timestamp === null || open === null || high === null || low === null || close === null) return [];
+    return [{ timestamp, open, high, low, close, volume, turnover }];
+  }).sort((left, right) => left.timestamp - right.timestamp);
+}

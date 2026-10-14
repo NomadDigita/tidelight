@@ -72,7 +72,6 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [view, setView] = useState<"decisions" | "orders">("decisions");
   const [preferences, setPreferences] = useState<NightwatchPreferences>({ trigger_mode: "manual", monitor_symbol: null, research_run_id: null, alert_on_signal: true, alert_on_fill: true, daily_summary: true, nightwatch_signals: false, nightwatch_fills: false, nightwatch_risks: false, nightwatch_research: false, nightwatch_daily_summary: false, playbook_key: initialPlaybookKey ?? BACKTEST_STRATEGY });
   const [schedulerAvailable, setSchedulerAvailable] = useState(false);
-  const [emailDeliveryAvailable, setEmailDeliveryAvailable] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [alerts, setAlerts] = useState(initialAlerts);
   const [visibleAlerts, setVisibleAlerts] = useState(5);
@@ -101,7 +100,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     return () => { cancelled = true; };
   }, [symbol]);
 
-  useEffect(() => { if (signedIn) void fetch("/api/nightwatch/preferences").then((response) => response.ok ? response.json() : null).then((data: (NightwatchPreferences & { scheduler_available?: boolean; email_delivery_available?: boolean }) | null) => { if (data) { const loaded = initialPlaybookKey ? { ...data, playbook_key: initialPlaybookKey } : data; setPreferences(loaded); setSchedulerAvailable(Boolean(data.scheduler_available)); setEmailDeliveryAvailable(Boolean(data.email_delivery_available)); if (initialPlaybookKey && data.playbook_key !== initialPlaybookKey) void fetch("/api/nightwatch/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(loaded) }); } }).catch(() => undefined); }, [signedIn, initialPlaybookKey]);
+  useEffect(() => { if (signedIn) void fetch("/api/nightwatch/preferences").then((response) => response.ok ? response.json() : null).then((data: (NightwatchPreferences & { scheduler_available?: boolean }) | null) => { if (data) { const loaded = initialPlaybookKey ? { ...data, playbook_key: initialPlaybookKey } : data; setPreferences(loaded); setSchedulerAvailable(Boolean(data.scheduler_available)); if (initialPlaybookKey && data.playbook_key !== initialPlaybookKey) void fetch("/api/nightwatch/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(loaded) }); } }).catch(() => undefined); }, [signedIn, initialPlaybookKey]);
 
   async function savePreferences(next: Partial<NightwatchPreferences>) {
     if (!signedIn) { router.push("/login"); return; }
@@ -204,21 +203,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
           {!schedulerAvailable ? <small>Scheduler setup required on this deployment. Manual checks and daily summaries remain available.</small> : <small>Scheduled for 09:00 UTC daily; Hobby may start it any time during that hour. One market per account. Uses completed candles, skips while paused, and never sends exchange orders.</small>}
           {preferences.research_run_id ? <small>Linked research note {preferences.research_run_id.slice(0, 8).toUpperCase()} follows this schedule.</small> : null}
         </div>
-        <div className="nw-workspace-alerts">
-          <span>WORKSPACE ALERTS</span>
-          <label><input type="checkbox" checked={preferences.alert_on_signal} onChange={(event) => void savePreferences({ alert_on_signal: event.target.checked })} disabled={!signedIn || savingPreferences}/> Signal alerts</label>
-          <label><input type="checkbox" checked={preferences.alert_on_fill} onChange={(event) => void savePreferences({ alert_on_fill: event.target.checked })} disabled={!signedIn || savingPreferences}/> Paper-fill alerts</label>
-          <label><input type="checkbox" checked={preferences.daily_summary} onChange={(event) => void savePreferences({ daily_summary: event.target.checked })} disabled={!signedIn || savingPreferences}/> Daily summary</label>
-        </div>
-        <div className="nw-email-preferences" id="email-preferences">
-          <span>EMAIL DELIVERY · OPTIONAL</span>
-          {!emailDeliveryAvailable ? <small>Email delivery will be available when the Resend server key is configured.</small> : null}
-          <label><input type="checkbox" checked={preferences.nightwatch_signals} onChange={(event) => void savePreferences({ nightwatch_signals: event.target.checked })} disabled={!signedIn || savingPreferences || !emailDeliveryAvailable}/> Email me Nightwatch signals</label>
-          <label><input type="checkbox" checked={preferences.nightwatch_fills} onChange={(event) => void savePreferences({ nightwatch_fills: event.target.checked })} disabled={!signedIn || savingPreferences || !emailDeliveryAvailable}/> Email me paper fills</label>
-          <label><input type="checkbox" checked={preferences.nightwatch_risks} onChange={(event) => void savePreferences({ nightwatch_risks: event.target.checked })} disabled={!signedIn || savingPreferences || !emailDeliveryAvailable}/> Email risk reviews</label>
-          <label><input type="checkbox" checked={preferences.nightwatch_research} onChange={(event) => void savePreferences({ nightwatch_research: event.target.checked })} disabled={!signedIn || savingPreferences || !emailDeliveryAvailable}/> Email linked research briefs</label>
-          <label><input type="checkbox" checked={preferences.nightwatch_daily_summary} onChange={(event) => void savePreferences({ nightwatch_daily_summary: event.target.checked })} disabled={!signedIn || savingPreferences || !emailDeliveryAvailable}/> Email my daily summary</label>
-        </div>
+        <div className="nw-workspace-alerts"><span>NOTIFICATION PREFERENCES</span><p>Choose in-app and email delivery from your notification center.</p><Link href="/notifications?view=settings" className="nw-inline-link">Manage notification settings ↗</Link></div>
         <button type="button" className="nw-summary-button" onClick={() => void generateSummary()} disabled={!signedIn || summaryBusy}>{summaryBusy ? "Building summary…" : "Generate today's summary"}</button>
       </div>
     </section>

@@ -17,6 +17,7 @@ const navigation: { href: string; label: string; icon: NavigationIconName; techn
   { href: "/flow", label: "Agent flow", icon: "flow" },
   { href: "/markets", label: "Market map", icon: "markets" },
   { href: "/watchlist", label: "Watchlist", icon: "watchlist" },
+  { href: "/notifications", label: "Notifications", icon: "notifications" },
   { href: "/community", label: "Research community", icon: "community" },
   { href: "/strategies", label: "Strategy lab", icon: "strategies", technical: true },
   { href: "/nightwatch", label: "Nightwatch agent", icon: "nightwatch", technical: true },

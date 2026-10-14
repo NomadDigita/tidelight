@@ -21,6 +21,7 @@ import "./product-quick-actions.css";
 import "./overview/intelligent-overview.css";
 import "./tidelight-animated-mark.css";
 import "./account-center.css";
+import "./notifications/notifications.css";
 
 const baseMetadata: Metadata = {
   metadataBase: new URL("https://tidelight.app"),

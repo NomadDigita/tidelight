@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type NavigationIconName = "overview" | "guide" | "research" | "flow" | "community" | "markets" | "strategies" | "nightwatch" | "futures" | "trading" | "watchlist" | "briefs" | "demo" | "systems" | "settings";
+export type NavigationIconName = "overview" | "guide" | "research" | "flow" | "community" | "markets" | "strategies" | "nightwatch" | "futures" | "trading" | "watchlist" | "briefs" | "demo" | "systems" | "settings" | "notifications";
 
 export function NavigationIcon({ name, className }: { name: NavigationIconName; className?: string }) {
   const shared = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -14,12 +14,13 @@ export function NavigationIcon({ name, className }: { name: NavigationIconName; 
     strategies: <><path d="M3 7h18M3 17h18"/><circle cx="8" cy="7" r="2.5" fill="var(--bg)"/><circle cx="16" cy="17" r="2.5" fill="var(--bg)"/></>,
     nightwatch: <><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></>,
     futures: <><path d="M3 18h18M5 14l4-4 3 2 6-7m-4 0h4v4"/><path d="M5 18v2"/></>,
-    trading: <><path d="m3 10 6-6h7l-6 6H3Zm11 4 7-7v7l-6 6H8l6-6Z"/><path d="m8 20 6-6h7"/></>,
+    trading: <><path d="M3 10.1 9.2 4h5.1L8 10.3h7.1l-4.2 4.2H8.2L3 10.1Z"/><path d="m21 13.9-6.2 6.1H9.7l6.3-6.3H8.9l4.2-4.2h2.7l5.2 4.4Z"/></>,
     watchlist: <path d="M5 3.5h14v17l-7-4.5-7 4.5v-17Z"/>,
     briefs: <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></>,
     demo: <><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></>,
     systems: <><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01M12 7h5m-5 10h5"/></>,
     settings: <><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--bg)"/><circle cx="16" cy="12" r="2" fill="var(--bg)"/><circle cx="10" cy="18" r="2" fill="var(--bg)"/></>,
+    notifications: <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></>,
   };
   return <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...shared}>{paths[name]}</svg>;
 }

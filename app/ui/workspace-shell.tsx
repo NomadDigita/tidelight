@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions";
 import { useExperience } from "@/app/ui/theme-provider";
 import { ExperienceSwitch, ThemeQuickSwitch } from "@/app/ui/theme-provider";
@@ -17,6 +17,7 @@ const navigation: { href: string; label: string; icon: NavigationIconName; techn
   { href: "/flow", label: "Agent flow", icon: "flow" },
   { href: "/markets", label: "Market map", icon: "markets" },
   { href: "/watchlist", label: "Watchlist", icon: "watchlist" },
+  { href: "/notifications", label: "Notifications", icon: "notifications" },
   { href: "/community", label: "Research community", icon: "community" },
   { href: "/strategies", label: "Strategy lab", icon: "strategies", technical: true },
   { href: "/nightwatch", label: "Nightwatch agent", icon: "nightwatch", technical: true },
@@ -83,7 +84,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
   const pathname = usePathname();
   const router = useRouter();
   const { mode } = useExperience();
-  const operatorNavigation = isOperator ? [...navigation, { href: "/operator", label: "Operator console", icon: "settings" as NavigationIconName, technical: true }] : navigation;
+  const operatorNavigation = useMemo(() => isOperator ? [...navigation, { href: "/operator", label: "Operator console", icon: "settings" as NavigationIconName, technical: true }] : navigation, [isOperator]);
   const visibleNavigation = mode === "mini" ? operatorNavigation.filter((item) => !item.technical) : operatorNavigation;
   const profileLabel = displayName?.trim() || (email ? email.split("@")[0] : "Guest workspace");
   const profileInitial = profileLabel.slice(0, 1).toUpperCase() || "T";
@@ -95,7 +96,7 @@ export default function WorkspaceShell({ children, email, avatarUrl, displayName
     if (mode !== "mini") return;
     const isTechnicalRoute = operatorNavigation.some((item) => item.technical && (pathname === item.href || pathname.startsWith(`${item.href}/`)));
     if (isTechnicalRoute) router.replace("/");
-  }, [mode, pathname, router]);
+  }, [mode, pathname, router, operatorNavigation]);
 
   useEffect(() => {
     const closeNavigation = () => setMobileMenuPath(null);

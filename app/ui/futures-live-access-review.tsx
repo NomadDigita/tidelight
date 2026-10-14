@@ -10,7 +10,15 @@ export default function FuturesLiveAccessReview(){
   const [error,setError]=useState("");
   const [note,setNote]=useState<Record<string,string>>({});
   const load=useCallback(async()=>{setLoading(true);setError("");try{const response=await fetch("/api/admin/futures-live-access",{cache:"no-store"});const result=await response.json() as {requests?:RequestItem[];error?:string};if(!response.ok)throw new Error(result.error??"Review queue unavailable.");setRequests(result.requests??[]);}catch(cause){setError(cause instanceof Error?cause.message:"Review queue unavailable.");}finally{setLoading(false);}},[]);
-  useEffect(()=>{void load();},[load]);
+  useEffect(()=>{
+    let active=true;
+    fetch("/api/admin/futures-live-access",{cache:"no-store"}).then(async response=>{
+      const result=await response.json() as {requests?:RequestItem[];error?:string};
+      if(!response.ok)throw new Error(result.error??"Review queue unavailable.");
+      if(active)setRequests(result.requests??[]);
+    }).catch(cause=>{if(active)setError(cause instanceof Error?cause.message:"Review queue unavailable.");}).finally(()=>{if(active)setLoading(false);});
+    return()=>{active=false;};
+  },[]);
   async function review(item:RequestItem,status:"approved"|"rejected"){
     setBusy(item.user_id);setError("");try{const response=await fetch("/api/admin/futures-live-access",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:item.user_id,status,note:note[item.user_id]??""})});const result=await response.json() as {error?:string};if(!response.ok)throw new Error(result.error??"Could not save the review.");setRequests(current=>current.filter(request=>request.user_id!==item.user_id));}catch(cause){setError(cause instanceof Error?cause.message:"Could not save the review.");}finally{setBusy("");}
   }

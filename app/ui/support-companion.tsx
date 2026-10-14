@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { useIntelligence } from "@/app/ui/intelligence-provider";
 import { useExperience } from "@/app/ui/theme-provider";
 import { composeIntelligenceBlocks } from "@/lib/intelligence-ui";
@@ -77,7 +77,7 @@ export default function SupportCompanion() {
   const positionRef = useRef<{ x: number; y: number } | null>(null);
   const draggedRef = useRef(false);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
-  function viewportBounds() {
+  const viewportBounds = useCallback(() => {
     const viewport = window.visualViewport;
     const width = Math.max(1, Math.floor(viewport?.width ?? document.documentElement.clientWidth ?? window.innerWidth));
     const height = Math.max(1, Math.floor(viewport?.height ?? document.documentElement.clientHeight ?? window.innerHeight));
@@ -85,11 +85,11 @@ export default function SupportCompanion() {
     const buttonWidth = Math.max(46, launcher?.width ?? 46);
     const buttonHeight = Math.max(46, launcher?.height ?? 46);
     return { maxX: Math.max(4, width - buttonWidth - 4), maxY: Math.max(4, height - buttonHeight - 4) };
-  }
-  function clampPosition(point: { x: number; y: number }) {
+  }, []);
+  const clampPosition = useCallback((point: { x: number; y: number }) => {
     const bounds = viewportBounds();
     return { x: Math.max(4, Math.min(point.x, bounds.maxX)), y: Math.max(4, Math.min(point.y, bounds.maxY)) };
-  }
+  }, [viewportBounds]);
   const suggestions = starts[Object.keys(starts).find((path) => pathname.startsWith(path)) ?? ""] ?? defaultStarts;
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function SupportCompanion() {
     restored = clampPosition(restored);
     const timer = window.setTimeout(() => { positionRef.current = restored; setPosition(restored); }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [clampPosition, viewportBounds]);
 
   function saveConversation(nextMessages: Message[], updatedAt: number) {
     if (!nextMessages.length) return;
@@ -173,7 +173,7 @@ export default function SupportCompanion() {
     };
     window.addEventListener("resize", clamp);
     return () => window.removeEventListener("resize", clamp);
-  }, []);
+  }, [clampPosition]);
   function startDrag(event: ReactPointerEvent<HTMLButtonElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);

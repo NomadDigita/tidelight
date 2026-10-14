@@ -38,7 +38,7 @@ export default async function AccountPage() {
       { label: "Research lens", detail: "Set your account’s default research risk profile", href: "/settings#account-profile", icon: "⌁", value: "Manage" },
       { label: "Withdrawal address & limits", detail: "Manage these only in your Bitget account; Tidelight cannot withdraw", href: "/trading", icon: "⌑", state: "Bitget only" },
       { label: "Deposit routing", detail: "Tidelight does not accept deposits or hold customer balances", icon: "↪", state: "Not offered" },
-      { label: "Notifications & email subscriptions", detail: "Nightwatch alerts, fills, risks, research, and daily brief", href: "/nightwatch#email-preferences", icon: "♧", value: "Manage" },
+      { label: "Notifications & email subscriptions", detail: "Manage your Nightwatch inbox and email delivery choices", href: "/notifications?view=settings", icon: "♧", value: "Manage" },
       { label: "Always on / screen lock", detail: "Screen locking is controlled by your browser and device", icon: "▣", state: "Device setting" },
     ] },
     { id: "general", title: "General", intro: "Help, feedback, product information, and local data controls.", rows: [

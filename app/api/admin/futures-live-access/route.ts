@@ -6,11 +6,6 @@ import { drainEmailQueue } from "@/lib/email/delivery";
 import { isTidelightOperator } from "@/lib/auth/operator-access";
 
 export const dynamic="force-dynamic";
-function isReviewer(user:{app_metadata?:Record<string,unknown>}){
-  const role=user.app_metadata?.role;
-  const roles=user.app_metadata?.roles;
-  return role==="admin"||role==="operator"||(Array.isArray(roles)&&(roles.includes("admin")||roles.includes("operator")));
-}
 export async function GET(){
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();

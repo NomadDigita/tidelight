@@ -1,7 +1,10 @@
 /* Final mobile safety layer. Keep every route inside the device viewport. */
 .mobile-language-toggle { display:none; }
 @media (max-width: 780px) {
-  html, body { max-width: 100%; overflow-x: hidden; }
+  /* `hidden` creates a scrolling ancestor that prevents viewport sticky
+     headers from sticking on mobile. Clip horizontal overflow without
+     capturing vertical page scrolling. */
+  html, body { max-width: 100%; overflow-x: clip; overflow-y: visible; }
   body { -webkit-text-size-adjust: 100%; }
   .app-shell, .main-area, .route-content, .content-wrap { min-width: 0; max-width: 100%; }
   .main-area, .route-content { overflow-x: clip; }
@@ -55,6 +58,10 @@
   input, select, textarea, button { max-width: 100%; }
   img, svg, video { max-width: 100%; }
 }
+
+/* landing.css declares overflow:hidden for artwork clipping; that creates a
+   scroll container and disables the sticky public masthead. */
+.landing-page { overflow-x: clip; overflow-y: visible; }
 
 @media (max-width: 520px) {
   .content-wrap { padding-inline: 12px; }

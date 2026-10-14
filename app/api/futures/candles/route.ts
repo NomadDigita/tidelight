@@ -17,18 +17,22 @@ export async function GET(request: Request) {
   if (!allowed.has(interval)) return Response.json({ error: "Choose a supported chart interval." }, { status: 400, headers: { "Cache-Control": "no-store" } });
   try {
     const params = new URLSearchParams({ category: "USDT-FUTURES", symbol });
-    const [asset, candles, depthResult, tradesResult] = await Promise.all([
+    const [asset, candles, depthResult, tradesResult, fundingResult] = await Promise.all([
       getBitgetStockPerp(symbol),
       getBitgetCandles(symbol, interval as "15m"|"1H"|"4H"|"1D", 120, "USDT-FUTURES"),
       publicData("/market/orderbook?" + new URLSearchParams({ ...Object.fromEntries(params), limit: "20" })),
       publicData("/market/fills?" + new URLSearchParams({ ...Object.fromEntries(params), limit: "30" })).catch(() => ({ data: [] as unknown })),
+      publicData("/market/current-fund-rate?" + new URLSearchParams({ ...Object.fromEntries(params) })).catch(() => ({ data: [] as unknown })),
     ]);
     if (!asset) return Response.json({ error: "This stock perpetual is not currently available from Bitget." }, { status: 503, headers: { "Cache-Control": "no-store" } });
     const depth = depthResult.data as { a?: string[][]; b?: string[][]; ts?: string } | undefined;
     const fills = tradesResult.data as Array<{ tradeId?: string; execId?: string; price?: string; size?: string; side?: string; ts?: string }> | undefined;
+    const funding = (fundingResult.data as Array<{ fundingRate?: string; fundingRateInterval?: string; nextUpdate?: string }> | undefined)?.[0];
+    const fundingRate = Number(funding?.fundingRate), nextFundingAt = Number(funding?.nextUpdate), fundingInterval = Number(funding?.fundingRateInterval);
     return Response.json({
       provider: "Bitget", category: "USDT-FUTURES", interval,
       market: { symbol, lastPrice: asset.lastPrice, change24h: asset.change24h, high24h: asset.high24h, low24h: asset.low24h, open24h: asset.open24h, volume24h: asset.volume24h, turnover24h: asset.turnover24h, providerTimestamp: asset.providerTimestamp },
+      funding: Number.isFinite(fundingRate) && Number.isFinite(nextFundingAt) ? { rate: fundingRate, nextUpdate: nextFundingAt, intervalHours: Number.isFinite(fundingInterval) ? fundingInterval : null } : null,
       candles: candles.slice(-120).map(({ timestamp, open, high, low, close, volume }) => ({ timestamp, open, high, low, close, volume })),
       orderbook: { asks: (depth?.a ?? []).slice(0,12).map(([price,size])=>({price:Number(price),size:Number(size)})).filter(row=>Number.isFinite(row.price)&&Number.isFinite(row.size)), bids: (depth?.b ?? []).slice(0,12).map(([price,size])=>({price:Number(price),size:Number(size)})).filter(row=>Number.isFinite(row.price)&&Number.isFinite(row.size)), timestamp: Number(depth?.ts) || null },
       trades: (fills ?? []).map((trade,index)=>({id:trade.tradeId??trade.execId??String(index),price:Number(trade.price),size:Number(trade.size),side:String(trade.side).toLowerCase()==="buy"?"buy" as const:"sell" as const,timestamp:Number(trade.ts)})).filter(trade=>Number.isFinite(trade.price)&&Number.isFinite(trade.size)&&Number.isFinite(trade.timestamp)).slice(0,30),

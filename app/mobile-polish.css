@@ -196,6 +196,13 @@
   }
 }
 
+@media (max-width: 600px) {
+  .app-shell .operator-identity-card { min-width:0; overflow:hidden; }
+  .app-shell .operator-identity-email { font-size:clamp(15px,4.4vw,22px); }
+  .app-shell .station-panel-head { gap:8px; padding:11px; }
+  .app-shell .station-panel-head > .station-subtle { font-size:10px; }
+}
+
 @media (max-width: 520px) {
   .content-wrap { padding-inline: 12px; }
   .mobile-utility { gap: 6px; }

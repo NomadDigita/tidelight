@@ -63,6 +63,86 @@
    scroll container and disables the sticky public masthead. */
 .landing-page { overflow-x: clip; overflow-y: visible; }
 
+/* Premium liquid-glass mastheads, matched to the draggable quick-action pill. */
+.main-area > .topbar {
+  --masthead-glass: color-mix(in srgb, var(--panel) 48%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  isolation: isolate;
+  overflow: clip;
+  border: 1px solid color-mix(in srgb, var(--brand-teal) 24%, transparent) !important;
+  border-top: 0;
+  border-radius: 0 0 22px 22px;
+  background: var(--masthead-glass) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(175%);
+  backdrop-filter: blur(26px) saturate(175%);
+  box-shadow: 0 12px 34px color-mix(in srgb, #07120e 16%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 28%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--brand-teal) 14%, transparent);
+}
+.main-area > .topbar::before {
+  z-index: 0;
+  background: linear-gradient(112deg,
+    color-mix(in srgb, white 13%, transparent),
+    color-mix(in srgb, var(--brand-teal) 8%, transparent) 34%,
+    transparent 66%,
+    color-mix(in srgb, white 7%, transparent));
+}
+.main-area > .topbar > * { z-index: 1; }
+
+:root[data-theme="daylight"] .main-area > .topbar {
+  --masthead-glass: color-mix(in srgb, #fffefa 53%, transparent);
+  border-color: color-mix(in srgb, #6f9a7a 29%, transparent) !important;
+  box-shadow: 0 12px 34px #263d291a,
+    inset 0 1px 0 #ffffffd4,
+    inset 0 -1px 0 #6f9a7a24;
+}
+:root[data-theme="blue"] .main-area > .topbar {
+  --masthead-glass: color-mix(in srgb, #111b31 52%, transparent);
+  border-color: color-mix(in srgb, #9caeff 29%, transparent) !important;
+  box-shadow: 0 12px 34px #05091666,
+    inset 0 1px 0 #dbe3ff2b,
+    inset 0 -1px 0 #9caeff21;
+}
+
+.landing-nav {
+  border: 1px solid color-mix(in srgb, var(--brand-teal) 24%, transparent);
+  border-top: 0;
+  border-radius: 0 0 24px 24px;
+  background: color-mix(in srgb, var(--bg) 48%, transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(175%);
+  backdrop-filter: blur(26px) saturate(175%);
+  box-shadow: 0 12px 34px color-mix(in srgb, #07120e 16%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 24%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--brand-teal) 14%, transparent);
+}
+:root[data-theme="daylight"] .landing-nav {
+  background: color-mix(in srgb, #fbfaf5 56%, transparent);
+  border-color: color-mix(in srgb, #6f9a7a 28%, transparent);
+  box-shadow: 0 12px 34px #263d291a,
+    inset 0 1px 0 #ffffffd4,
+    inset 0 -1px 0 #6f9a7a24;
+}
+:root[data-theme="blue"] .landing-nav {
+  background: color-mix(in srgb, #111b31 56%, transparent);
+  border-color: color-mix(in srgb, #9caeff 28%, transparent);
+  box-shadow: 0 12px 34px #05091666,
+    inset 0 1px 0 #dbe3ff2b,
+    inset 0 -1px 0 #9caeff21;
+}
+@media (max-width: 780px) {
+  .main-area > .topbar { border-radius: 0 0 20px 20px; }
+  .landing-nav { border-radius: 0 0 20px 20px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .main-area > .topbar, .landing-nav {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--panel) !important;
+  }
+}
+
 @media (max-width: 520px) {
   .content-wrap { padding-inline: 12px; }
   .mobile-utility { gap: 6px; }

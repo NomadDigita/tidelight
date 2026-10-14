@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getBitgetStockPerp, STOCK_PERP_UNIVERSE } from "@/lib/bitget-market";
+import { STOCK_PERP_UNIVERSE } from "@/lib/bitget-market";
 import FuturesTradingStation from "@/app/ui/futures-trading-station";
 import "./paper.css";
 
@@ -24,7 +24,6 @@ export default async function FuturesPage({ searchParams }: { searchParams: Prom
     supabase.from("futures_live_access_requests").select("status,requested_at,reviewed_at,review_note").maybeSingle(),
   ]) : [{ data: null }, { data: null }, { data: [] }, { data: [] }, { data: null }];
   const open = position.data as { symbol: string; direction: "long" | "short"; quantity: number; entry_fill: number; margin: number; entry_fee: number; opened_at: string } | null;
-  const mark = open && STOCK_PERP_UNIVERSE.some(symbol => symbol === open.symbol) ? await getBitgetStockPerp(open.symbol).catch(() => null) : null;
   let connection: { mode: string; live_enabled: boolean; last_validated_at: string | null } | null = null;
   if (user) {
     const admin = createAdminClient();

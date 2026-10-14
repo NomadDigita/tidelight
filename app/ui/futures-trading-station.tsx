@@ -144,6 +144,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
   const [symbol,setSymbol]=useState(initialSymbol??position?.symbol??"NVDAUSDT");
   const [interval,setInterval]=useState<Interval>("15m");
   const [payload,setPayload]=useState<MarketPayload|null>(null);
+  const [marketReceivedAt,setMarketReceivedAt]=useState<number|null>(null);
   const [dataError,setDataError]=useState("");
   const [depthTab,setDepthTab]=useState<"book"|"trades">("book");
   const [size,setSize]=useState("50");
@@ -171,7 +172,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
         const response=await fetch("/api/futures/candles?symbol="+encodeURIComponent(symbol)+"&interval="+encodeURIComponent(interval),{cache:"no-store",signal:controller.signal});
         const next=await response.json() as MarketPayload&{error?:string};
         if(!response.ok)throw new Error(next.error??"Bitget market data is unavailable.");
-        if(active){setPayload(next);setDataError("");}
+        if(active){setPayload(next);setMarketReceivedAt(Date.now());setDataError("");}
       }catch(cause){if(active&&!(cause instanceof DOMException&&cause.name==="AbortError"))setDataError(cause instanceof Error?cause.message:"Bitget market data is unavailable.");}
     };
     void refresh();const timer=window.setInterval(()=>void refresh(),8000);
@@ -228,7 +229,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
   }
   const bestAsk=payload?.orderbook.asks[0]?.price,bestBid=payload?.orderbook.bids[0]?.price;
   const spread=bestAsk&&bestBid?((bestAsk-bestBid)/((bestAsk+bestBid)/2))*10000:null;
-  const freshness=payload?.market.providerTimestamp?Math.max(0,Math.floor((Date.now()-payload.market.providerTimestamp)/1000)):null;
+  const freshness=payload?.market.providerTimestamp&&marketReceivedAt?Math.max(0,Math.floor((marketReceivedAt-payload.market.providerTimestamp)/1000)):null;
   return <div className="content-wrap inner-page futures-station">
     <header className="station-heading"><div><span className="station-eyebrow">TIDELIGHT · {chinese?"BITGET 美股永续合约":"BITGET USDT FUTURES"}</span><h1>{chinese?<>美股 <span>永续合约</span></>:<>US stock <span>perpetuals</span></>}</h1><p>{chinese?"Bitget 实时行情、10,000 USDT 模拟账户，以及经过审批的实盘权限流程。":"Bitget’s live market, a funded $10,000 paper account, and a gated live access path."}</p></div><div className="station-mode"><i/>{liveMode?"LIVE ACCESS APPROVED":"PAPER ACCOUNT"}<span>{liveMode?"LIVE MODE":"SIMULATED EXECUTION"}</span><div className="station-mode-switch" role="group" aria-label="Execution mode"><button type="button" aria-pressed={!liveMode} onClick={()=>setLiveMode(false)}>{chinese?"模拟":"Paper"}</button><button type="button" aria-pressed={liveMode} onClick={switchToLive}>{chinese?"实盘":"Live"}</button></div></div></header>
     {liveStatus==="pending"?<section className="station-live-status pending"><b>Live access review in progress</b><span>Your request is securely queued for review. Reviews typically take minutes to a few hours. You can continue using paper mode while we review it.</span>{liveRequestedAt?<time>{time(liveRequestedAt)}</time>:null}</section>:null}

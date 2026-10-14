@@ -151,7 +151,8 @@
 .mobile-workspace-drawer,
 .mobile-more-menu,
 .product-quick-actions,
-.page-heading {
+.page-heading,
+.app-shell .station-heading {
   --chrome-glass-bg: color-mix(in srgb, var(--panel) 76%, transparent);
   --chrome-glass-edge: color-mix(in srgb, var(--brand-teal) 22%, var(--line));
   background: var(--chrome-glass-bg) !important;
@@ -210,6 +211,16 @@
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
     0 10px 28px color-mix(in srgb, #07120e 7%, transparent);
 }
+.station-heading {
+  padding: 17px 20px;
+  border: 1px solid var(--chrome-glass-edge);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--panel) 63%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+    0 10px 28px color-mix(in srgb, #07120e 7%, transparent);
+}
 .page-heading > * { position: relative; z-index: 1; }
 .page-heading::before {
   content: "";
@@ -235,7 +246,8 @@
 :root[data-theme="daylight"] .mobile-workspace-drawer,
 :root[data-theme="daylight"] .mobile-more-menu,
 :root[data-theme="daylight"] .product-quick-actions,
-:root[data-theme="daylight"] .page-heading {
+:root[data-theme="daylight"] .page-heading,
+:root[data-theme="daylight"] .station-heading {
   --chrome-glass-bg: color-mix(in srgb, #fffefa 70%, transparent);
   --chrome-glass-edge: color-mix(in srgb, #6f9a7a 22%, #dfe1d7);
   box-shadow: 0 12px 34px #263d2914,
@@ -247,7 +259,8 @@
 :root[data-theme="blue"] .mobile-workspace-drawer,
 :root[data-theme="blue"] .mobile-more-menu,
 :root[data-theme="blue"] .product-quick-actions,
-:root[data-theme="blue"] .page-heading {
+:root[data-theme="blue"] .page-heading,
+:root[data-theme="blue"] .station-heading {
   --chrome-glass-bg: color-mix(in srgb, #111b31 72%, transparent);
   --chrome-glass-edge: color-mix(in srgb, #9caeff 23%, #344267);
   box-shadow: 0 12px 34px #05091655,
@@ -257,13 +270,13 @@
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .topbar, .mobile-nav, .mobile-workspace-drawer, .mobile-more-menu,
-  .product-quick-actions, .page-heading, .library-toolbar {
+  .product-quick-actions, .page-heading, .station-heading, .library-toolbar {
     background: var(--panel) !important;
   }
 }
 @media (prefers-reduced-transparency: reduce) {
   .topbar, .mobile-nav, .mobile-workspace-drawer, .mobile-more-menu,
-  .product-quick-actions, .page-heading, .library-toolbar {
+  .product-quick-actions, .page-heading, .station-heading, .library-toolbar {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background: var(--panel) !important;
@@ -271,6 +284,7 @@
 }
 @media (max-width: 780px) {
   .page-heading { padding: 14px 15px; border-radius: 15px; }
+  .app-shell .station-heading { padding: 14px; border-radius: 15px; }
 }
 
 

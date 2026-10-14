@@ -164,9 +164,7 @@
 }
 
 .topbar {
-  position: sticky;
   isolation: isolate;
-  overflow: clip;
 }
 .topbar::before {
   content: "";

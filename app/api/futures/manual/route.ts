@@ -10,11 +10,13 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in to place a futures paper order." }, { status: 401 });
-  let body: { symbol?: unknown; action?: unknown; margin?: unknown };
+  let body: { symbol?: unknown; action?: unknown; margin?: unknown; leverage?: unknown };
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Send a valid workstation order." }, { status: 400 }); }
   const symbol = typeof body.symbol === "string" ? body.symbol.toUpperCase() : "";
   const action = body.action;
   const margin = Number(body.margin);
+  const leverage = Number(body.leverage ?? 10);
+  if (!Number.isInteger(leverage) || leverage < 1 || leverage > 100) return NextResponse.json({ error: "Leverage must be between 1× and 100×." }, { status: 400 });
   if (!STOCK_PERP_UNIVERSE.some((item) => item === symbol) || !["open_long","open_short","close"].includes(String(action))) return NextResponse.json({ error: "Choose a supported perpetual and order action." }, { status: 400 });
   if ((action === "open_long" || action === "open_short") && (!Number.isFinite(margin) || margin < 10 || margin > 250)) return NextResponse.json({ error: "Paper margin must be between 10 and 250 USDT." }, { status: 400 });
   try {
@@ -23,7 +25,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data, error } = await admin.rpc("futures_paper_manual_order", {
       p_user_id: user.id, p_symbol: symbol, p_as_of_ms: market.providerTimestamp,
-      p_reference_price: market.lastPrice, p_action: action, p_margin: action === "close" ? 0 : margin,
+      p_reference_price: market.lastPrice, p_action: action, p_margin: action === "close" ? 0 : margin, p_leverage: leverage,
     });
     if (error) {
       console.error("Futures paper order RPC failed", error.code);

@@ -285,6 +285,71 @@
   .app-shell .station-heading { padding: 14px; border-radius: 15px; }
 }
 
+/* Keep the public masthead pinned while letting the page move beneath it. */
+.landing-page {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, #081013 76%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  border-bottom-color: color-mix(in srgb, #62d6ad 17%, transparent);
+  box-shadow: 0 8px 28px #0208091c, inset 0 1px 0 #ffffff0a;
+}
+
+:root[data-theme="daylight"] .landing-nav {
+  background: color-mix(in srgb, #fbfaf5 78%, transparent);
+  border-bottom-color: #7b9c8138;
+  box-shadow: 0 8px 28px #263d2914, inset 0 1px 0 #ffffffa8;
+}
+:root[data-theme="blue"] .landing-nav {
+  background: color-mix(in srgb, #0d1426 78%, transparent);
+  border-bottom-color: #aebeff2b;
+  box-shadow: 0 8px 28px #05091640, inset 0 1px 0 #dbe3ff12;
+}
+
+/* A movable helper should read as glass, with the page still visible through it. */
+.product-quick-actions {
+  background: color-mix(in srgb, var(--panel) 38%, transparent) !important;
+  -webkit-backdrop-filter: blur(11px) saturate(140%) !important;
+  backdrop-filter: blur(11px) saturate(140%) !important;
+  border-color: color-mix(in srgb, var(--brand-teal) 30%, transparent) !important;
+  box-shadow: 0 12px 30px #02080930,
+    inset 0 1px 0 color-mix(in srgb, white 25%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--brand-teal) 14%, transparent) !important;
+}
+:root[data-theme="daylight"] .product-quick-actions {
+  background: color-mix(in srgb, #fffefa 48%, transparent) !important;
+  border-color: color-mix(in srgb, #6f9a7a 32%, transparent) !important;
+  box-shadow: 0 12px 30px #263d2924, inset 0 1px 0 #ffffffb8 !important;
+}
+:root[data-theme="blue"] .product-quick-actions {
+  background: color-mix(in srgb, #111b31 44%, transparent) !important;
+  border-color: color-mix(in srgb, #9caeff 35%, transparent) !important;
+  box-shadow: 0 12px 30px #05091655, inset 0 1px 0 #dbe3ff20 !important;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .landing-nav { background: #081013e8; }
+  .product-quick-actions { background: color-mix(in srgb, var(--panel) 82%, transparent) !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .landing-nav {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #081013;
+  }
+  .product-quick-actions {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--panel) !important;
+  }
+}
+
 
 
 /* Shared workspace typography and card treatment. Status borders retain their semantic colours. */

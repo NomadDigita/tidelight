@@ -55,7 +55,12 @@
 @media(prefers-reduced-motion:reduce){.tide-guide-panel:before{display:none}}
 
 /* Keep the glass surface legible over busy product pages and avoid duplicate Tide labels while open. */
-.tide-guide-panel{background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 97%,transparent),color-mix(in srgb,var(--panel-2) 97%,transparent))}
+.tide-guide-panel{background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 76%,transparent),color-mix(in srgb,var(--panel-2) 80%,transparent));backdrop-filter:blur(30px) saturate(165%);-webkit-backdrop-filter:blur(30px) saturate(165%);box-shadow:0 30px 90px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 color-mix(in srgb,var(--brand-teal) 16%,transparent),0 0 34px color-mix(in srgb,var(--brand-teal) 11%,transparent)}
+.tide-guide-thread{background:radial-gradient(circle at 50% 2%,color-mix(in srgb,var(--brand-teal) 6%,transparent),transparent 55%),color-mix(in srgb,var(--panel) 42%,transparent)}
+.tide-guide-head{background:radial-gradient(circle at 84% -35%,color-mix(in srgb,var(--brand-teal) 21%,transparent),transparent 64%),linear-gradient(135deg,color-mix(in srgb,var(--panel-2) 66%,transparent),color-mix(in srgb,var(--panel) 56%,transparent));backdrop-filter:blur(18px) saturate(155%);-webkit-backdrop-filter:blur(18px) saturate(155%)}
+.tide-guide-message{border-color:color-mix(in srgb,var(--brand-teal) 15%,var(--line));background:color-mix(in srgb,var(--panel-2) 58%,transparent);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);box-shadow:inset 0 1px 0 color-mix(in srgb,white 10%,transparent)}
+.tide-guide-message.user{background:color-mix(in srgb,var(--brand-teal) 13%,transparent)}
+@media(prefers-reduced-transparency:reduce){.tide-guide-panel{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none}.tide-guide-thread,.tide-guide-head,.tide-guide-message{backdrop-filter:none;-webkit-backdrop-filter:none}.tide-guide-thread{background:var(--panel)}.tide-guide-head{background:var(--panel-2)}.tide-guide-message{background:var(--panel-2)}}
 .tide-guide.is-open .tide-guide-launcher{width:46px;min-width:46px;height:46px;min-height:46px;justify-content:center;gap:0;padding:2px}
 .tide-guide.is-open .tide-guide-launcher>span,.tide-guide.is-open .tide-guide-launcher>i{display:none}
 .tide-guide.is-open .tide-guide-launcher .tide-guide-mark{width:39px;height:39px}

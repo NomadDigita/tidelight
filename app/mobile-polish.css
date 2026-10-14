@@ -433,3 +433,62 @@
   .company-grid { grid-template-columns: 1fr !important; }
   .company-card { min-height: 220px; }
 }
+
+/* Floating and expanded surfaces use the same refracted glass as the masthead.
+   Keep the content layer translucent too, so the card beneath remains visible. */
+:root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog) {
+  position: relative;
+  isolation: isolate;
+  background-color: color-mix(in srgb,var(--panel) 76%,transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(155%);
+  backdrop-filter: blur(28px) saturate(155%);
+  border-color: color-mix(in srgb,var(--brand-teal) 25%,var(--line));
+  box-shadow: 0 28px 86px color-mix(in srgb,#020908 30%,transparent),
+    inset 0 1px 0 color-mix(in srgb,white 22%,transparent),
+    inset 0 -1px 0 color-mix(in srgb,var(--brand-teal) 12%,transparent);
+}
+:root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(125deg,color-mix(in srgb,white 10%,transparent),transparent 34%,transparent 72%,color-mix(in srgb,var(--brand-teal) 5%,transparent));
+}
+:root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog) > * {
+  position: relative;
+}
+:root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog) :is(.source-entry,.session-limits,.workshop-illustration,.workshop-tool-summary,.workshop-tool-grid>button,.feedback-status) {
+  background-color: color-mix(in srgb,var(--panel-2) 62%,transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb,white 12%,transparent);
+}
+:root .app-shell .brief-dialog .source-fields :is(input,textarea) {
+  background-color: color-mix(in srgb,var(--bg) 62%,transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.modal-backdrop,.feedback-scrim,.session-backdrop,.workshop-backdrop {
+  /* The overlay is a positioning/click-dismiss layer only; leave the page vivid. */
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+@media (max-width: 780px) {
+  :root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog) {
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog) {
+    background: var(--panel);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  :root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog)::before { display: none; }
+  :root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog) :is(.source-entry,.session-limits,.workshop-illustration,.workshop-tool-summary,.workshop-tool-grid>button,.feedback-status) { -webkit-backdrop-filter:none;backdrop-filter:none;background:var(--panel-2); }
+  :root .app-shell .brief-dialog .source-fields :is(input,textarea) { -webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg); }
+}

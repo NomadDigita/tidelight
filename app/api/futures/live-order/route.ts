@@ -12,7 +12,7 @@ async function publicInstruments(symbol: string) {
   const query=new URLSearchParams({category:"USDT-FUTURES",symbol});
   const response=await fetch("https://api.bitget.com/api/v3/market/instruments?"+query,{cache:"no-store",signal:AbortSignal.timeout(10000)});
   if(!response.ok)throw new Error("instrument-feed-unavailable");
-  const result=await response.json() as {code?:string;data?:Array<{symbol:string;category:string;status?:string;type?:string;sizeMultiplier?:string;minOrderAmount?:string}>};
+  const result=await response.json() as {code?:string;data?:Array<{symbol:string;category:string;status?:string;type?:string;maxLeverage?:string;sizeMultiplier?:string;minOrderAmount?:string}>};
   if(result.code!=="00000")throw new Error("instrument-feed-unavailable");
   return result.data?.find(item=>item.symbol===symbol&&item.category==="USDT-FUTURES"&&(item.status==="online"||item.status===undefined));
 }
@@ -20,11 +20,13 @@ export async function POST(request:Request) {
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user)return NextResponse.json({error:"Sign in to send a live futures order."},{status:401});
-  let body:{symbol?:unknown;action?:unknown;margin?:unknown;confirmation?:unknown};
+  let body:{symbol?:unknown;action?:unknown;margin?:unknown;leverage?:unknown;confirmation?:unknown};
   try{body=await request.json();}catch{return NextResponse.json({error:"Review the order and try again."},{status:400});}
   const symbol=typeof body.symbol==="string"?body.symbol.toUpperCase():"";
   const action=body.action;
   const margin=Number(body.margin);
+  const leverage=Number(body.leverage??10);
+  if(!Number.isInteger(leverage)||leverage<1||leverage>100)return NextResponse.json({error:"Leverage must be between 1× and 100×."},{status:400});
   if(!STOCK_PERP_UNIVERSE.some(item=>item===symbol)||!["open_long","open_short","close"].includes(String(action)))return NextResponse.json({error:"Choose a supported perpetual and order action."},{status:400});
   if((action==="open_long"||action==="open_short")&&(!Number.isFinite(margin)||margin<10||margin>MAX_MARGIN))return NextResponse.json({error:"Live order margin must be between 10 and 250 USDT."},{status:400});
   try{
@@ -64,29 +66,31 @@ export async function POST(request:Request) {
       if(holdMode==="hedge_mode")posSide=direction;else reduceOnly="yes";
     }else{
       if(positions.length)return NextResponse.json({error:"A Bitget position is already open for this contract. Close it before opening another."},{status:409});
-      if(available<margin)return NextResponse.json({error:"Available Bitget USDT is below the requested isolated margin."},{status:409});
+      if(available<margin+margin*leverage*0.001)return NextResponse.json({error:"Available Bitget USDT is below the requested isolated margin."},{status:409});
       const instrument=await publicInstruments(symbol);
       if(!instrument)return NextResponse.json({error:"Bitget does not currently list this contract for orders."},{status:503});
+      const maxLeverage=Number(instrument.maxLeverage??100);
+      if(leverage>maxLeverage)return NextResponse.json({error:`Bitget caps ${symbol} at ${maxLeverage}× leverage.`},{status:400});
       const step=Number(instrument.sizeMultiplier??"0.000001"),minimum=Number(instrument.minOrderAmount??"0");
-      const raw=margin/market.lastPrice;
+      const raw=margin*leverage/market.lastPrice;
       qty=Number((Math.floor(raw/step)*step).toFixed(8));
       if(!Number.isFinite(qty)||qty<minimum)return NextResponse.json({error:"This margin is below Bitget's minimum order size for the contract."},{status:400});
       side=action==="open_long"?"buy":"sell";
       if(holdMode==="hedge_mode")posSide=action==="open_long"?"long":"short";
       const current=settings.symbolConfigList?.find(item=>item.category==="USDT-FUTURES"&&item.symbol===symbol);
-      if(current?.marginMode!=="isolated"||current?.leverage!=="1"){
-        await bitgetPrivateRequest(credentials,"POST","/api/v3/account/set-leverage",{category:"USDT-FUTURES",symbol,marginMode:"isolated",leverage:"1"});
+      if(current?.marginMode!=="isolated"||current?.leverage!==String(leverage)){
+        await bitgetPrivateRequest(credentials,"POST","/api/v3/account/set-leverage",{category:"USDT-FUTURES",symbol,marginMode:"isolated",leverage:String(leverage),...(holdMode==="hedge_mode"?{posSide:action==="open_long"?"long":"short"}:{})});
       }
     }
     const clientOid="tl"+randomUUID().replaceAll("-","").slice(0,30);
     const payload:Record<string,string>={category:"USDT-FUTURES",symbol,qty:qty.toFixed(8).replace(/0+$/,"").replace(/\.$/,""),side,orderType:"market",marginMode:"isolated",clientOid};
     if(posSide)payload.posSide=posSide;
     if(reduceOnly)payload.reduceOnly=reduceOnly;
-    const {error:auditWriteError}=await supabase.from("security_events").insert({user_id:user.id,event_type:"bitget_order_attempt",metadata:{mode:"live",product:"USDT-FUTURES",symbol,action,margin:action==="close"?null:margin,quantity:qty,createdAt:new Date().toISOString()}});
+    const {error:auditWriteError}=await supabase.from("security_events").insert({user_id:user.id,event_type:"bitget_order_attempt",metadata:{mode:"live",product:"USDT-FUTURES",symbol,action,margin:action==="close"?null:margin,leverage:action==="close"?null:leverage,quantity:qty,createdAt:new Date().toISOString()}});
     if(auditWriteError)return NextResponse.json({error:"Could not write the live order audit record. No order was sent."},{status:503});
     const order=await bitgetPrivateRequest(credentials,"POST","/api/v3/trade/place-order",payload);
     const result=order.data as {orderId?:string;clientOid?:string};
-    return NextResponse.json({accepted:true,symbol,action,side,quantity:qty,referencePrice:market.lastPrice,margin:action==="close"?null:margin,orderId:result?.orderId??null,clientOid:result?.clientOid??clientOid},{headers:{"Cache-Control":"no-store"}});
+    return NextResponse.json({accepted:true,symbol,action,side,quantity:qty,referencePrice:market.lastPrice,margin:action==="close"?null:margin,leverage:action==="close"?null:leverage,notional:action==="close"?null:qty*market.lastPrice,orderId:result?.orderId??null,clientOid:result?.clientOid??clientOid},{headers:{"Cache-Control":"no-store"}});
   }catch(error){
     if(error instanceof BitgetRequestError)return NextResponse.json({error:"Bitget rejected the order or account setting. Check futures trade permission, margin eligibility and contract rules; no success was reported."},{status:422});
     console.warn("Futures live order rejected before success",error instanceof Error?error.name:"unknown");

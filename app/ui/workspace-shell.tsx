@@ -21,7 +21,7 @@ const navigation: { href: string; label: string; icon: NavigationIconName; techn
   { href: "/community", label: "Research community", icon: "community" },
   { href: "/strategies", label: "Strategy lab", icon: "strategies", technical: true },
   { href: "/nightwatch", label: "Nightwatch agent", icon: "nightwatch", technical: true },
-  { href: "/futures", label: "Futures paper desk", icon: "futures", technical: true },
+  { href: "/futures", label: "Stocks perpetual desk", icon: "futures", technical: true },
   { href: "/trading", label: "Bitget trading", icon: "trading", technical: true },
   { href: "/briefs", label: "Saved briefs", icon: "briefs", technical: true },
   { href: "/demo", label: "Product walkthrough", icon: "demo", technical: true },

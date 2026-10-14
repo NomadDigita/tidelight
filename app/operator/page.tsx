@@ -10,7 +10,7 @@ export const metadata = { title: "Operator console | Tidelight" };
 const controls = [
   { eyebrow: "ACCESS GOVERNANCE", title: "Futures live access", detail: "Review requests, terms acceptance, and operator decisions.", href: "/settings/futures-access", action: "Open review queue" },
   { eyebrow: "PRODUCT OPERATIONS", title: "Core workspace controls", detail: "Manage the existing research, account, and execution settings.", href: "/settings", action: "Open settings" },
-  { eyebrow: "EXECUTION OVERSIGHT", title: "US stock perpetuals", detail: "Inspect the Futures workstation and current execution mode.", href: "/futures", action: "Open Futures desk" },
+  { eyebrow: "EXECUTION OVERSIGHT", title: "Stocks perpetual desk", detail: "Inspect the stock perpetual workstation and current execution mode.", href: "/futures", action: "Open Stocks perpetual desk" },
 ];
 
 export default async function OperatorConsolePage() {

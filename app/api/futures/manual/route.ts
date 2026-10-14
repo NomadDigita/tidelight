@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in to place a futures paper order." }, { status: 401 });
-  let body: { symbol?: unknown; action?: unknown; margin?: unknown; leverage?: unknown };
+  let body: { symbol?: unknown; action?: unknown; margin?: unknown; leverage?: unknown; referencePrice?: unknown; priceProtection?: unknown };
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Send a valid workstation order." }, { status: 400 }); }
   const symbol = typeof body.symbol === "string" ? body.symbol.toUpperCase() : "";
   const action = body.action;
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
   try {
     const market = await getBitgetStockPerp(symbol);
     if (!market || !market.lastPrice || !market.providerTimestamp || Date.now() - market.providerTimestamp > 60_000) return NextResponse.json({ error: "Bitget's contract mark is stale. Try again when a fresh quote is available." }, { status: 503 });
+    if (action !== "close" && body.priceProtection === true && (!Number.isFinite(Number(body.referencePrice)) || Number(body.referencePrice) <= 0 || Math.abs(market.lastPrice - Number(body.referencePrice)) / Number(body.referencePrice) > 0.02)) return NextResponse.json({ error: "Price protection paused this order because the quote moved more than 2%. Review the updated market price." }, { status: 409 });
     const admin = createAdminClient();
     const { data, error } = await admin.rpc("futures_paper_manual_order", {
       p_user_id: user.id, p_symbol: symbol, p_as_of_ms: market.providerTimestamp,

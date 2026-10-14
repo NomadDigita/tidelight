@@ -419,3 +419,62 @@
 @media (max-width:780px) { .company-card.is-unavailable { min-height:132px; } }
 .company-chart-caption { margin:0 0 2px; color:var(--faint); font:5px var(--mono); letter-spacing:.06em; text-align:right; }
 @media (max-width:780px) { .company-chart-caption { font-size:4.5px; } }
+
+/* Shared glass treatment for dense workspace panels and account settings. */
+.app-shell .station-panel {
+  border-color:color-mix(in srgb,var(--brand-teal) 16%,var(--line));
+  background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--brand-teal) 5%,transparent),transparent 48%),linear-gradient(145deg,color-mix(in srgb,var(--panel) 97%,var(--brand-teal) 3%),var(--panel));
+  box-shadow:inset 0 1px 0 color-mix(in srgb,white 40%,transparent),0 14px 35px color-mix(in srgb,var(--bg) 14%,transparent);
+}
+.app-shell .station-panel-head {
+  flex-wrap:wrap;
+  background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--brand-teal) 11%,transparent),transparent 62%),linear-gradient(120deg,color-mix(in srgb,var(--panel-2) 84%,transparent),color-mix(in srgb,var(--panel) 91%,transparent));
+  box-shadow:inset 0 1px 0 color-mix(in srgb,white 52%,transparent),0 5px 16px color-mix(in srgb,var(--bg) 10%,transparent);
+}
+.app-shell .station-history,
+.app-shell .station-agent,
+.app-shell .station-account { min-width:0; }
+.app-shell .station-agent summary > span { min-width:0; }
+.app-shell .station-agent summary b,
+.app-shell .station-history h2,
+.app-shell .station-account h2 { overflow-wrap:anywhere; }
+.app-shell :is(.station-ledger-summary>div,.station-open-position,.station-account-grid>div) { min-width:0; }
+.app-shell .station-fill-row > * { min-width:0; overflow-wrap:anywhere; }
+.app-shell .settings-layout { align-items:stretch; }
+.app-shell .settings-card {
+  position:relative;
+  isolation:isolate;
+  min-width:0;
+  overflow:hidden;
+  border-color:color-mix(in srgb,var(--brand-teal) 15%,var(--line));
+  border-radius:16px;
+  background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--brand-teal) 7%,transparent),transparent 55%),linear-gradient(145deg,color-mix(in srgb,var(--panel) 96%,var(--brand-teal) 4%),var(--panel));
+  box-shadow:inset 0 1px 0 color-mix(in srgb,white 46%,transparent),0 12px 32px color-mix(in srgb,var(--bg) 12%,transparent);
+}
+.app-shell .settings-card-head {
+  min-width:0;
+  padding:11px 12px;
+  border:1px solid color-mix(in srgb,var(--brand-teal) 17%,var(--line));
+  border-radius:12px;
+  background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--brand-teal) 10%,transparent),transparent 64%),linear-gradient(120deg,color-mix(in srgb,var(--panel-2) 78%,transparent),color-mix(in srgb,var(--panel) 90%,transparent));
+  box-shadow:inset 0 1px 0 color-mix(in srgb,white 45%,transparent),0 5px 15px color-mix(in srgb,var(--bg) 8%,transparent);
+}
+.app-shell .settings-card-head h2 { min-width:0; overflow-wrap:anywhere; line-height:1.22; }
+.app-shell .settings-card > :not(.settings-card-head) { min-width:0; }
+.app-shell .settings-card :is(p,small,b,a) { overflow-wrap:anywhere; }
+:root[data-theme="daylight"] .app-shell :is(.station-panel,.settings-card) {
+  border-color:color-mix(in srgb,#68a88c 22%,var(--line));
+  background:radial-gradient(ellipse at 7% 0%,rgba(109,190,157,.09),transparent 48%),linear-gradient(145deg,rgba(255,255,255,.88),rgba(247,250,245,.94));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 12px 32px rgba(40,69,53,.09);
+}
+:root[data-theme="daylight"] .app-shell :is(.station-panel-head,.settings-card-head) {
+  border-color:rgba(86,158,128,.23);
+  background:radial-gradient(ellipse at 0 0,rgba(103,186,151,.13),transparent 62%),linear-gradient(120deg,rgba(237,248,241,.91),rgba(249,251,247,.78));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 5px 16px rgba(40,69,53,.07);
+}
+@media(max-width:780px) {
+  .app-shell .settings-card { padding:15px; border-radius:15px; }
+  .app-shell .settings-card-head { padding:10px; }
+  .app-shell .station-panel-head { align-items:flex-start; }
+  .app-shell .station-history .station-panel-head > .station-subtle { max-width:100%; white-space:normal; }
+}

@@ -34,9 +34,9 @@ export default async function OperatorConsolePage() {
     <section className="page-heading compact-heading">
       <div><div className="eyebrow"><span className="eyebrow-line" /> PRIVATE OPERATIONS</div><h1>Operator <span>console.</span></h1><p>Restricted Tidelight controls for authorized operators. Your access is verified on the server.</p></div>
     </section>
-    <section className="settings-card" aria-label="Operator identity">
+    <section className="settings-card operator-identity-card" aria-label="Operator identity">
       <div className="eyebrow small-eyebrow">SIGNED IN AS</div>
-      <h2>{user.email}</h2>
+      <h2 className="operator-identity-email">{user.email}</h2>
       <p>Operator tools are available only to confirmed, allowlisted accounts or accounts assigned an operator role in Supabase Auth.</p>
     </section>
     <div className="settings-layout" style={{ marginTop: 20 }}>

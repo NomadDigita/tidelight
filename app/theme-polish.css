@@ -368,6 +368,46 @@
   border-color:var(--line);
   border-radius:var(--radius-card);
 }
+.app-shell .settings-card {
+  background:
+    radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--brand-teal) 8%,transparent),transparent 58%),
+    linear-gradient(145deg,color-mix(in srgb,var(--panel) 94%,white 2%),var(--panel));
+  box-shadow:0 14px 36px color-mix(in srgb,var(--bg) 12%,transparent),inset 0 1px 0 color-mix(in srgb,white 48%,transparent);
+}
+.app-shell .settings-card > h2,
+.app-shell .settings-card > .eyebrow + h2 {
+  color:var(--text);
+  font-family:var(--display);
+  font-weight:var(--weight-heading);
+}
+.app-shell .operator-identity-email {
+  max-width:100%;
+  min-width:0;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  line-height:1.2;
+}
+.app-shell :is(.station-panel-head,.settings-card-head,.panel-heading,.section-heading,.account-info-heading,.account-center-group-head) {
+  position:relative;
+  isolation:isolate;
+}
+.app-shell .station-panel-head {
+  min-width:0;
+  padding:12px 13px;
+  border:1px solid color-mix(in srgb,var(--brand-teal) 20%,var(--line));
+  border-radius:12px;
+  background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--brand-teal) 9%,transparent),transparent 62%),linear-gradient(120deg,color-mix(in srgb,var(--panel-2) 72%,transparent),color-mix(in srgb,var(--panel) 86%,transparent));
+  box-shadow:inset 0 1px 0 color-mix(in srgb,white 45%,transparent),0 5px 16px color-mix(in srgb,var(--bg) 8%,transparent);
+}
+.app-shell .station-panel-head > div { min-width:0; flex:1 1 auto; }
+.app-shell .station-panel-head h2 { overflow-wrap:anywhere; }
+.app-shell .station-panel-head > .station-subtle { min-width:0; max-width:42%; overflow-wrap:anywhere; text-align:right; }
+.app-shell :is(.settings-card-head,.panel-heading,.section-heading,.account-info-heading,.account-center-group-head) > :is(h2,h3) {
+  color:var(--text);
+  font-family:var(--display);
+  font-weight:var(--weight-heading);
+}
+.app-shell :is(.settings-card-head,.panel-heading,.section-heading,.account-info-heading,.account-center-group-head) > div { min-width:0; }
 .app-shell :is(.nw-run-button,.mfa-challenge button,.experience-switch button.selected) {
   font-weight:var(--weight-emphasis);
 }

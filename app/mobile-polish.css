@@ -476,6 +476,19 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+/* CSS Modules may omit the filter on the session popover in some bundles. */
+:root .app-shell details[open] > div[class*="popover"] {
+  background: linear-gradient(145deg,color-mix(in srgb,var(--panel) 84%,transparent),color-mix(in srgb,var(--panel-2) 87%,transparent));
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root .app-shell details[open] > div[class*="popover"] {
+    background: var(--panel) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
 @media (max-width: 780px) {
   :root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog) {
     -webkit-backdrop-filter: blur(20px) saturate(150%);

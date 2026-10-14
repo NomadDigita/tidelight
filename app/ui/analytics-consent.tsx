@@ -68,12 +68,12 @@ export default function AnalyticsConsent() {
       </div>
     </section>}
     <style jsx global>{`
-      .analytics-consent{position:fixed;z-index:10000;right:14px;bottom:58px;width:min(390px,calc(100vw - 28px));padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:0 10px 34px #0002;color:var(--text)}
+      .analytics-consent{position:relative;z-index:10;width:min(760px,calc(100% - 28px));margin:12px auto 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 5px 18px #0000000d;color:var(--text)}
       .analytics-consent-copy strong{font-size:13px}.analytics-consent-copy p{margin:6px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
       .analytics-consent-actions{display:flex;gap:8px;margin-top:12px}.analytics-consent-actions button,.analytics-privacy-trigger{border:1px solid var(--line);border-radius:999px;padding:9px 13px;background:transparent;color:var(--text);font:600 11px/1.2 inherit;cursor:pointer;white-space:nowrap}.analytics-consent-actions button{flex:1}.analytics-consent-actions .analytics-consent-accept{background:var(--text);color:var(--panel)}
       .analytics-consent-actions button:focus-visible,.analytics-privacy-trigger:focus-visible{outline:3px solid var(--accent,#6b8cff);outline-offset:3px}
       .analytics-privacy-trigger{position:fixed;z-index:9998;right:14px;bottom:14px;background:var(--panel);box-shadow:0 3px 14px #0002;font-size:10px}
-      @media(max-width:600px){.analytics-consent{right:10px;bottom:58px;width:calc(100vw - 20px);padding:13px}.analytics-privacy-trigger{right:10px;bottom:10px}}
+      @media(max-width:600px){.analytics-consent{width:calc(100% - 20px);padding:11px}.analytics-privacy-trigger{right:10px;bottom:10px}}
     `}</style>
   </>;
 }

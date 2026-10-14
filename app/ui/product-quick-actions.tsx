@@ -1,7 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+
+const QUICK_ACTIONS_POSITION_KEY = "tidelight-quick-actions-position-v1";
 
 export default function ProductQuickActions() {
   const pathname = usePathname();
@@ -14,7 +16,59 @@ export default function ProductQuickActions() {
   const messageRef = useRef<HTMLTextAreaElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
+  const drag = useRef<{ pointerId: number; startX: number; startY: number; left: number; top: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
   const requestId = useRef(crypto.randomUUID());
+
+  useEffect(() => {
+    let timer = 0;
+    try {
+      const saved = window.localStorage.getItem(QUICK_ACTIONS_POSITION_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as { left?: unknown; top?: unknown };
+        if (typeof parsed.left === "number" && typeof parsed.top === "number") {
+          timer = window.setTimeout(() => setPosition({ left: Math.max(0, Math.min(parsed.left as number, window.innerWidth - 64)), top: Math.max(0, Math.min(parsed.top as number, window.innerHeight - 64)) }), 0);
+        }
+      }
+    } catch { /* Ignore malformed saved positions. */ }
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  function startDrag(event: ReactPointerEvent<HTMLElement>) {
+    if (event.button !== 0 || (event.target as HTMLElement).closest("button") === null) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    drag.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, left: bounds.left, top: bounds.top, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveDrag(event: ReactPointerEvent<HTMLElement>) {
+    const active = drag.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    const dx = event.clientX - active.startX;
+    const dy = event.clientY - active.startY;
+    if (!active.moved && Math.hypot(dx, dy) < 5) return;
+    active.moved = true;
+    suppressClick.current = true;
+    const next = {
+      left: Math.max(0, Math.min(active.left + dx, window.innerWidth - event.currentTarget.offsetWidth)),
+      top: Math.max(0, Math.min(active.top + dy, window.innerHeight - event.currentTarget.offsetHeight)),
+    };
+    setPosition(next);
+  }
+
+  function endDrag(event: ReactPointerEvent<HTMLElement>) {
+    const active = drag.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    if (active.moved) {
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const next = { left: bounds.left, top: bounds.top };
+      setPosition(next);
+      try { window.localStorage.setItem(QUICK_ACTIONS_POSITION_KEY, JSON.stringify(next)); } catch { /* Keep the current position for this visit. */ }
+      window.setTimeout(() => { suppressClick.current = false; }, 0);
+    }
+    drag.current = null;
+  }
 
   useEffect(() => {
     if (!open) {
@@ -69,7 +123,17 @@ export default function ProductQuickActions() {
   }
 
   return <>
-    <nav className={`product-quick-actions${pathname === "/" ? " is-landing" : ""}`} aria-label="Product help and feedback">
+    <nav
+      className={`product-quick-actions${pathname === "/" ? " is-landing" : ""}${position ? " is-positioned" : ""}`}
+      aria-label="Product help and feedback"
+      title="Drag to move these controls"
+      style={position ? { left: position.left, top: position.top, right: "auto", bottom: "auto" } : undefined}
+      onPointerDown={startDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onClickCapture={(event) => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); } }}
+    >
       <button ref={triggerRef} type="button" onClick={() => { setOpen(true); setStatus(""); }} aria-label="Share feedback" title="Share feedback"><span aria-hidden="true">💡</span></button>
       <button type="button" onClick={askForHelp} aria-label="Get help" title="Get help"><span aria-hidden="true">?</span></button>
     </nav>

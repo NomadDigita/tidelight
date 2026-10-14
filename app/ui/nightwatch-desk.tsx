@@ -75,6 +75,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [alerts, setAlerts] = useState(initialAlerts);
   const [visibleAlerts, setVisibleAlerts] = useState(5);
+  const [alertFilter, setAlertFilter] = useState<"all"|"unread"|"signal"|"fill"|"summary">("all");
   const [visibleDecisions, setVisibleDecisions] = useState(5);
   const [visibleFills, setVisibleFills] = useState(5);
   const [summaryBusy, setSummaryBusy] = useState(false);
@@ -92,6 +93,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     blocked: allRuns.filter(run => run.outcome === "rejected" || run.outcome === "blocked").length,
     unavailable: allRuns.filter(run => run.snapshot?.agent?.confidence === 0).length,
   };
+  const filteredAlerts = alerts.filter((alert) => alertFilter === "all" || (alertFilter === "unread" ? !alert.read_at : alert.kind === alertFilter));
 
   useEffect(() => {
     let cancelled = false;
@@ -248,8 +250,9 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
         <div className="nw-alert-actions"><span className="nw-count">{alerts.filter((alert) => !alert.read_at).length} unread</span>{alerts.some((alert) => !alert.read_at) ? <button type="button" onClick={() => void markAlertRead()} disabled={!signedIn}>Mark all read</button> : null}</div>
       </div>
       {alerts.length ? <>
-        <div className="nw-alert-list" id="nightwatch-alert-history">{alerts.slice(0, visibleAlerts).map((alert) => <article className={`nw-alert ${alert.kind}${alert.read_at ? " read" : ""}`} key={alert.id}><span>{alert.kind === "fill" ? "↗" : alert.kind === "summary" ? "≋" : "!"}</span><div><b>{alert.title}</b><p>{alert.body}</p><small>{date(alert.created_at)}{alert.read_at ? " · read" : " · new"}</small></div>{!alert.read_at ? <button type="button" aria-label={`Mark ${alert.title} as read`} onClick={() => void markAlertRead(alert.id)} disabled={!signedIn}>✓</button> : null}</article>)}</div>
-        <HistoryMoreButton id="nightwatch-alert-history" total={alerts.length} visible={visibleAlerts} onClick={() => setVisibleAlerts((count) => count >= alerts.length ? 5 : Math.min(count + 5, alerts.length))}/>
+        <div className="nw-alert-filters" role="group" aria-label="Filter Nightwatch alerts">{([ ["all","All"],["unread","Unread"],["signal","Signals"],["fill","Paper fills"],["summary","Summaries"] ] as const).map(([key,label])=><button type="button" key={key} aria-pressed={alertFilter===key} onClick={()=>{setAlertFilter(key);setVisibleAlerts(5);}}>{label}{key==="unread"?<span>{alerts.filter(a=>!a.read_at).length}</span>:null}</button>)}</div>
+        {filteredAlerts.length?<><div className="nw-alert-list" id="nightwatch-alert-history">{filteredAlerts.slice(0, visibleAlerts).map((alert) => <article className={`nw-alert ${alert.kind}${alert.read_at ? " read" : ""}`} key={alert.id}><span>{alert.kind === "fill" ? "↗" : alert.kind === "summary" ? "≋" : "!"}</span><div><b>{alert.title}</b><p>{alert.body}</p><small>{date(alert.created_at)}{alert.read_at ? " · read" : " · new"}</small></div>{!alert.read_at ? <button type="button" aria-label={`Mark ${alert.title} as read`} onClick={() => void markAlertRead(alert.id)} disabled={!signedIn}>✓</button> : null}</article>)}</div>
+          <HistoryMoreButton id="nightwatch-alert-history" total={filteredAlerts.length} visible={visibleAlerts} onClick={() => setVisibleAlerts((count) => count >= filteredAlerts.length ? 5 : Math.min(count + 5, filteredAlerts.length))}/></>:<div className="nw-empty-activity"><span>✓</span><div><b>No {alertFilter === "unread" ? "unread " : "matching "}alerts.</b><small>Switch the filter to review another part of the Nightwatch stream.</small></div></div>}
       </> : <div className="nw-empty-activity"><span>!</span><div><b>No alerts yet.</b><small>Signal and paper-fill alerts will appear here after a completed-candle check.</small></div></div>}
     </section>
 

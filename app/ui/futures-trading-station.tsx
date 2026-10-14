@@ -148,6 +148,7 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
   const [marketReceivedAt,setMarketReceivedAt]=useState<number|null>(null);
   const [dataError,setDataError]=useState("");
   const [depthTab,setDepthTab]=useState<"book"|"trades">("book");
+  const [accountTab,setAccountTab]=useState<"positions"|"orders"|"assets">("positions");
   const [size,setSize]=useState("50");
   const [leverage,setLeverage]=useState(10);
   useEffect(()=>{const stored=Number(window.localStorage.getItem("tidelight-stocks-perpetual-leverage"));if(Number.isInteger(stored)&&stored>=1&&stored<=100){const timer=window.setTimeout(()=>setLeverage(stored),0);return()=>window.clearTimeout(timer);}},[]);
@@ -263,6 +264,16 @@ export default function FuturesTradingStation({signedIn,initialSymbol,researchRu
           <div className="station-chart-foot"><span>{payload?.candles.length??0} candles · {interval} · Bitget USDT-FUTURES</span><span>Prices in USDT · completed and current market bars</span></div>
         </section>
         <OrderBook payload={payload} tab={depthTab} setTab={setDepthTab} chinese={chinese}/>
+        <section className="station-panel station-account-ledger" aria-label="Account activity">
+          <div className="station-panel-head"><div><span className="station-eyebrow">TIDELIGHT · ACCOUNT WORKSPACE</span><h2>Orders, positions & assets</h2></div><span className="station-subtle">{liveMode?"Live account":"Private paper ledger"}</span></div>
+          <div className="station-ledger-tabs" role="tablist" aria-label="Account workspace">
+            {([ ["positions","Positions"],["orders","Orders"],["assets","Assets"] ] as const).map(([key,label])=><button key={key} type="button" role="tab" aria-selected={accountTab===key} onClick={()=>setAccountTab(key)}>{label}<span>{key==="positions"?(position?1:0):key==="orders"?fills.length:2}</span></button>)}
+          </div>
+          {accountTab==="positions"?<div className="station-ledger-summary"><div><span>Open {liveMode?"Bitget":"paper"} position</span><b>{position?.symbol===symbol?`${position.direction.toUpperCase()} · ${Number(position.quantity).toFixed(6)} ${symbol.replace("USDT","")}`:"No open position for this contract"}</b></div><div><span>Reference mark</span><b>{price?usd(price,4)+" USDT":"Waiting for verified quote"}</b></div><div><span>Unrealized P&amp;L</span><b className={unrealized>=0?"positive":"negative"}>{position?.symbol===symbol?usd(unrealized):"—"}</b></div></div>:null}
+          {accountTab==="orders"?(fills.length?<div className="station-fill-table"><div className="station-table-labels"><span>Side</span><span>Contract</span><span>Fill price</span><span>Quantity</span><span>Time</span></div>{fills.slice(0,6).map(fill=><div className="station-fill-row" key={fill.id}><b className={tradeSide(fill)==="B"?"buy":"sell"}>{tradeSide(fill)} · {fill.action.replaceAll("_"," ")}</b><span>{fill.symbol}</span><span>{usd(fill.fill_price,4)}</span><span>{Number(fill.quantity).toFixed(5)}</span><small>{time(fill.created_at)}</small></div>)}</div>:<p className="station-empty">No recorded fills yet. Confirm a paper order to add it to this private ledger.</p>):null}
+          {accountTab==="assets"?<div className="station-ledger-summary"><div><span>Account equity</span><b>{usd(equity)}</b></div><div><span>Available cash</span><b>{usd(cash)}</b></div><div><span>Reserved margin</span><b>{usd(position?.margin??0)}</b></div></div>:null}
+          <p className="station-data-note">{liveMode?"Live positions and balances are read from Bitget. Verify final order status with the exchange.":"Paper ledger entries are simulated and never sent to an exchange."}</p>
+        </section>
         {!liveMode?        <section className="station-panel station-history"><div className="station-panel-head"><div><span className="station-eyebrow">{chinese?"私人模拟执行":"PRIVATE SIMULATED EXECUTION"}</span><h2>Recent fills</h2></div><span className="station-subtle">{fills.length} recorded</span></div>{fills.length?<div className="station-fill-table"><div className="station-table-labels"><span>Side</span><span>Contract</span><span>Fill price</span><span>Quantity</span><span>Time</span></div>{fills.slice(0,8).map(fill=><div className="station-fill-row" key={fill.id}><b className={tradeSide(fill)==="B"?"buy":"sell"}>{tradeSide(fill)} · {fill.action.replaceAll("_"," ")}</b><span>{fill.symbol}</span><span>{usd(fill.fill_price,4)}</span><span>{Number(fill.quantity).toFixed(5)}</span><small>{time(fill.created_at)}</small></div>)}</div>:<p className="station-empty">Your paper fills appear here after an order is submitted.</p>}</section>:null}
       </main>
       <aside className="station-aside">

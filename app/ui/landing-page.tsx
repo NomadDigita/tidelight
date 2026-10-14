@@ -41,7 +41,7 @@ export default function LandingPage() {
     <LandingDocsEmbed />
     <section className="landing-method"><div><span className="landing-kicker">THE TIDELIGHT METHOD</span><h2>One question in.<br /><em>One clearer next step out.</em></h2><p>Tide helps you ask naturally. The research agents gather context. The flow shows their work. The market layer keeps the exposure honest. You stay in control of the decision.</p></div><Link href="/flow">Walk through Agent Flow <NavigationTrail className="landing-arrow" /></Link></section>
     <section className="landing-bottom"><div><span className="landing-kicker">BUILT FOR MARKETS THAT NEVER SLEEP</span><h2>Start with the question<br /><em>you actually have.</em></h2></div><Link className="landing-primary" href="/overview">Enter your workspace <NavigationTrail className="landing-arrow" /></Link></section>
-    <footer className="landing-footer"><span>© 2026 Tidelight Research</span><span>Clarity when the bell is quiet.</span><div><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><a href="mailto:thedigitalabiola@gmail.com">Contact</a></div></footer>
+    <footer className="landing-footer"><span>© 2026 Tidelight Research</span><span>Clarity when the bell is quiet.</span><div><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><a href="mailto:support@tidelight.app">Contact</a></div></footer>
   </main>;
 }
 

@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 
 const MEASUREMENT_ID = "G-JOP7HOTN38";
 const CONSENT_KEY = "tidelight-analytics-consent-v1";
-type Choice = "accepted" | "rejected";
+type Choice = "accepted" | "rejected" | "neutral";
 
-function validChoice(value: unknown): value is Choice { return value === "accepted" || value === "rejected"; }
+function validChoice(value: unknown): value is Choice { return value === "accepted" || value === "rejected" || value === "neutral"; }
 
 function enableAnalytics() {
   if (document.getElementById("tidelight-google-analytics")) return;
@@ -31,6 +31,8 @@ declare global {
 
 export default function AnalyticsConsent() {
   const [open, setOpen] = useState(false);
+  const [resolved, setResolved] = useState(false);
+  const [hasChoice, setHasChoice] = useState(false);
   const [accountChoice, setAccountChoice] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -41,7 +43,7 @@ export default function AnalyticsConsent() {
     const apply = (choice: Choice) => {
       window.localStorage.setItem(CONSENT_KEY, choice);
       if (choice === "accepted") enableAnalytics();
-      if (active) setOpen(false);
+      if (active) { setOpen(false); setHasChoice(true); setResolved(true); }
     };
     void (async () => {
       try {
@@ -49,8 +51,9 @@ export default function AnalyticsConsent() {
         if (response.status === 401) {
           if (!active) return;
           setAccountChoice(false);
-          if (validChoice(local)) { if (local === "accepted") enableAnalytics(); }
+          if (validChoice(local)) { if (local === "accepted") enableAnalytics(); setHasChoice(true); }
           else setOpen(true);
+          setResolved(true);
           return;
         }
         if (!response.ok) throw new Error("Account privacy settings are unavailable.");
@@ -59,15 +62,20 @@ export default function AnalyticsConsent() {
         setAccountChoice(true);
         if (validChoice(data.choice)) { apply(data.choice); return; }
         if (validChoice(local)) {
+          if (local === "neutral") { apply(local); return; }
           const saved = await fetch("/api/privacy/analytics-consent", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ choice: local }) });
-          if (saved.ok) { if (active) apply(local); return; }
+          if (active) apply(local);
+          if (saved.ok) return;
+          return;
         }
         setOpen(true);
+        setResolved(true);
       } catch {
         if (!active) return;
         setAccountChoice(null);
-        if (validChoice(local)) { if (local === "accepted") enableAnalytics(); }
+        if (validChoice(local)) { if (local === "accepted") enableAnalytics(); setHasChoice(true); }
         else setOpen(true);
+        setResolved(true);
       }
     })();
     return () => { active = false; };
@@ -77,12 +85,13 @@ export default function AnalyticsConsent() {
     setSaving(true);
     setError("");
     try {
-      if (accountChoice !== false) {
+      if (next !== "neutral" && accountChoice !== false) {
         const response = await fetch("/api/privacy/analytics-consent", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ choice: next }) });
         if (!(accountChoice === null && response.status === 401) && !response.ok) throw new Error("We couldn’t save this choice to your account. Please try again.");
       }
       window.localStorage.setItem(CONSENT_KEY, next);
       setOpen(false);
+      setHasChoice(true);
       if (next === "accepted") enableAnalytics();
       else window.gtag?.("consent", "update", { analytics_storage: "denied" });
     } catch (cause) {
@@ -91,14 +100,15 @@ export default function AnalyticsConsent() {
   }, [accountChoice]);
 
   return <>
-    {!open && <button className="analytics-privacy-trigger" type="button" onClick={() => setOpen(true)}>Privacy choices</button>}
+    {resolved && !open && !hasChoice && <button className="analytics-privacy-trigger" type="button" onClick={() => setOpen(true)}>Privacy choices</button>}
     {open && <section className="analytics-consent" aria-label="Analytics privacy choices" aria-live="polite">
       <div className="analytics-consent-copy">
         <strong>Choose your analytics setting</strong>
-        <p>Analytics stays off unless you allow it. Your choice is saved to your Tidelight account when signed in, or to this browser when signed out. You can change it any time from Privacy choices. No advertising cookies are enabled.</p>
+        <p>Analytics stays off unless you allow it. Your choice is saved to your Tidelight account when signed in, or to this browser when signed out. You can dismiss this notice without enabling analytics. No advertising cookies are enabled.</p>
         {error && <p role="alert" className="analytics-consent-error">{error}</p>}
       </div>
       <div className="analytics-consent-actions">
+        <button type="button" className="analytics-consent-neutral" disabled={saving} onClick={() => void saveChoice("neutral")}>Not now</button>
         <button type="button" className="analytics-consent-reject" disabled={saving} onClick={() => void saveChoice("rejected")}>{saving ? "Saving…" : "Reject analytics"}</button>
         <button type="button" className="analytics-consent-accept" disabled={saving} onClick={() => void saveChoice("accepted")}>{saving ? "Saving…" : "Allow analytics"}</button>
       </div>

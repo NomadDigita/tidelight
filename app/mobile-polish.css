@@ -482,12 +482,46 @@
   -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
   backdrop-filter: blur(24px) saturate(155%) !important;
 }
+:root .tide-guide-panel {
+  background: linear-gradient(145deg,color-mix(in srgb,var(--panel) 84%,transparent),color-mix(in srgb,var(--panel-2) 87%,transparent)) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(160%) !important;
+  backdrop-filter: blur(26px) saturate(160%) !important;
+}
+:root .tide-guide-panel .tide-guide-head {
+  background: linear-gradient(135deg,color-mix(in srgb,var(--panel-2) 76%,transparent),color-mix(in srgb,var(--panel) 72%,transparent)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+  backdrop-filter: blur(18px) saturate(150%) !important;
+}
+:root .tide-guide-panel .tide-guide-thread {
+  background: color-mix(in srgb,var(--panel) 64%,transparent) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(150%) !important;
+  backdrop-filter: blur(22px) saturate(150%) !important;
+}
+:root .tide-guide-panel .tide-guide-message {
+  background: color-mix(in srgb,var(--panel-2) 78%,transparent) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(145%) !important;
+  backdrop-filter: blur(16px) saturate(145%) !important;
+}
+:root .tide-guide-panel .tide-guide-message.user {
+  background: color-mix(in srgb,var(--brand-teal) 16%,var(--panel) 84%) !important;
+}
 @media (prefers-reduced-transparency: reduce) {
   :root .app-shell details[open] > div[class*="popover"] {
     background: var(--panel) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
+  :root .tide-guide-panel,
+  :root .tide-guide-panel .tide-guide-head,
+  :root .tide-guide-panel .tide-guide-thread,
+  :root .tide-guide-panel .tide-guide-message {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  :root .tide-guide-panel { background: var(--panel) !important; }
+  :root .tide-guide-panel .tide-guide-head,
+  :root .tide-guide-panel .tide-guide-thread,
+  :root .tide-guide-panel .tide-guide-message { background: var(--panel-2) !important; }
 }
 @media (max-width: 780px) {
   :root .app-shell :is(.brief-dialog,.session-sheet,.workshop-sheet,.feedback-dialog) {

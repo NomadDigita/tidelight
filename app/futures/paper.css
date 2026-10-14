@@ -194,3 +194,4 @@
 @keyframes station-dyor-word-shimmer{0%,100%{background-position:50% 8%;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--mint) 26%,transparent)) drop-shadow(0 0 32px color-mix(in srgb,var(--mint) 15%,transparent));opacity:.27}50%{background-position:50% 94%;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--mint) 50%,transparent)) drop-shadow(0 0 54px color-mix(in srgb,var(--mint) 30%,transparent));opacity:.43}}
 @media(max-width:760px){.station-dyor-glass:after{right:10px;bottom:9px;font-size:clamp(56px,17vw,82px);opacity:.24}.station-dyor-orbit{width:92%;height:82px}}
 @media(prefers-reduced-motion:reduce){.station-dyor-glass:after{animation:none}}
+.workshop-paper-order-watch{margin:11px 0;padding:10px 12px;border:1px solid color-mix(in srgb,#d5a34f 28%,var(--line));border-left:2px solid #d5a34f;border-radius:8px;background:color-mix(in srgb,#d5a34f 6%,var(--bg));color:var(--muted);font:9px/1.55 var(--font)}

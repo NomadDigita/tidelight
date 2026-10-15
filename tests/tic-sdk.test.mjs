@@ -38,3 +38,28 @@ test("client rejects unsafe URLs and malformed parameters before making calls", 
   await assert.rejects(client.listTokenizedEquities({ limit: 101 }), /limit/);
   await assert.rejects(client.listTokenizedEquities({ cursor: "../../etc" }), /cursor/);
 });
+
+test("research client submits an idempotent job and reads its completed snapshot", async () => {
+  const calls = [];
+  const jobId = "01234567-89ab-4cde-8fab-0123456789ab";
+  const client = new TidelightClient({ apiKey: key, maxRetries: 0, fetch: async (url, init) => {
+    calls.push({ url: String(url), init });
+    return (init.method === "POST"
+      ? Response.json({ job_id: jobId, status: "queued", duplicate: false, request_id: "start" }, { status: 202 })
+      : Response.json({ job_id: jobId, ticker: "NVDA", status: "complete", attempts: 1, max_attempts: 3, result: { type: "company_snapshot" }, error: null, created_at: "2026-01-01T00:00:00Z", started_at: null, completed_at: "2026-01-01T00:01:00Z", retry_at: null, request_id: "status" }));
+  } });
+  const accepted = await client.startCompanyResearch("NVDA", "idem-key-0001");
+  assert.equal(accepted.job_id, jobId);
+  assert.equal(calls[0].init.headers["Idempotency-Key"], "idem-key-0001");
+  const result = await client.waitForResearchJob(jobId, { intervalMs: 250, timeoutMs: 500 });
+  assert.equal(result.status, "complete");
+  assert.equal(result.result.type, "company_snapshot");
+  assert.equal(calls[1].url, `https://tidelight.app/api/v1/research/jobs/${jobId}`);
+});
+
+test("research client validates job identifiers and preserves scope failures", async () => {
+  const client = new TidelightClient({ apiKey: key, maxRetries: 0, fetch: async () => Response.json({ error: { code: "insufficient_scope", message: "Missing scope", request_id: "denied" } }, { status: 403 }) });
+  await assert.rejects(client.getResearchJob("../secret"), /job ID/);
+  await assert.rejects(client.startCompanyResearch("NVDA", "short"), /idempotencyKey/);
+  await assert.rejects(client.startCompanyResearch("NVDA", "idem-key-0002"), error => error.code === "insufficient_scope" && error.requestId === "denied");
+});

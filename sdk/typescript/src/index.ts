@@ -18,6 +18,22 @@ export type InstrumentPage = {
   request_id: string;
 };
 
+export type ResearchJobStatus = "queued" | "running" | "retry_wait" | "complete" | "failed" | "cancelled";
+export type ResearchJob = {
+  job_id: string;
+  ticker: string;
+  status: ResearchJobStatus;
+  attempts: number;
+  max_attempts: number;
+  result: Record<string, unknown> | null;
+  error: { code: string; message: string } | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  retry_at: string | null;
+  request_id: string;
+};
+
 export class TidelightApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -92,6 +108,64 @@ export class TidelightClient {
         await this.pause(attempt, response.headers.get("retry-after"), options.signal);
         continue;
       }
+      throw new TidelightApiError(response.status, typeof detail.code === "string" ? detail.code : "api_error", typeof detail.message === "string" ? detail.message : "Tidelight API request failed.", typeof detail.request_id === "string" ? detail.request_id : response.headers.get("x-request-id"));
+    }
+  }
+
+  async startCompanyResearch(ticker: string, idempotencyKey: string, options: { signal?: AbortSignal } = {}) {
+    if (!/^[A-Za-z][A-Za-z0-9.]{0,9}$/.test(ticker)) throw new TypeError("ticker must be a supported stock symbol.");
+    if (!/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey)) throw new TypeError("idempotencyKey must be 8 to 128 valid characters.");
+    return this.jobRequest<{ job_id: string; status: ResearchJobStatus; duplicate: boolean; request_id: string }>("/research/jobs", "POST", { ticker }, idempotencyKey, options.signal);
+  }
+
+  async getResearchJob(jobId: string, options: { signal?: AbortSignal } = {}): Promise<ResearchJob> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jobId)) throw new TypeError("Invalid research job ID.");
+    return this.jobRequest<ResearchJob>(`/research/jobs/${jobId}`, "GET", undefined, undefined, options.signal);
+  }
+
+  async cancelResearchJob(jobId: string, options: { signal?: AbortSignal } = {}) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jobId)) throw new TypeError("Invalid research job ID.");
+    return this.jobRequest<{ job_id: string; status: string; request_id: string }>(`/research/jobs/${jobId}`, "DELETE", undefined, undefined, options.signal);
+  }
+
+  async waitForResearchJob(jobId: string, options: { intervalMs?: number; timeoutMs?: number; signal?: AbortSignal } = {}): Promise<ResearchJob> {
+    const intervalMs = options.intervalMs ?? 2000, timeoutMs = options.timeoutMs ?? 120000;
+    if (!Number.isInteger(intervalMs) || intervalMs < 250 || intervalMs > 30000 || !Number.isInteger(timeoutMs) || timeoutMs < intervalMs || timeoutMs > 600000) throw new RangeError("Polling interval or timeout is out of range.");
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const job = await this.getResearchJob(jobId, options);
+      if (["complete", "failed", "cancelled"].includes(job.status)) return job;
+      await new Promise<void>((resolve, reject) => {
+        const done = () => { options.signal?.removeEventListener("abort", abort); resolve(); };
+        const timer = setTimeout(done, Math.min(intervalMs, deadline - Date.now()));
+        const abort = () => { clearTimeout(timer); options.signal?.removeEventListener("abort", abort); reject(options.signal?.reason); };
+        if (options.signal?.aborted) abort(); else options.signal?.addEventListener("abort", abort, { once: true });
+      });
+    }
+    throw new TidelightApiError(0, "poll_timeout", "The research job did not finish before the polling timeout.", null);
+  }
+
+  private async jobRequest<T>(path: string, method: "GET" | "POST" | "DELETE", body?: unknown, idempotencyKey?: string, signal?: AbortSignal): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    for (let attempt = 0; ; attempt++) {
+      const controller = new AbortController(); const abort = () => controller.abort(signal?.reason);
+      const timer = setTimeout(() => controller.abort(), this.timeoutMs); signal?.addEventListener("abort", abort, { once: true });
+      let response: Response; let payload: unknown;
+      try {
+        const headers: Record<string, string> = { Authorization: `Bearer ${this.apiKey}`, Accept: "application/json" };
+        if (body) headers["Content-Type"] = "application/json";
+        if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+        response = await this.transport(url, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}), signal: controller.signal });
+        try { payload = await response.json(); } catch { payload = null; }
+      } catch (error) {
+        if (signal?.aborted) throw error;
+        if (attempt >= this.maxRetries) throw new TidelightApiError(0, "network_error", "The Tidelight API could not be reached.", null);
+        await this.pause(attempt, undefined, signal); continue;
+      } finally { clearTimeout(timer); signal?.removeEventListener("abort", abort); }
+      if (response.ok && payload && typeof payload === "object") return payload as T;
+      const detail = payload && typeof payload === "object" && "error" in payload && payload.error && typeof payload.error === "object" ? payload.error as Record<string, unknown> : {};
+      if ([429, 502, 503, 504].includes(response.status) && attempt < this.maxRetries) { await this.pause(attempt, response.headers.get("retry-after"), signal); continue; }
+      if (response.ok) throw new TidelightApiError(response.status, "invalid_response", "The Tidelight API returned an invalid response.", response.headers.get("x-request-id"));
       throw new TidelightApiError(response.status, typeof detail.code === "string" ? detail.code : "api_error", typeof detail.message === "string" ? detail.message : "Tidelight API request failed.", typeof detail.request_id === "string" ? detail.request_id : response.headers.get("x-request-id"));
     }
   }

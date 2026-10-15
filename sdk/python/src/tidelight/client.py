@@ -34,6 +34,22 @@ class InstrumentPage:
     request_id: str
 
 
+@dataclass(frozen=True)
+class ResearchJob:
+    job_id: str
+    ticker: str
+    status: str
+    attempts: int
+    max_attempts: int
+    result: dict[str, Any] | None
+    error: dict[str, str] | None
+    created_at: str
+    started_at: str | None
+    completed_at: str | None
+    retry_at: str | None
+    request_id: str
+
+
 class ApiError(Exception):
     def __init__(self, status: int, code: str, message: str, request_id: str | None = None):
         super().__init__(message)
@@ -109,6 +125,65 @@ class Client:
             if page.next_cursor == cursor:
                 raise ApiError(0, "invalid_response", "The API returned a repeated pagination cursor.", page.request_id)
             cursor = page.next_cursor
+
+    def start_company_research(self, ticker: str, idempotency_key: str) -> dict[str, Any]:
+        if not isinstance(ticker, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9.]{0,9}", ticker):
+            raise ValueError("ticker must be a supported stock symbol.")
+        if not isinstance(idempotency_key, str) or not re.fullmatch(r"[A-Za-z0-9._:-]{8,128}", idempotency_key):
+            raise ValueError("idempotency_key must be 8 to 128 valid characters.")
+        return self._job_request("/research/jobs", "POST", {"ticker": ticker}, idempotency_key)
+
+    def get_research_job(self, job_id: str) -> ResearchJob:
+        if not isinstance(job_id, str) or not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", job_id, re.I):
+            raise ValueError("Invalid research job ID.")
+        return ResearchJob(**self._job_request(f"/research/jobs/{job_id}", "GET"))
+
+    def cancel_research_job(self, job_id: str) -> dict[str, Any]:
+        if not isinstance(job_id, str) or not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", job_id, re.I):
+            raise ValueError("Invalid research job ID.")
+        return self._job_request(f"/research/jobs/{job_id}", "DELETE")
+
+    def wait_for_research_job(self, job_id: str, *, interval: float = 2, timeout: float = 120) -> ResearchJob:
+        if not 0.25 <= interval <= 30 or not interval <= timeout <= 600:
+            raise ValueError("Polling interval or timeout is out of range.")
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            job = self.get_research_job(job_id)
+            if job.status in {"complete", "failed", "cancelled"}:
+                return job
+            self._sleeper(min(interval, max(0, deadline - time.monotonic())))
+        raise ApiError(0, "poll_timeout", "The research job did not finish before the polling timeout.")
+
+    def _job_request(self, path: str, method: str, body: dict[str, Any] | None = None, idempotency_key: str | None = None) -> dict[str, Any]:
+        headers = {"Authorization": f"Bearer {self._api_key}", "Accept": "application/json"}
+        data = None
+        if body is not None:
+            data = json.dumps(body).encode()
+            headers["Content-Type"] = "application/json"
+        if idempotency_key:
+            headers["Idempotency-Key"] = idempotency_key
+        url = f"{self._base_url}{path}"
+        for attempt in range(self._max_retries + 1):
+            request = Request(url, data=data, headers=headers, method=method)
+            try:
+                with self._opener(request, timeout=self._timeout) as response:
+                    payload = json.load(response)
+                    if not isinstance(payload, dict):
+                        raise ApiError(response.status, "invalid_response", "The Tidelight API returned an invalid response.", response.headers.get("X-Request-Id"))
+                    return payload
+            except HTTPError as error:
+                try:
+                    details = json.load(error).get("error", {})
+                except (ValueError, AttributeError):
+                    details = {}
+                if error.code in {429, 502, 503, 504} and attempt < self._max_retries:
+                    self._pause(attempt, error.headers.get("Retry-After")); continue
+                raise ApiError(error.code, details.get("code", "api_error"), details.get("message", "Tidelight API request failed."), details.get("request_id") or error.headers.get("X-Request-Id")) from None
+            except (URLError, TimeoutError, OSError):
+                if attempt >= self._max_retries:
+                    raise ApiError(0, "network_error", "The Tidelight API could not be reached.") from None
+                self._pause(attempt, None)
+        raise RuntimeError("Unreachable retry state")
 
     def _pause(self, attempt: int, retry_after: str | None) -> None:
         delay = min(2.0, 0.25 * 2**attempt)

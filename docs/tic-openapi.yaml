@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Tidelight Intelligence Cloud API
   version: 1.0.0
-  description: The implemented read only developer API. Tokenized equity spot data is distinct from underlying US stock and perpetual contract data.
+  description: The versioned developer API exposes read only market data and permission scoped asynchronous research jobs. Tokenized equity spot data is distinct from underlying US stock and perpetual contract data.
 servers:
   - url: https://tidelight.app/api/v1
 security:
@@ -42,6 +42,83 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
         '429': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
+  /research/jobs:
+    post:
+      operationId: startCompanySnapshot
+      summary: Start an asynchronous company research snapshot
+      description: Requires a key with research:run. Each project can create up to 10 jobs per rolling hour. Reusing an Idempotency-Key with the same ticker returns the existing job.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 8, maxLength: 128, pattern: '^[A-Za-z0-9._:-]+$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticker]
+              properties:
+                ticker: { type: string, description: Supported US stock ticker, example: NVDA }
+      responses:
+        '202':
+          description: New research snapshot queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartResearchJobResponse'
+        '200':
+          description: Existing idempotent job returned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StartResearchJobResponse' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /research/jobs/{job_id}:
+    parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      operationId: getResearchJob
+      summary: Get a research job status and completed snapshot
+      responses:
+        '200':
+          description: Job status; result is present only after successful completion
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResearchJob' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: cancelResearchJob
+      summary: Cancel a queued job or request cancellation of a running job
+      responses:
+        '202':
+          description: Cancellation accepted or requested for a running job
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [job_id, status, request_id]
+                properties:
+                  job_id: { type: string, format: uuid }
+                  status: { type: string, enum: [cancelled, cancellation_requested] }
+                  request_id: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     tidelightKey: { type: http, scheme: bearer, bearerFormat: Tidelight API key }
@@ -62,6 +139,80 @@ components:
                   message: { type: string }
                   request_id: { type: string, format: uuid }
   schemas:
+    StartResearchJobResponse:
+      type: object
+      required: [job_id, status, duplicate, request_id]
+      properties:
+        job_id: { type: string, format: uuid }
+        status: { type: string, enum: [queued, running, retry_wait, complete, failed, cancelled] }
+        duplicate: { type: boolean }
+        request_id: { type: string, format: uuid }
+    ResearchJob:
+      type: object
+      required: [job_id, ticker, status, attempts, max_attempts, result, request_id]
+      properties:
+        job_id: { type: string, format: uuid }
+        ticker: { type: string }
+        status: { type: string, enum: [queued, running, retry_wait, complete, failed, cancelled] }
+        attempts: { type: integer, minimum: 0, maximum: 3 }
+        max_attempts: { type: integer, const: 3 }
+        result: { oneOf: [{ $ref: '#/components/schemas/CompanySnapshot' }, { type: 'null' }] }
+        error: { oneOf: [{ $ref: '#/components/schemas/ApiError' }, { type: 'null' }] }
+        created_at: { type: string, format: date-time }
+        started_at: { type: [string, 'null'], format: date-time }
+        completed_at: { type: [string, 'null'], format: date-time }
+        retry_at: { type: [string, 'null'], format: date-time }
+        request_id: { type: string, format: uuid }
+    CompanySnapshot:
+      type: object
+      required: [type, ticker, generated_at, market, evidence, limitations]
+      properties:
+        type: { type: string, const: company_snapshot }
+        ticker: { type: string }
+        generated_at: { type: string, format: date-time }
+        market:
+          type: object
+          required: [tokenized_equity_spot, stock_perpetual]
+          properties:
+            tokenized_equity_spot: { type: array, items: { $ref: '#/components/schemas/Instrument' } }
+            stock_perpetual: { oneOf: [{ $ref: '#/components/schemas/StockPerpetual' }, { type: 'null' }] }
+        evidence:
+          type: object
+          required: [mode, note, items]
+          properties:
+            mode: { type: string, const: headline_discovery }
+            note: { type: string }
+            items: { type: array, items: { $ref: '#/components/schemas/HeadlineReference' } }
+        limitations: { type: array, items: { type: string } }
+    StockPerpetual:
+      type: object
+      required: [symbol, instrument_type, underlying_ticker, issuer_name, quote_currency, last_price, change_24h, provider_timestamp, source]
+      properties:
+        symbol: { type: string }
+        instrument_type: { type: string, const: stock_perpetual }
+        underlying_ticker: { type: string }
+        issuer_name: { type: string }
+        quote_currency: { type: string }
+        last_price: { type: number }
+        change_24h: { type: [number, 'null'] }
+        provider_timestamp: { type: [integer, 'null'] }
+        source: { type: string, const: Bitget USDT perpetual }
+    HeadlineReference:
+      type: object
+      required: [title, url, publisher, published_at, snippet, discovered_via]
+      properties:
+        title: { type: string }
+        url: { type: string, format: uri }
+        publisher: { type: string }
+        published_at: { type: [string, 'null'], format: date-time }
+        snippet: { type: string }
+        discovered_via: { type: string }
+    ApiError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
     Instrument:
       type: object
       required: [symbol, instrument_type, underlying_ticker, issuer_name, quote_currency, last_price, change_24h, provider_timestamp, market_session_status, source]

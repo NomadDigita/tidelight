@@ -1,0 +1,65 @@
+import io
+import json
+import unittest
+from urllib.error import HTTPError
+from urllib.parse import parse_qs, urlparse
+
+from tidelight import ApiError, Client
+
+KEY = "tl_test_" + "a" * 43
+INSTRUMENT = {"symbol": "RNVDAUSDT", "instrument_type": "tokenized_equity_spot", "underlying_ticker": "NVDA", "issuer_name": "NVIDIA", "quote_currency": "USDT", "last_price": 1.0, "change_24h": None, "provider_timestamp": None, "market_session_status": "available", "source": "Bitget Reality spot"}
+
+
+class FakeResponse(io.BytesIO):
+    def __init__(self, data):
+        super().__init__(json.dumps(data).encode())
+        self.status = 200
+        self.headers = {}
+
+
+class ClientTests(unittest.TestCase):
+    def test_pagination_and_bearer_header(self):
+        calls = []
+
+        def opener(request, timeout):
+            self.assertEqual(request.get_header("Authorization"), "Bearer " + KEY)
+            calls.append(parse_qs(urlparse(request.full_url).query))
+            return FakeResponse({"data": [INSTRUMENT], "next_cursor": "RNVDAUSDT" if len(calls) == 1 else None, "generated_at": 1, "request_id": "test"})
+
+        client = Client(KEY, opener=opener)
+        self.assertEqual(len(list(client.tokenized_equities())), 2)
+        self.assertEqual(calls[1]["cursor"], ["RNVDAUSDT"])
+
+    def test_transient_retry_and_structured_error(self):
+        calls = []
+
+        def opener(request, timeout):
+            calls.append(1)
+            if len(calls) == 1:
+                raise HTTPError(request.full_url, 503, "Unavailable", {"Retry-After": "0"}, io.BytesIO(b'{"error":{"code":"provider_unavailable","message":"Retry"}}'))
+            return FakeResponse({"data": [], "next_cursor": None, "generated_at": 1, "request_id": "success"})
+
+        client = Client(KEY, opener=opener, sleeper=lambda _: None, max_retries=1)
+        self.assertEqual(client.list_tokenized_equities().request_id, "success")
+        self.assertEqual(len(calls), 2)
+
+        def denied(request, timeout):
+            raise HTTPError(request.full_url, 401, "Denied", {"X-Request-Id": "denied"}, io.BytesIO(b'{"error":{"code":"unauthorized","message":"Invalid key"}}'))
+
+        with self.assertRaises(ApiError) as caught:
+            Client(KEY, opener=denied).list_tokenized_equities()
+        self.assertEqual(caught.exception.request_id, "denied")
+        self.assertNotIn(KEY, str(caught.exception))
+
+    def test_input_validation(self):
+        with self.assertRaises(ValueError):
+            Client(KEY, base_url="http://example.com/api/v1")
+        client = Client(KEY, opener=lambda *_args, **_kwargs: self.fail("transport called"))
+        with self.assertRaises(ValueError):
+            client.list_tokenized_equities(limit=101)
+        with self.assertRaises(ValueError):
+            client.list_tokenized_equities(cursor="../../etc")
+
+
+if __name__ == "__main__":
+    unittest.main()

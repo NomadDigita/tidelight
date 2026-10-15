@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tidelight-sdk"
+version = "0.1.0"
+description = "Tidelight Intelligence Cloud Python client (unpublished)"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

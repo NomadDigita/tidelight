@@ -6,13 +6,13 @@
 
 | Public repository | Canonical source | Published contents |
 | --- | --- | --- |
-| `tidelight-api` | `public/components/api`, `docs/tic-openapi.yaml` | Public API guide and OpenAPI contract |
-| `tidelight-mcp` | `public/components/mcp` | Public endpoint, OAuth, scope, and sanitized tool documentation |
+| `tidelight-api` | `public/components/api`, `docs/tic-openapi.yaml` | Public API guide, first-call example, and OpenAPI contract |
+| `tidelight-mcp` | `public/components/mcp` | Public connection guide and host-agnostic MCP protocol core, schemas, and tests |
 | `tidelight-sdk` | `sdk/typescript` | TypeScript SDK source, tests, and package metadata |
 | `tidelight-python` | `sdk/python` | Python SDK source, tests, and package metadata |
-| `tidelight-examples` | `public/components/examples` | Credential-safe quickstarts using supported SDK methods |
+| `tidelight-examples` | `public/components/examples` | Runnable credential-safe REST quickstarts in Node.js, Python, and curl |
 
-The allowlist in `.github/tidelight-mirrors.json` is the only source-to-target mapping. The MCP runtime in `app/api/mcp`, shared services in `lib/tic`, application routes, Supabase migrations, and deployment configuration are intentionally excluded. No secrets or environment configuration are mirrored. The mirror checker rejects secret-like paths and known private-key/service-role markers before synchronization.
+The allowlist in `.github/tidelight-mirrors.json` is the only source-to-target mapping. The MCP host in `app/api/mcp`, shared authorization and tenant services in `lib/tic`, API route handlers, Supabase migrations, and deployment configuration are intentionally excluded. The public MCP tool/schema component is maintained at `public/components/mcp/server` and imported by the production host so its protocol behavior cannot drift. The host must enforce identity, project scope, quota, and provider policy before calling it. No secrets or environment configuration are mirrored. The mirror checker rejects secret-like paths and known private-key/service-role markers before synchronization.
 
 Each target repository is a generated snapshot: its root is owned by the mapped canonical paths. Make changes in this repository and let the sync workflow open a target PR. Do not develop independent code in a mirror. If a target change is needed, propose it here and then let automation publish it.
 
@@ -20,7 +20,7 @@ Each target repository is a generated snapshot: its root is owned by the mapped 
 
 `.github/workflows/sync-public-mirrors.yml` runs after relevant changes reach `main`, or by manual dispatch. It computes changed components from the push range, validates the allowlist, runs the SDK test suites, then opens one synchronization PR per changed non-empty mirror. It serializes sync runs to avoid competing branches. The copier materializes only Git-tracked source files, so ignored build and interpreter cache artifacts created by validation are not published. PRs in the mother repository run the mirror validation workflow, SDK tests, and the existing application checks configured for the repository.
 
-The targets are currently empty repositories. The first successful run initializes each target's default branch with the canonical snapshot because GitHub cannot open a PR against an unborn branch. This bootstrap is limited to empty targets. All later updates are branch-based PRs and retain the target's existing branch protections. If a target has already been initialized, the script does not silently fall back to a direct push when a clone or permission check fails.
+The five targets are initialized. Changes to mapped paths create synchronization branches and PRs; the workflow does not directly push over an initialized target default branch. The first-run empty-repository bootstrap path remains restricted to genuinely empty targets for future repositories. If a target has already been initialized, the script does not silently fall back to a direct push when a clone or permission check fails.
 
 The workflow requires an organization-owned GitHub App installed on the mother and five target repositories. Configure these mother-repository Actions secrets:
 
@@ -45,6 +45,8 @@ Run locally before merging changes to a published component:
 node scripts/check-public-mirrors.mjs
 npm test --prefix sdk/typescript
 PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+npm ci --prefix public/components/mcp/server && npm test --prefix public/components/mcp/server
+npm test --prefix public/components/examples && npm run test:python --prefix public/components/examples
 ```
 
 For a mapping-only or security-boundary change, also run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`. Inspect the generated target diff in every sync PR, verify it contains only the intended public distribution, and merge through the target repository's required checks. Never put private provider credentials, service-role keys, API secrets, internal worker URLs, server implementation files, or user data in a public mirror.

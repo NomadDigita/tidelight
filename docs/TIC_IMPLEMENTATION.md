@@ -54,6 +54,10 @@ Production adds owner-scoped webhook endpoint management, encrypted one-time sig
 
 The migrations `20261015063058_tic_webhooks.sql` and `20261015063324_tic_webhook_scheduler.sql` are applied in production. Tables are service-role only with RLS enabled and no client policies. Local database checks confirmed retry progression, attempt persistence, and `anon`/`authenticated` denial. JavaScript tests, typecheck, lint, production build, and mobile/desktop browser review passed. PR #127 added the system; PR #128 fixed Node auto-select DNS lookup compatibility. Both are merged and the latter is deployed to production. A real production research event first recorded two network errors; after the fix, the retained delivery succeeded on attempt 3 with HTTP 204. SSRF rejection returned 400 `unsafe_destination`. The temporary test account and its resources were deleted, with user, project, job, and request counts verified zero.
 
+## Milestone 6 — API key rotation (implementation in progress)
+
+The developer console can rotate an active, unexpired API key. A server-generated replacement retains its environment, scopes, per-minute and monthly quotas, expiry, name, and owner. A service-role-only Postgres function locks the source row and atomically revokes it while creating the replacement; failures roll back the revocation. Organization role checks match key revocation. The replacement secret is returned once with `Cache-Control: no-store`. The initial database integration check confirms successful rotation, preserved policy, rollback on duplicate hash and malformed prefix, and execute denial for `anon`/`authenticated`. Remaining verification: API and console journey, deployment, and production database checks.
+
 ## Remaining milestones in dependency order
 
 1. Evaluate MCP OAuth resource metadata and consent, then validate specific external MCP clients before naming them as supported.

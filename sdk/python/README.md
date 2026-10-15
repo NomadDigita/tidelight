@@ -1,6 +1,6 @@
 # Tidelight Python SDK
 
-Unpublished client for the implemented Tidelight Intelligence Cloud v1 market and asynchronous company snapshot endpoints. Research calls require a key with `research:run` scope. The package will be released after package ownership and release integration are configured.
+Unpublished client for the implemented Tidelight Intelligence Cloud v1 market, asynchronous company snapshot, and research webhook endpoints. Research calls require `research:run`; webhook calls require `alerts:manage`. The package will be released after package ownership and release integration are configured.
 
 Install locally with `pip install ./sdk/python`. Keep the API key on your server.
 
@@ -21,6 +21,17 @@ accepted = client.start_company_research("NVDA", str(uuid.uuid4()))
 result = client.wait_for_research_job(accepted["job_id"], interval=2, timeout=120)
 if result.status == "complete":
     print(result.result)
+
+created = client.create_webhook(
+    name="Research events",
+    url="https://your-service.example/tidelight",
+    events=["research.job.completed", "research.job.failed"],
+)
+# Persist this securely; the server only returns a signing secret on create or rotation.
+save_secret(created["signing_secret"])
+deliveries = client.list_webhook_deliveries()
 ```
+
+Webhook mutations are not retried automatically because the API does not yet accept webhook idempotency keys; this avoids duplicate endpoint creation or secret rotation after an ambiguous timeout. Webhook destination reachability and DNS safety are checked by the API. A client-side HTTPS check is not an authorization to deliver to a destination.
 
 The client retries network errors, 429, and transient 5xx statuses at most twice by default. It enforces a 10 second request timeout and raises `ApiError` with status, code, and request ID.

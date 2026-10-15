@@ -154,7 +154,64 @@ class Client:
             self._sleeper(min(interval, max(0, deadline - time.monotonic())))
         raise ApiError(0, "poll_timeout", "The research job did not finish before the polling timeout.")
 
-    def _job_request(self, path: str, method: str, body: dict[str, Any] | None = None, idempotency_key: str | None = None) -> dict[str, Any]:
+    def list_webhooks(self) -> dict[str, Any]:
+        return self._job_request("/webhooks", "GET")
+
+    def create_webhook(self, *, name: str, url: str, events: list[str]) -> dict[str, Any]:
+        self._validate_webhook_input(name, url, events)
+        return self._job_request("/webhooks", "POST", {"name": name, "url": url, "events": events}, retry_safe=False)
+
+    def update_webhook(self, endpoint_id: str, **changes: Any) -> dict[str, Any]:
+        self._validate_webhook_id(endpoint_id)
+        allowed = {"name", "url", "events", "enabled", "rotate_secret"}
+        if not changes or set(changes) - allowed:
+            raise ValueError("Provide at least one supported webhook change.")
+        if "name" in changes and (not isinstance(changes["name"], str) or not 2 <= len(changes["name"].strip()) <= 80):
+            raise ValueError("Webhook name must be 2 to 80 characters.")
+        if "url" in changes:
+            self._validate_webhook_url(changes["url"])
+        if "events" in changes:
+            self._validate_webhook_events(changes["events"])
+        if "enabled" in changes and not isinstance(changes["enabled"], bool):
+            raise ValueError("enabled must be a boolean.")
+        if "rotate_secret" in changes and changes["rotate_secret"] is not True:
+            raise ValueError("rotate_secret can only be true.")
+        return self._job_request(f"/webhooks/{endpoint_id}", "PATCH", changes, retry_safe=False)
+
+    def disable_webhook(self, endpoint_id: str) -> dict[str, Any]:
+        self._validate_webhook_id(endpoint_id)
+        return self._job_request(f"/webhooks/{endpoint_id}", "DELETE", retry_safe=False)
+
+    def list_webhook_deliveries(self) -> dict[str, Any]:
+        return self._job_request("/webhooks/deliveries", "GET")
+
+    @staticmethod
+    def _validate_webhook_id(endpoint_id: str) -> None:
+        if not isinstance(endpoint_id, str) or not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", endpoint_id, re.I):
+            raise ValueError("Invalid webhook endpoint ID.")
+
+    @staticmethod
+    def _validate_webhook_url(url: str) -> None:
+        if not isinstance(url, str) or len(url) > 2048:
+            raise ValueError("Webhook URL must be a valid public HTTPS URL.")
+        parsed = urlparse(url)
+        if parsed.scheme != "https" or parsed.port not in (None, 443) or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+            raise ValueError("Webhook URL must use public HTTPS on port 443 without credentials, query, or fragment.")
+
+    @staticmethod
+    def _validate_webhook_events(events: list[str]) -> None:
+        allowed = {"research.job.completed", "research.job.failed"}
+        if not isinstance(events, list) or not 1 <= len(events) <= 2 or any(not isinstance(event, str) or event not in allowed for event in events) or len(set(events)) != len(events):
+            raise ValueError("Choose one or more supported webhook events.")
+
+    @classmethod
+    def _validate_webhook_input(cls, name: str, url: str, events: list[str]) -> None:
+        if not isinstance(name, str) or not 2 <= len(name.strip()) <= 80:
+            raise ValueError("Webhook name must be 2 to 80 characters.")
+        cls._validate_webhook_url(url)
+        cls._validate_webhook_events(events)
+
+    def _job_request(self, path: str, method: str, body: dict[str, Any] | None = None, idempotency_key: str | None = None, *, retry_safe: bool = True) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {self._api_key}", "Accept": "application/json"}
         data = None
         if body is not None:
@@ -163,7 +220,8 @@ class Client:
         if idempotency_key:
             headers["Idempotency-Key"] = idempotency_key
         url = f"{self._base_url}{path}"
-        for attempt in range(self._max_retries + 1):
+        retry_limit = self._max_retries if retry_safe else 0
+        for attempt in range(retry_limit + 1):
             request = Request(url, data=data, headers=headers, method=method)
             try:
                 with self._opener(request, timeout=self._timeout) as response:
@@ -176,7 +234,7 @@ class Client:
                     details = json.load(error).get("error", {})
                 except (ValueError, AttributeError):
                     details = {}
-                if error.code in {429, 502, 503, 504} and attempt < self._max_retries:
+                if error.code in {429, 502, 503, 504} and attempt < retry_limit:
                     self._pause(attempt, error.headers.get("Retry-After")); continue
                 raise ApiError(error.code, details.get("code", "api_error"), details.get("message", "Tidelight API request failed."), details.get("request_id") or error.headers.get("X-Request-Id")) from None
             except (URLError, TimeoutError, OSError):

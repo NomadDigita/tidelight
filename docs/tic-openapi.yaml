@@ -1,0 +1,78 @@
+openapi: 3.1.0
+info:
+  title: Tidelight Intelligence Cloud API
+  version: 1.0.0
+  description: The implemented read only developer API. Tokenized equity spot data is distinct from underlying US stock and perpetual contract data.
+servers:
+  - url: https://tidelight.app/api/v1
+security:
+  - tidelightKey: []
+paths:
+  /market/instruments:
+    get:
+      operationId: listTokenizedEquityInstruments
+      summary: List verified tokenized equity spot instruments
+      parameters:
+        - name: kind
+          in: query
+          schema: { type: string, const: rtoken, default: rtoken }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: cursor
+          in: query
+          schema: { type: string, pattern: '^[A-Z0-9]{2,32}$' }
+      responses:
+        '200':
+          description: A page of instruments from Bitget Reality spot
+          headers:
+            X-Request-Id: { schema: { type: string, format: uuid } }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, next_cursor, generated_at, request_id]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Instrument' } }
+                  next_cursor: { type: [string, 'null'] }
+                  generated_at: { type: integer, description: Unix milliseconds when the provider data was assembled }
+                  request_id: { type: string, format: uuid }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    tidelightKey: { type: http, scheme: bearer, bearerFormat: Tidelight API key }
+  responses:
+    Error:
+      description: Structured error
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error:
+                type: object
+                required: [code, message, request_id]
+                properties:
+                  code: { type: string }
+                  message: { type: string }
+                  request_id: { type: string, format: uuid }
+  schemas:
+    Instrument:
+      type: object
+      required: [symbol, instrument_type, underlying_ticker, issuer_name, quote_currency, last_price, change_24h, provider_timestamp, market_session_status, source]
+      properties:
+        symbol: { type: string }
+        instrument_type: { type: string, const: tokenized_equity_spot }
+        underlying_ticker: { type: string }
+        issuer_name: { type: string }
+        quote_currency: { type: string }
+        last_price: { type: number }
+        change_24h: { type: [number, 'null'] }
+        provider_timestamp: { type: [integer, 'null'] }
+        market_session_status: { type: string, enum: [available, unavailable] }
+        source: { type: string, const: Bitget Reality spot }

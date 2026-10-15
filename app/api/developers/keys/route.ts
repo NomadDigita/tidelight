@@ -45,14 +45,22 @@ export async function POST(request: Request) {
     const role = await getProjectRole(admin, projectId, user.id);
     if (!role) return Response.json({ error: "Project not found." }, { status: 404 });
     if (!canWriteOrganization(role)) return Response.json({ error: "Your organization role cannot create credentials." }, { status: 403 });
-    const { count, error: countError } = await admin.from("developer_api_keys").select("id", { count: "exact", head: true }).eq("project_id", projectId).is("revoked_at", null);
-    if (countError) throw countError;
-    if ((count ?? 0) >= 10) return Response.json({ error: "Active key limit reached." }, { status: 429 });
     const key = issueSecret(environment);
     const expiresAt = new Date(Date.now() + (expiresInDays as number) * 86400000).toISOString();
-    const { data, error } = await admin.from("developer_api_keys").insert({ project_id: projectId, owner_id: user.id, name, environment, key_prefix: key.prefix, key_hash: key.hash, scopes, expires_at: expiresAt }).select(FIELDS).single();
-    if (error) throw error;
-    return Response.json({ key: data, secret: key.secret }, { status: 201, headers: { "Cache-Control": "no-store" } });
+    const { data: keyId, error } = await admin.rpc("create_developer_api_key_with_audit", {
+      p_project_id: projectId,
+      p_actor_id: user.id,
+      p_actor_email: user.email ?? "",
+      p_name: name,
+      p_environment: environment,
+      p_key_prefix: key.prefix,
+      p_key_hash: key.hash,
+      p_scopes: scopes,
+      p_expires_at: expiresAt,
+    });
+    if (error?.message.includes("active key limit reached")) return Response.json({ error: "Active key limit reached." }, { status: 429 });
+    if (error || typeof keyId !== "string") throw error ?? new Error("Invalid key creation result");
+    return Response.json({ keyId, secret: key.secret }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch { return Response.json({ error: "Key could not be created." }, { status: 503 }); }
 }
 
@@ -76,9 +84,13 @@ export async function DELETE(request: Request) {
     const role = await getProjectRole(admin, key.project_id, user.id);
     if (!role) return Response.json({ error: "Active key not found." }, { status: 404 });
     if (!canRevokeOrganizationKey(role, key.owner_id === user.id)) return Response.json({ error: "Your organization role cannot revoke this credential." }, { status: 403 });
-    const { data, error } = await admin.from("developer_api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", body.id).is("revoked_at", null).select("id").maybeSingle();
+    const { data, error } = await admin.rpc("revoke_developer_api_key_with_audit", {
+      p_key_id: body.id,
+      p_actor_id: user.id,
+      p_actor_email: user.email ?? "",
+    });
     if (error) throw error;
-    if (!data) return Response.json({ error: "Active key not found." }, { status: 404 });
+    if (data !== true) return Response.json({ error: "Active key not found." }, { status: 404 });
     return Response.json({ revoked: true }, { headers: { "Cache-Control": "no-store" } });
   } catch { return Response.json({ error: "Key could not be revoked." }, { status: 503 }); }
 }

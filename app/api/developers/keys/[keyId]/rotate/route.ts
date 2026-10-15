@@ -36,6 +36,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ key
       p_key_id: key.id,
       p_key_hash: replacement.hash,
       p_key_prefix: replacement.prefix,
+      p_actor_id: user.id,
+      p_actor_email: user.email ?? "",
     });
     if (rotateError || typeof replacementId !== "string") throw rotateError ?? new Error("Invalid rotation result");
 

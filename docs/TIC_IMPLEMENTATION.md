@@ -94,6 +94,12 @@ Verification: PostgreSQL 17 transaction tests seeded successful, client-error, s
 
 Production browser verification completed 15 October 2026: the authenticated developer console opened Usage successfully on the owner test account. That account has no developer projects, so production correctly displayed zero request totals and the empty chart/request states rather than fabricated activity. At 390 px and 1440 px there was no document overflow or browser error. The selected Request usage navigation item was confirmed visible in the mobile DOM; the unauthenticated usage endpoint returned 401 as expected. Populated analytics values remain covered by the PostgreSQL fixture tests above.
 
+## Production workflow continuity checkpoint — in progress
+
+On 15 October 2026, a signed-in production browser exercised one source-grounded Research flow. The run persisted successfully, collected twelve current source headlines, captured a timestamped market quote, and rendered its operational stage trace without exposing private model reasoning. Its evidence gate correctly returned `NO TRADE HANDOFF`: it lacked two distinct recent publishers and did not support a directional scenario. The UI therefore provided no downstream order-review action. No Strategy Lab backtest or Nightwatch tick was initiated, and no user paper positions or schedules were changed. The test record remains in the owner's private research history; its run ID and private output are intentionally not recorded in this public repository.
+
+The signed-in Strategy Lab and Nightwatch pages were inspected at desktop and 390 px mobile widths. Both rendered without horizontal overflow; Nightwatch reported paper-only controls and a configured scheduler, but its cadence was manual, with no linked research run and no account opt-in. The scheduled-paper proof remains incomplete. Continue only with a research result that clears the existing evidence gate, then verify its symbol/run propagation through the Strategy Lab and Nightwatch handoffs and one opted-in scheduled paper check under [`OPERATIONS_RUNBOOK.md`](OPERATIONS_RUNBOOK.md). Never bypass the no-handoff result or route a test to live execution.
+
 ## Remaining milestones in dependency order
 
 1. Validate specific external MCP clients before naming them as supported.

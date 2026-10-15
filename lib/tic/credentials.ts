@@ -42,7 +42,7 @@ export async function authorizeDeveloperRequest(request: Request, endpoint: stri
       const reason = record?.reason;
       return { error: apiError(reason === "quota_exceeded" ? 429 : reason === "insufficient_scope" ? 403 : 401, reason ?? "unauthorized", reason === "quota_exceeded" ? "This key has reached its request limit." : reason === "insufficient_scope" ? `This key lacks ${scope} access.` : "This key is invalid, expired, or revoked.", requestId) };
     }
-    return { admin, requestId, usageId: record.request_id as string, projectId: record.project_id as string, ownerId: record.owner_id as string, keyId: record.key_id as string };
+    return { admin, requestId, usageId: record.request_id as string, projectId: record.project_id as string, keyId: record.key_id as string };
   } catch {
     return { error: apiError(503, "service_unavailable", "Credential validation is temporarily unavailable.", requestId) };
   }

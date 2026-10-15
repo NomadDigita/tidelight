@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { apiError, finishUsage, sameOrigin } from "@/lib/tic/credentials";
 import { listTokenizedEquityInstruments, validateInstrumentQuery } from "@/lib/tic/market";
+import { getProjectRole, listAccessibleProjects } from "@/lib/tic/organizations";
+import { canWriteOrganization } from "@/lib/tic/organization-rbac";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -23,9 +25,14 @@ export async function POST(request: Request) {
   if (!UUID.test(keyId) || !query) return apiError(400, "invalid_request", "Select a key and valid instrument parameters.", requestId);
   try {
     const admin = createAdminClient();
-    const { data: key, error: keyError } = await admin.from("developer_api_keys").select("id,key_hash").eq("id", keyId).eq("owner_id", user.id).maybeSingle();
+    const projects = await listAccessibleProjects(admin, user.id);
+    const projectIds = projects.map(project => project.id);
+    if (!projectIds.length) return apiError(404, "key_not_found", "This credential is unavailable in your organization.", requestId);
+    const { data: key, error: keyError } = await admin.from("developer_api_keys").select("id,key_hash,project_id").eq("id", keyId).in("project_id", projectIds).maybeSingle();
     if (keyError) throw keyError;
     if (!key) return apiError(404, "key_not_found", "This credential is unavailable in your account.", requestId);
+    const role = await getProjectRole(admin, key.project_id, user.id);
+    if (!role || !canWriteOrganization(role)) return apiError(403, "forbidden", "Your organization role cannot run API explorer requests.", requestId);
     const { data: reserved, error: reserveError } = await admin.rpc("reserve_developer_request", { p_hash: key.key_hash, p_scope: "market:read", p_endpoint: "/v1/market/instruments" });
     if (reserveError) throw reserveError;
     const record = Array.isArray(reserved) ? reserved[0] : null;

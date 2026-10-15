@@ -28,20 +28,19 @@ The API explorer provides a real console request for the supported instrument en
 
 Production Supabase project `plmdnzbmvgigkzfmfwov` accepted the migration as version `20261015001517`. Privilege checks confirmed `anon` and `authenticated` cannot read developer keys or reserve quota, while `service_role` can invoke the quota RPC; an invalid key is rejected. The production Vercel project has a `SUPABASE_SERVICE_ROLE_KEY` setting; preview does not, so preview cannot exercise the signed-in data path. The publishable key remains in browser use; the secret must never be prefixed `NEXT_PUBLIC_`. The public market route and console explorer are enabled by default at the user's explicit direction. Written provider redistribution terms remain to be supplied and reviewed.
 
-## Milestone 2 — durable research snapshots (implementation in progress)
+## Milestone 2 — durable research snapshots (complete)
 
 The implementation adds a service role only `tic_research_jobs` queue with project idempotency, key and project quotas, retry timestamps, bounded attempts, lease based claiming, cancellation, and expiring worker leases. `research:run` is a separate API scope. The Supabase `pg_cron` scheduler dispatches the Vercel worker over `pg_net`; its URL and dedicated bearer are held in Supabase Vault. The worker checks `TIC_RESEARCH_CRON_SECRET` and claims one job per invocation, runs the existing Bitget and headline discovery adapters, and stores a provenance labeled company snapshot. Market Reality spot instruments and USDT stock perpetuals remain separate instrument types. Headline snippets are labeled discovery references, and the result has explicit limitations. The public v1 API supports start, status/result, and cancellation. The console adds an owner scoped Research jobs page. Both in repository SDKs support job start/status/cancel and bounded polling. A project is limited to 10 job starts per rolling hour in addition to key call quotas.
 
-Verification before deployment: production build, security and queue behavior must pass local database tests; JavaScript, TypeScript SDK, and Python tests must pass; and the signed in project/key → research job → result → cancellation/usage journey must be visually and functionally inspected. Production migrations and Supabase Cron execution remain unverified until deployed.
+Verification: production build, security and queue behavior passed local PostgreSQL tests; JavaScript (115), TypeScript SDK (3), and Python SDK (5) tests passed. The signed in production journey created a project and scoped key, read a live market instrument, started an NVDA snapshot, replayed its idempotency key, cancelled an AAPL job, and received the completed snapshot from the worker. The account-scoped console reported both statuses and seven authorized requests. The test key was revoked and immediately returned 401; the temporary user and its project, key, two jobs, and seven request records were deleted, with all related counts verified zero. The production Vercel worker accepted only authenticated requests. Supabase Cron dispatched through Vault-backed `pg_net` and received HTTP 200; the deployed worker returned a safe empty-queue response. Browser review covered the signed-out console and docs on mobile/desktop. Research-job view rendered at 390 px with no page overflow. A follow-up polish keeps the active navigation item in view when changing console sections on narrow screens.
 
 ## Remaining milestones in dependency order
 
-1. Complete deployment and production verification for the job queue, cron worker, endpoints, SDKs, console states, and tenant boundaries.
-2. Expand project membership into organizations with audited role changes, tenant RLS tests, and account recovery. Add key rotation, security logs, and stronger abuse controls.
-3. Build a remote Streamable HTTP MCP server on the same intelligence services with scoped authentication and tested client connections. Return evidence and concise execution events; keep private model reasoning private.
-4. Add webhook delivery infrastructure with SSRF protection and signatures, and monitoring controls only for supported event sources.
-5. Measure provider and compute costs, define entitlements and credit budgets, then select a Nigerian merchant compatible payment provider and configure approved pricing. Billing UI must show actual records only.
-6. Run cross theme and mobile UI review, accessibility checks, MCP interoperability, SDK integration, abuse tests, staging smoke tests, then controlled production verification for each capability.
+1. Expand project membership into organizations with audited role changes, tenant RLS tests, and account recovery. Add key rotation, security logs, and stronger abuse controls.
+2. Build a remote Streamable HTTP MCP server on the same intelligence services with scoped authentication and tested client connections. Return evidence and concise execution events; keep private model reasoning private.
+3. Add webhook delivery infrastructure with SSRF protection and signatures, and monitoring controls only for supported event sources.
+4. Measure provider and compute costs, define entitlements and credit budgets, then select a Nigerian merchant compatible payment provider and configure approved pricing. Billing UI must show actual records only.
+5. Run cross theme and mobile UI review, accessibility checks, MCP interoperability, SDK integration, abuse tests, staging smoke tests, then controlled production verification for each capability.
 
 ## External configuration still needed
 

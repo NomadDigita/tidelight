@@ -49,6 +49,13 @@ export default function DeveloperConsole() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { const timer = window.setTimeout(() => void reload(), 0); return () => window.clearTimeout(timer); }, [reload]);
+  useEffect(() => {
+    if (!window.matchMedia("(max-width: 620px)").matches) return;
+    const selected = document.querySelector<HTMLButtonElement>(".tic-console-nav button.selected");
+    if (!selected) return;
+    const behavior: ScrollBehavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    selected.scrollIntoView({ block: "nearest", inline: "center", behavior });
+  }, [view]);
   async function createProject(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try { await mutate("/api/developers/projects", "POST", { name: projectName }); setProjectName(""); await reload(); }

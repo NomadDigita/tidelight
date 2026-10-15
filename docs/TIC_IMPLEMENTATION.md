@@ -83,6 +83,14 @@ Separate `api` and `mcp` hosts require DNS and Vercel domain configuration. Dura
 
 The application now routes `api.tidelight.app/v1/*` to the existing versioned REST handlers, `mcp.tidelight.app/mcp` (and `/`) to the existing Streamable HTTP MCP handler, and `status.tidelight.app` to a live status page and health endpoint. The API hostname root returns a service index. Host-specific routing denies unrelated paths; it does not add alternate authorization or bypass the existing API key scopes, request quotas, or usage accounting. SDK defaults and the OpenAPI server URL now use `https://api.tidelight.app/v1`.
 
-Production DNS is external to Vercel: `tidelight.app` uses Cloudoon nameservers. The API, MCP, and status hostnames must be attached to the Vercel project and their Vercel CNAME targets entered at Cloudoon before these public addresses are reachable. `docs.tidelight.app` is presently a live GitBook custom domain; its `/api` path returns GitBook 404. Do not reassign that host to Vercel without migrating or configuring the GitBook content. The in-app developer docs remain at `tidelight.app/developers/docs` until that path is added to the existing GitBook site or the docs host is intentionally migrated.
+Production deployment #134 is READY. The status page and `/api/health` were verified on production; both application and database returned operational. The `api`, `mcp`, and `status` hostnames are now attached to the Vercel project, but Vercel reports their DNS configuration as misconfigured because the active authoritative nameservers are external Cloudoon. Add these records in the Cloudoon DNS zone:
+
+| Type | Name | Target |
+| --- | --- | --- |
+| CNAME | `api` | `cname.vercel-dns.com` |
+| CNAME | `mcp` | `cname.vercel-dns.com` |
+| CNAME | `status` | `cname.vercel-dns.com` |
+
+Then verify the three hostnames in Vercel and run the public smoke tests. `docs.tidelight.app` is presently a live GitBook custom domain; its `/api` path renders GitBook's not-found content. Do not reassign that host to Vercel without migrating or configuring the GitBook content. The in-app developer docs remain at `tidelight.app/developers/docs` until that path is added to the existing GitBook site or the docs host is intentionally migrated.
 
 Email invitation links require a verified transactional email sender and configured Supabase Auth templates. Until then, organization owners can add accounts that already exist in Tidelight.

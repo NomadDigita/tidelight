@@ -9,6 +9,9 @@ on:
       - 'docs/tic-openapi.yaml'
       - 'sdk/typescript/**'
       - 'sdk/python/**'
+      - 'scripts/check-public-mirrors.mjs'
+      - 'scripts/public-mirror-files.mjs'
+      - 'scripts/sync-public-mirrors.mjs'
   workflow_dispatch:
 
 permissions:

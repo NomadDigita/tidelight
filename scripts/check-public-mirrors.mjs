@@ -1,10 +1,11 @@
-import { lstat, readFile, readdir } from "node:fs/promises";
+import { lstat, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { getTrackedMirrorFiles } from "./public-mirror-files.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(await readFile(path.join(root, ".github/tidelight-mirrors.json"), "utf8"));
-const forbiddenPath = /(^|\/)(\.env(?:\.|$)|secrets?(?:\.|$)|credentials?(?:\.|$)|service-role|private-key|id_rsa|\.git(?:\/|$))/i;
+const forbiddenPath = /(^|\/)(\.env(?:\.|$)|secrets?(?:\.|$)|credentials?(?:\.|$)|service-role|private-key|id_rsa|\.git(?:\/|$)|__pycache__(?:\/|$)|node_modules(?:\/|$)|dist(?:\/|$)|coverage(?:\/|$)|\.next(?:\/|$))|\.(?:py[co]|tsbuildinfo)$/i;
 const forbiddenContent = [/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/, /sb_secret_[A-Za-z0-9_]+/, /service_role\s*[:=]/i, /tl_live_[A-Za-z0-9_-]{43}/, /AKIA[0-9A-Z]{16}/];
 const errors = [];
 const seenRepos = new Set();
@@ -32,31 +33,31 @@ for (const [name, mirror] of Object.entries(config.mirrors ?? {})) {
       errors.push(`${name}: source does not exist: ${mapping.source}`);
       continue;
     }
-    const inspect = async (current) => {
+    const tracked = getTrackedMirrorFiles(root, mapping.source);
+    if (tracked.length === 0) {
+      errors.push(`${name}: source mapping contains no Git-tracked files: ${mapping.source}`);
+      continue;
+    }
+    for (const relativeFile of tracked) {
+      const current = path.resolve(root, relativeFile);
+      if (!current.startsWith(`${sourceRoot}${path.sep}`) && current !== sourceRoot) {
+        errors.push(`${name}: tracked file escapes its source mapping: ${relativeFile}`);
+        continue;
+      }
       const info = await lstat(current);
       if (info.isSymbolicLink()) {
         errors.push(`${name}: symbolic links are not permitted in a public source mapping: ${path.relative(root, current)}`);
-        return;
+        continue;
       }
-      if (info.isDirectory()) {
-        for (const entry of await readdir(current)) {
-          const next = path.join(current, entry);
-          const relative = path.relative(sourceRoot, next).split(path.sep).join("/");
-          if (forbiddenPath.test(relative)) errors.push(`${name}: forbidden path ${mapping.source}/${relative}`);
-          else await inspect(next);
-        }
-      } else {
-        if (!info.isFile()) {
-          errors.push(`${name}: only regular files may be mirrored: ${path.relative(root, current)}`);
-          return;
-        }
-        const relative = path.relative(sourceRoot, current).split(path.sep).join("/");
-        const contents = await readFile(current, "utf8");
-        if (forbiddenPath.test(relative)) errors.push(`${name}: forbidden file ${mapping.source}/${relative}`);
-        if (forbiddenContent.some((pattern) => pattern.test(contents))) errors.push(`${name}: possible secret material in ${mapping.source}/${relative}`);
+      if (!info.isFile()) {
+        errors.push(`${name}: only regular files may be mirrored: ${path.relative(root, current)}`);
+        continue;
       }
-    };
-    await inspect(sourceRoot);
+      const relative = path.relative(sourceRoot, current).split(path.sep).join("/");
+      const contents = await readFile(current, "utf8");
+      if (forbiddenPath.test(relative)) errors.push(`${name}: forbidden file ${mapping.source}/${relative}`);
+      if (forbiddenContent.some((pattern) => pattern.test(contents))) errors.push(`${name}: possible secret material in ${mapping.source}/${relative}`);
+    }
   }
 }
 

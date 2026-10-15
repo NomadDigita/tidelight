@@ -18,7 +18,7 @@ Each target repository is a generated snapshot: its root is owned by the mapped 
 
 ## Synchronization and trust boundaries
 
-`.github/workflows/sync-public-mirrors.yml` runs after relevant changes reach `main`, or by manual dispatch. It computes changed components from the push range, validates the allowlist, runs the SDK test suites, then opens one synchronization PR per changed non-empty mirror. It serializes sync runs to avoid competing branches. PRs in the mother repository run the mirror validation workflow, SDK tests, and the existing application checks configured for the repository.
+`.github/workflows/sync-public-mirrors.yml` runs after relevant changes reach `main`, or by manual dispatch. It computes changed components from the push range, validates the allowlist, runs the SDK test suites, then opens one synchronization PR per changed non-empty mirror. It serializes sync runs to avoid competing branches. The copier materializes only Git-tracked source files, so ignored build and interpreter cache artifacts created by validation are not published. PRs in the mother repository run the mirror validation workflow, SDK tests, and the existing application checks configured for the repository.
 
 The targets are currently empty repositories. The first successful run initializes each target's default branch with the canonical snapshot because GitHub cannot open a PR against an unborn branch. This bootstrap is limited to empty targets. All later updates are branch-based PRs and retain the target's existing branch protections. If a target has already been initialized, the script does not silently fall back to a direct push when a clone or permission check fails.
 

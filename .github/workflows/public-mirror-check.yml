@@ -10,7 +10,9 @@ on:
       - 'sdk/typescript/**'
       - 'sdk/python/**'
       - 'scripts/check-public-mirrors.mjs'
+      - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
+      - 'tests/public-mirrors.test.mjs'
   push:
     branches: [main]
     paths:
@@ -21,7 +23,9 @@ on:
       - 'sdk/typescript/**'
       - 'sdk/python/**'
       - 'scripts/check-public-mirrors.mjs'
+      - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
+      - 'tests/public-mirrors.test.mjs'
 
 permissions:
   contents: read

@@ -76,6 +76,12 @@ Production verification: a real email-code account completed signup and opened t
 
 Cleanup and inspection: the authenticated console, OAuth consent, and MCP connections were inspected in Chromium at desktop and mobile sizes with no page errors or document overflow. The test OAuth client, flows, grants, project, key, request usage, and key audit rows were deleted; database checks confirmed zero remaining rows for each. The account created at the user's request remains available to them. No named third-party MCP client has been certified.
 
+## Milestone 10 — request usage analytics
+
+The console now presents the exact rolling 30-day request count across accessible projects, split into successful responses, client errors, and server errors. A UTC daily chart includes average response latency in its hover labels, with an expandable accessible data table and the latest 100 individual request records below it. The analytics RPC runs with invoker privileges, accepts only bounded, unique project ID lists and date ranges, and is executable only by `service_role`. It reports measured request counts and latency; monetary cost and credit consumption remain unavailable until provider and compute rates are established.
+
+Verification: PostgreSQL 17 transaction tests seeded successful, client-error, server-error, and pending requests and confirmed exact counts, average latency, zero-filled days, input validation, `SECURITY INVOKER`, and denied `anon`/`authenticated` execution. The test transaction rolled back all fixtures. The application suite passed 139 tests; typecheck, lint, and the production build passed.
+
 ## Remaining milestones in dependency order
 
 1. Validate specific external MCP clients before naming them as supported.

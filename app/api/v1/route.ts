@@ -5,7 +5,7 @@ export function GET(request: Request) {
   return Response.json({
     name: "Tidelight Intelligence Cloud API",
     version: "v1",
-    documentation: "https://tidelight.app/developers/docs",
+    documentation: "https://dev.tidelight.app",
     openapi: "https://github.com/NomadDigita/tidelight/blob/main/docs/tic-openapi.yaml",
     endpoints: {
       tokenized_equity_instruments: `${origin}/v1/market/instruments`,

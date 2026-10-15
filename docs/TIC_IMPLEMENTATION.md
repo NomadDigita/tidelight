@@ -12,7 +12,7 @@ The first public API capability reuses `getBitgetMarketUniverse()` rather than a
 
 The API checks a high entropy Bearer key through a service role only RPC. The RPC holds a key row lock while checking per-minute and monthly quotas and reserving a request record, so concurrent calls cannot bypass the limit. Project ownership is checked with the authenticated Supabase user before key issuance. Client roles have no direct grants or RLS policies on the new credential tables. A full secret is returned only on creation. The request log contains metadata, never headers or bodies.
 
-The contract currently uses `tidelight.app/api/v1` so it can be deployed with the existing application. `api.tidelight.app`, `mcp.tidelight.app`, and `docs.tidelight.app` need routing and DNS review before they can be advertised. The landing page and docs inherit current Tidelight theme tokens and the developer routes bypass the trading workspace chrome.
+The contract uses `api.tidelight.app/v1`. The developer portal is `tidelight.app/developers`, developer documentation is `dev.tidelight.app`, the MCP service is `mcp.tidelight.app`, and system status is `status.tidelight.app`. `docs.tidelight.app` remains Tidelight Research's GitBook site. The landing page and docs inherit current Tidelight theme tokens and the developer routes bypass the trading workspace chrome.
 
 ## Milestone 1 — developer foundation
 
@@ -77,7 +77,7 @@ Verification: TypeScript SDK build and six tests passed; Python SDK eight tests 
 
 ## External configuration still needed
 
-Separate `api` and `mcp` hosts require DNS and Vercel domain configuration. Durable worker dispatch requires the dedicated `TIC_RESEARCH_CRON_SECRET` in Vercel Production plus `tic_research_worker_url` and `tic_research_worker_secret` in Supabase Vault before applying the scheduler migration. MCP OAuth requires issuer, client registration, consent, and token lifecycle infrastructure. SDK publishing requires package ownership and publishing credentials. Commercial billing needs pricing approval, payment provider eligibility and account configuration. Provider licensing must be confirmed before broad redistribution of market data.
+The API, MCP, status, and developer documentation hosts are attached to Vercel. Durable worker dispatch requires the dedicated `TIC_RESEARCH_CRON_SECRET` in Vercel Production plus `tic_research_worker_url` and `tic_research_worker_secret` in Supabase Vault before applying the scheduler migration. MCP OAuth requires issuer, client registration, consent, and token lifecycle infrastructure. SDK publishing requires package ownership and publishing credentials. Commercial billing needs pricing approval, payment provider eligibility and account configuration. Provider licensing must be confirmed before broad redistribution of market data.
 
 ## Service host routing milestone — implementation complete, DNS pending
 
@@ -91,6 +91,6 @@ Production deployment #134 is READY. The status page and `/api/health` were veri
 | CNAME | `mcp` | `cname.vercel-dns.com` |
 | CNAME | `status` | `cname.vercel-dns.com` |
 
-Then verify the three hostnames in Vercel and run the public smoke tests. `docs.tidelight.app` is presently a live GitBook custom domain; its `/api` path renders GitBook's not-found content. Do not reassign that host to Vercel without migrating or configuring the GitBook content. The in-app developer docs remain at `tidelight.app/developers/docs` until that path is added to the existing GitBook site or the docs host is intentionally migrated.
+`dev.tidelight.app` is a Vercel CNAME (`cname.vercel-dns.com`) and is attached to the project. It routes to the existing developer docs page; `/` and `/api` are aliases, while unrelated paths return not found. `docs.tidelight.app` is Tidelight Research's live GitBook custom domain; preserve its DNS and content.
 
 Email invitation links require a verified transactional email sender and configured Supabase Auth templates. Until then, organization owners can add accounts that already exist in Tidelight.

@@ -76,7 +76,7 @@ Tidelight 会把研究简报中的观点关联到所用的来源材料。打开�
 | **项目定位** | 面向代币化美股、以证据为先的市场研究工作台 |
 | **适用人群** | 对市场感兴趣的投资者、研究者和观察者 |
 | **在线产品** | [tidelight.app](https://tidelight.app) |
-| **代码仓库** | [NomadDigita/tidelight](https://github.com/NomadDigita/tidelight) |
+| **代码仓库** | [TidelightOrg/tidelight](https://github.com/TidelightOrg/tidelight) |
 | **市场数据** | Bitget 公开行情；SEC 发行方文件；可选 Finnhub 分析师目标价汇总 |
 | **AI 研究** | 服务端 Bitget Qwen 和 Gemini 集成 |
 | **隐私保护** | Supabase Auth 和按用户隔离的 PostgreSQL 策略 |
@@ -115,7 +115,7 @@ npm run dev
 
 ## 接下来的工作
 
-Tidelight 遵循一项简单原则：展示证据、标注假设、保留不确定性，并清楚区分模拟交易与实盘交易。你可以查看[产品计划](./docs/zh-CN/PROJECT_PLAN.md)和[当前里程碑](./docs/zh-CN/NEXT_BUILD_MILESTONES.md)，也可以查看[简体中文项目文档](./docs/zh-CN/README.md)，或[提交问题与建议](https://github.com/NomadDigita/tidelight/issues)，告诉我们哪里令人困惑、缺少什么来源，或怎样能让工作台更实用。
+Tidelight 遵循一项简单原则：展示证据、标注假设、保留不确定性，并清楚区分模拟交易与实盘交易。你可以查看[产品计划](./docs/zh-CN/PROJECT_PLAN.md)和[当前里程碑](./docs/zh-CN/NEXT_BUILD_MILESTONES.md)，也可以查看[简体中文项目文档](./docs/zh-CN/README.md)，或[提交问题与建议](https://github.com/TidelightOrg/tidelight/issues)，告诉我们哪里令人困惑、缺少什么来源，或怎样能让工作台更实用。
 
 <div align="center">
   <br />

@@ -74,7 +74,7 @@ Strategy Lab replays a baseline against historical public candles. Nightwatch an
 | **What it is** | An evidence-first market research desk for tokenized US equities |
 | **Who it is for** | Curious investors, researchers, and market watchers |
 | **Live product** | [tidelight.app](https://tidelight.app) |
-| **Repository** | [NomadDigita/tidelight](https://github.com/NomadDigita/tidelight) |
+| **Repository** | [TidelightOrg/tidelight](https://github.com/TidelightOrg/tidelight) |
 | **Market data** | Public Bitget market feeds; SEC issuer filings; optional Finnhub analyst-target aggregates |
 | **AI research** | Server-side Bitget Qwen and Gemini integrations |
 | **Privacy** | Supabase Auth and owner-scoped PostgreSQL policies |
@@ -113,7 +113,7 @@ Quarterly and annual issuer facts come from SEC EDGAR. Finnhub analyst-target ag
 
 ## The work ahead
 
-Tidelight is being built with a simple standard: show the evidence, label assumptions, preserve uncertainty, and keep simulations visibly separate from real trading. Follow the [product plan](./PROJECT_PLAN.md) and [current milestones](./docs/NEXT_BUILD_MILESTONES.md), or [open an issue](https://github.com/NomadDigita/tidelight/issues) with a confusing moment, a missing source, or an idea that would make the desk more useful.
+Tidelight is being built with a simple standard: show the evidence, label assumptions, preserve uncertainty, and keep simulations visibly separate from real trading. Follow the [product plan](./PROJECT_PLAN.md) and [current milestones](./docs/NEXT_BUILD_MILESTONES.md), or [open an issue](https://github.com/TidelightOrg/tidelight/issues) with a confusing moment, a missing source, or an idea that would make the desk more useful.
 
 <div align="center">
   <br />

@@ -6,6 +6,6 @@
   "description": "Tidelight Intelligence Cloud TypeScript client (unpublished)",
   "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
   "files": ["dist", "README.md"],
-  "scripts": { "build": "tsc -p tsconfig.json" },
+  "scripts": { "build": "tsc -p tsconfig.json", "test": "npm run build && node --test tests/*.test.mjs" },
   "devDependencies": { "typescript": "^5" }
 }

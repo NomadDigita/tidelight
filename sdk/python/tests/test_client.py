@@ -18,6 +18,34 @@ class FakeResponse(io.BytesIO):
 
 
 class ClientTests(unittest.TestCase):
+    def test_research_job_creation_status_and_cancellation(self):
+        job_id = "01234567-89ab-4cde-8fab-0123456789ab"
+        calls = []
+
+        def opener(request, timeout):
+            calls.append((request.get_method(), request.full_url, request.get_header("Idempotency-key")))
+            if request.get_method() == "POST":
+                return FakeResponse({"job_id": job_id, "status": "queued", "duplicate": False, "request_id": "r1"})
+            if request.get_method() == "GET":
+                return FakeResponse({"job_id": job_id, "ticker": "NVDA", "status": "complete", "attempts": 1, "max_attempts": 3, "result": {"type": "company_snapshot"}, "error": None, "created_at": "2026-01-01T00:00:00Z", "started_at": None, "completed_at": "2026-01-01T00:01:00Z", "retry_at": None, "request_id": "r2"})
+            return FakeResponse({"job_id": job_id, "status": "cancelled", "request_id": "r3"})
+
+        client = Client(KEY, opener=opener)
+        started = client.start_company_research("NVDA", "request-0001")
+        self.assertEqual(started["status"], "queued")
+        self.assertEqual(calls[0][2], "request-0001")
+        job = client.get_research_job(job_id)
+        self.assertEqual(job.status, "complete")
+        self.assertEqual(job.result["type"], "company_snapshot")
+        self.assertEqual(client.cancel_research_job(job_id)["status"], "cancelled")
+
+    def test_research_job_validates_before_network(self):
+        client = Client(KEY, opener=lambda *_args, **_kwargs: self.fail("transport called"))
+        with self.assertRaises(ValueError):
+            client.start_company_research("NVDA?", "request-0001")
+        with self.assertRaises(ValueError):
+            client.start_company_research("NVDA", "short")
+
     def test_pagination_and_bearer_header(self):
         calls = []
 

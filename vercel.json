@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/tic-research",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/nightwatch",
       "schedule": "0 9 * * *"
     },

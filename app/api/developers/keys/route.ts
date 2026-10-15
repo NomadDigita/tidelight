@@ -4,6 +4,7 @@ import { issueSecret, sameOrigin } from "@/lib/tic/credentials";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FIELDS = "id,project_id,name,environment,key_prefix,scopes,minute_limit,monthly_limit,expires_at,revoked_at,last_used_at,created_at";
+const KEY_SCOPES = ["market:read", "research:run"] as const;
 
 export async function GET() {
   const supabase = await createClient();
@@ -31,6 +32,8 @@ export async function POST(request: Request) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const environment = body.environment;
   const expiresInDays = body.expiresInDays;
+  const scopes = body.scopes === undefined ? ["market:read"] : body.scopes;
+  if (!Array.isArray(scopes) || !scopes.length || scopes.some(scope => typeof scope !== "string" || !(KEY_SCOPES as readonly string[]).includes(scope)) || new Set(scopes).size !== scopes.length) return Response.json({ error: "Choose one or more supported scopes." }, { status: 400 });
   if (!UUID.test(projectId) || name.length < 2 || name.length > 80 || (environment !== "test" && environment !== "production") || !Number.isInteger(expiresInDays) || (expiresInDays as number) < 1 || (expiresInDays as number) > 365) return Response.json({ error: "Invalid project, name, environment, or expiration." }, { status: 400 });
   try {
     const admin = createAdminClient();
@@ -42,7 +45,7 @@ export async function POST(request: Request) {
     if ((count ?? 0) >= 10) return Response.json({ error: "Active key limit reached." }, { status: 429 });
     const key = issueSecret(environment);
     const expiresAt = new Date(Date.now() + (expiresInDays as number) * 86400000).toISOString();
-    const { data, error } = await admin.from("developer_api_keys").insert({ project_id: projectId, owner_id: user.id, name, environment, key_prefix: key.prefix, key_hash: key.hash, scopes: ["market:read"], expires_at: expiresAt }).select(FIELDS).single();
+    const { data, error } = await admin.from("developer_api_keys").insert({ project_id: projectId, owner_id: user.id, name, environment, key_prefix: key.prefix, key_hash: key.hash, scopes, expires_at: expiresAt }).select(FIELDS).single();
     if (error) throw error;
     return Response.json({ key: data, secret: key.secret }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch { return Response.json({ error: "Key could not be created." }, { status: 503 }); }

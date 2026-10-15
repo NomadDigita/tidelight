@@ -34,6 +34,13 @@ export type ResearchJob = {
   request_id: string;
 };
 
+export type WebhookEvent = "research.job.completed" | "research.job.failed";
+export type WebhookEndpoint = { id: string; project_id: string; organization_id: string; name: string; url: string; events: WebhookEvent[]; enabled: boolean; created_at: string; updated_at: string };
+export type WebhookDelivery = { id: string; endpoint_id: string; project_id: string; event_id: string; event_type: WebhookEvent; payload: Record<string, unknown>; status: "pending" | "sending" | "retry_wait" | "succeeded" | "failed" | "cancelled"; attempt_count: number; last_status_code: number | null; last_error_code: string | null; last_duration_ms: number | null; created_at: string; completed_at: string | null; endpoint_name: string; tic_webhook_delivery_attempts: Array<{ attempt_number: number; status_code: number | null; duration_ms: number | null; error_code: string | null; created_at: string }> };
+export type WebhookMutationResponse = { endpoint: WebhookEndpoint; signing_secret?: string; request_id: string };
+export type WebhookEndpointInput = { name: string; url: string; events: WebhookEvent[] };
+export type WebhookEndpointUpdate = { name?: string; url?: string; events?: WebhookEvent[]; enabled?: boolean; rotate_secret?: true };
+
 export class TidelightApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -145,8 +152,62 @@ export class TidelightClient {
     throw new TidelightApiError(0, "poll_timeout", "The research job did not finish before the polling timeout.", null);
   }
 
-  private async jobRequest<T>(path: string, method: "GET" | "POST" | "DELETE", body?: unknown, idempotencyKey?: string, signal?: AbortSignal): Promise<T> {
+  async listWebhooks(options: { signal?: AbortSignal } = {}) {
+    return this.jobRequest<{ endpoints: WebhookEndpoint[]; request_id: string }>("/webhooks", "GET", undefined, undefined, options.signal);
+  }
+
+  async createWebhook(input: WebhookEndpointInput, options: { signal?: AbortSignal } = {}) {
+    this.validateWebhookInput(input);
+    return this.jobRequest<WebhookMutationResponse>("/webhooks", "POST", input, undefined, options.signal, false);
+  }
+
+  async updateWebhook(endpointId: string, input: WebhookEndpointUpdate, options: { signal?: AbortSignal } = {}) {
+    this.validateWebhookId(endpointId);
+    this.validateWebhookUpdate(input);
+    return this.jobRequest<WebhookMutationResponse>("/webhooks/" + endpointId, "PATCH", input, undefined, options.signal, false);
+  }
+
+  async disableWebhook(endpointId: string, options: { signal?: AbortSignal } = {}) {
+    this.validateWebhookId(endpointId);
+    return this.jobRequest<{ disabled: true; request_id: string }>("/webhooks/" + endpointId, "DELETE", undefined, undefined, options.signal, false);
+  }
+
+  async listWebhookDeliveries(options: { signal?: AbortSignal } = {}) {
+    return this.jobRequest<{ deliveries: WebhookDelivery[]; request_id: string }>("/webhooks/deliveries", "GET", undefined, undefined, options.signal);
+  }
+
+  private validateWebhookId(id: string) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new TypeError("Invalid webhook endpoint ID.");
+  }
+
+  private validateWebhookUrl(value: string) {
+    let url: URL;
+    try { url = new URL(value); } catch { throw new TypeError("Webhook URL must be a valid public HTTPS URL."); }
+    if (url.protocol !== "https:" || (url.port && url.port !== "443") || url.username || url.password || url.search || url.hash || value.length > 2048) throw new TypeError("Webhook URL must use public HTTPS on port 443 without credentials, query, or fragment.");
+  }
+
+  private validateWebhookEvents(events: WebhookEvent[]) {
+    if (!Array.isArray(events) || events.length < 1 || events.length > 2 || new Set(events).size !== events.length || events.some(event => !["research.job.completed", "research.job.failed"].includes(event))) throw new TypeError("Choose one or more supported webhook events.");
+  }
+
+  private validateWebhookInput(input: WebhookEndpointInput) {
+    if (!input || typeof input.name !== "string" || input.name.trim().length < 2 || input.name.trim().length > 80) throw new TypeError("Webhook name must be 2 to 80 characters.");
+    this.validateWebhookUrl(input.url);
+    this.validateWebhookEvents(input.events);
+  }
+
+  private validateWebhookUpdate(input: WebhookEndpointUpdate) {
+    if (!input || typeof input !== "object" || Object.keys(input).length === 0 || Object.keys(input).some(key => !["name", "url", "events", "enabled", "rotate_secret"].includes(key))) throw new TypeError("Provide at least one supported webhook change.");
+    if (input.name !== undefined && (typeof input.name !== "string" || input.name.trim().length < 2 || input.name.trim().length > 80)) throw new TypeError("Webhook name must be 2 to 80 characters.");
+    if (input.url !== undefined) this.validateWebhookUrl(input.url);
+    if (input.events !== undefined) this.validateWebhookEvents(input.events);
+    if (input.enabled !== undefined && typeof input.enabled !== "boolean") throw new TypeError("enabled must be a boolean.");
+    if (input.rotate_secret !== undefined && input.rotate_secret !== true) throw new TypeError("rotate_secret can only be true.");
+  }
+
+  private async jobRequest<T>(path: string, method: "GET" | "POST" | "PATCH" | "DELETE", body?: unknown, idempotencyKey?: string, signal?: AbortSignal, retrySafe = true): Promise<T> {
     const url = `${this.baseUrl}${path}`;
+    const retryLimit = retrySafe ? this.maxRetries : 0;
     for (let attempt = 0; ; attempt++) {
       const controller = new AbortController(); const abort = () => controller.abort(signal?.reason);
       const timer = setTimeout(() => controller.abort(), this.timeoutMs); signal?.addEventListener("abort", abort, { once: true });
@@ -159,12 +220,12 @@ export class TidelightClient {
         try { payload = await response.json(); } catch { payload = null; }
       } catch (error) {
         if (signal?.aborted) throw error;
-        if (attempt >= this.maxRetries) throw new TidelightApiError(0, "network_error", "The Tidelight API could not be reached.", null);
+        if (attempt >= retryLimit) throw new TidelightApiError(0, "network_error", "The Tidelight API could not be reached.", null);
         await this.pause(attempt, undefined, signal); continue;
       } finally { clearTimeout(timer); signal?.removeEventListener("abort", abort); }
       if (response.ok && payload && typeof payload === "object") return payload as T;
       const detail = payload && typeof payload === "object" && "error" in payload && payload.error && typeof payload.error === "object" ? payload.error as Record<string, unknown> : {};
-      if ([429, 502, 503, 504].includes(response.status) && attempt < this.maxRetries) { await this.pause(attempt, response.headers.get("retry-after"), signal); continue; }
+      if ([429, 502, 503, 504].includes(response.status) && attempt < retryLimit) { await this.pause(attempt, response.headers.get("retry-after"), signal); continue; }
       if (response.ok) throw new TidelightApiError(response.status, "invalid_response", "The Tidelight API returned an invalid response.", response.headers.get("x-request-id"));
       throw new TidelightApiError(response.status, typeof detail.code === "string" ? detail.code : "api_error", typeof detail.message === "string" ? detail.message : "Tidelight API request failed.", typeof detail.request_id === "string" ? detail.request_id : response.headers.get("x-request-id"));
     }

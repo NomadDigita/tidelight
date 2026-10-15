@@ -2,6 +2,9 @@ openapi: 3.1.0
 info:
   title: Tidelight Intelligence Cloud API
   version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://tidelight.app/terms
   description: The versioned developer API exposes read only market data and permission scoped asynchronous research jobs. Tokenized equity spot data is distinct from underlying US stock and perpetual contract data.
 servers:
   - url: https://tidelight.app/api/v1
@@ -119,6 +122,138 @@ paths:
         '404': { $ref: '#/components/responses/Error' }
         '409': { $ref: '#/components/responses/Error' }
         '429': { $ref: '#/components/responses/Error' }
+  /webhooks:
+    get:
+      operationId: listWebhooks
+      summary: List webhook endpoints in the API key's project
+      description: Requires alerts:manage. Endpoint secrets are never returned by list operations.
+      responses:
+        '200':
+          description: Project webhook endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [endpoints, request_id]
+                properties:
+                  endpoints: { type: array, items: { $ref: '#/components/schemas/WebhookEndpoint' } }
+                  request_id: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createWebhook
+      summary: Register a signed webhook endpoint
+      description: Requires alerts:manage. Destinations must use public HTTPS on port 443 and pass DNS-based SSRF checks. The signing secret is shown once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, url, events]
+              properties:
+                name: { type: string, minLength: 2, maxLength: 80 }
+                url: { type: string, format: uri, maxLength: 2048 }
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 2
+                  uniqueItems: true
+                  items: { $ref: '#/components/schemas/WebhookEvent' }
+      responses:
+        '201':
+          description: Endpoint created. Store signing_secret securely; it will not be returned again.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookMutationResponse' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '413': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /webhooks/{endpoint_id}:
+    parameters:
+      - name: endpoint_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      operationId: updateWebhook
+      summary: Update, disable, or rotate a webhook endpoint
+      description: Requires alerts:manage. A rotated signing secret is shown once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                name: { type: string, minLength: 2, maxLength: 80 }
+                url: { type: string, format: uri, maxLength: 2048 }
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 2
+                  uniqueItems: true
+                  items: { $ref: '#/components/schemas/WebhookEvent' }
+                enabled: { type: boolean }
+                rotate_secret: { type: boolean, const: true }
+      responses:
+        '200':
+          description: Endpoint updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookMutationResponse' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '413': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: disableWebhook
+      summary: Disable a webhook endpoint and cancel pending deliveries
+      responses:
+        '200':
+          description: Endpoint disabled
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [disabled, request_id]
+                properties:
+                  disabled: { type: boolean, const: true }
+                  request_id: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /webhooks/deliveries:
+    get:
+      operationId: listWebhookDeliveries
+      summary: List the latest 100 webhook deliveries for this project
+      description: Requires alerts:manage. Includes attempt summaries and bounded event payloads.
+      responses:
+        '200':
+          description: Recent deliveries
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deliveries, request_id]
+                properties:
+                  deliveries: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/WebhookDelivery' } }
+                  request_id: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     tidelightKey: { type: http, scheme: bearer, bearerFormat: Tidelight API key }
@@ -227,3 +362,57 @@ components:
         provider_timestamp: { type: [integer, 'null'] }
         market_session_status: { type: string, enum: [available, unavailable] }
         source: { type: string, const: Bitget Reality spot }
+    WebhookEvent:
+      type: string
+      enum: [research.job.completed, research.job.failed]
+    WebhookEndpoint:
+      type: object
+      required: [id, project_id, organization_id, name, url, events, enabled, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        project_id: { type: string, format: uuid }
+        organization_id: { type: string, format: uuid }
+        name: { type: string }
+        url: { type: string, format: uri }
+        events: { type: array, items: { $ref: '#/components/schemas/WebhookEvent' } }
+        enabled: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    WebhookMutationResponse:
+      type: object
+      required: [endpoint, request_id]
+      properties:
+        endpoint: { $ref: '#/components/schemas/WebhookEndpoint' }
+        signing_secret:
+          type: string
+          description: Present only on create or rotation; retain securely because it is not returned again.
+        request_id: { type: string, format: uuid }
+    WebhookDelivery:
+      type: object
+      required: [id, endpoint_id, project_id, event_id, event_type, payload, status, attempt_count, last_status_code, last_error_code, last_duration_ms, created_at, completed_at, tic_webhook_delivery_attempts, endpoint_name]
+      properties:
+        id: { type: string, format: uuid }
+        endpoint_id: { type: string, format: uuid }
+        project_id: { type: string, format: uuid }
+        event_id: { type: string, format: uuid }
+        event_type: { $ref: '#/components/schemas/WebhookEvent' }
+        payload: { type: object, additionalProperties: true }
+        status: { type: string, enum: [pending, sending, retry_wait, succeeded, failed, cancelled] }
+        attempt_count: { type: integer, minimum: 0, maximum: 8 }
+        last_status_code: { type: [integer, 'null'] }
+        last_error_code: { type: [string, 'null'] }
+        last_duration_ms: { type: [integer, 'null'] }
+        created_at: { type: string, format: date-time }
+        completed_at: { type: [string, 'null'], format: date-time }
+        endpoint_name: { type: string }
+        tic_webhook_delivery_attempts:
+          type: array
+          items:
+            type: object
+            required: [attempt_number, status_code, duration_ms, error_code, created_at]
+            properties:
+              attempt_number: { type: integer }
+              status_code: { type: [integer, 'null'] }
+              duration_ms: { type: [integer, 'null'] }
+              error_code: { type: [string, 'null'] }
+              created_at: { type: string, format: date-time }

@@ -88,6 +88,53 @@ class ClientTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             client.list_tokenized_equities(cursor="../../etc")
 
+    def test_webhook_management_and_delivery_history(self):
+        endpoint_id = "01234567-89ab-4cde-8fab-0123456789ab"
+        calls = []
+
+        def opener(request, timeout):
+            calls.append((request.get_method(), request.full_url, request.get_header("Authorization"), request.data))
+            if request.get_method() == "GET" and request.full_url.endswith("/deliveries"):
+                return FakeResponse({"deliveries": [], "request_id": "r5"})
+            if request.get_method() == "GET":
+                return FakeResponse({"endpoints": [{"id": endpoint_id}], "request_id": "r1"})
+            if request.get_method() == "DELETE":
+                return FakeResponse({"disabled": True, "request_id": "r4"})
+            return FakeResponse({"endpoint": {"id": endpoint_id}, "signing_secret": "shown-once", "request_id": "r2"})
+
+        client = Client(KEY, opener=opener)
+        self.assertEqual(client.list_webhooks()["endpoints"][0]["id"], endpoint_id)
+        self.assertEqual(client.create_webhook(name="Research", url="https://example.com/hook", events=["research.job.completed"])["signing_secret"], "shown-once")
+        self.assertEqual(client.update_webhook(endpoint_id, rotate_secret=True)["signing_secret"], "shown-once")
+        self.assertTrue(client.disable_webhook(endpoint_id)["disabled"])
+        self.assertEqual(client.list_webhook_deliveries()["deliveries"], [])
+        self.assertEqual([call[0] for call in calls], ["GET", "POST", "PATCH", "DELETE", "GET"])
+        self.assertTrue(all(call[2] == "Bearer " + KEY for call in calls))
+
+    def test_webhook_input_validation_prevents_requests(self):
+        client = Client(KEY, opener=lambda *_args, **_kwargs: self.fail("network should not run"))
+        with self.assertRaises(ValueError):
+            client.create_webhook(name="x", url="http://example.com/hook", events=["research.job.completed"])
+        with self.assertRaises(ValueError):
+            client.create_webhook(name="Valid", url="https://example.com/hook", events=["unknown.event"])
+        with self.assertRaises(ValueError):
+            client.update_webhook("../invalid", enabled=False)
+        with self.assertRaises(ValueError):
+            client.update_webhook("01234567-89ab-4cde-8fab-0123456789ab", rotate_secret=False)
+
+    def test_webhook_mutation_does_not_retry_without_idempotency_support(self):
+        calls = []
+
+        def unavailable(request, timeout):
+            calls.append(1)
+            raise HTTPError(request.full_url, 503, "Unavailable", {}, io.BytesIO(b'{"error":{"code":"service_unavailable","message":"Try later"}}'))
+
+        client = Client(KEY, opener=unavailable, max_retries=3)
+        with self.assertRaises(ApiError) as caught:
+            client.create_webhook(name="Research", url="https://example.com/hook", events=["research.job.completed"])
+        self.assertEqual(caught.exception.code, "service_unavailable")
+        self.assertEqual(len(calls), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

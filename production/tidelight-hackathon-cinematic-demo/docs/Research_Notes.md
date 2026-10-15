@@ -3,7 +3,7 @@ TIDELIGHT PUBLIC PRODUCT REVIEW — 2026-10-11
 Sources checked:
 - https://tidelight.app
 - https://docs.tidelight.app
-- https://github.com/NomadDigita/Tidelight (connected repository)
+- https://github.com/TidelightOrg/tidelight (canonical repository)
 
 Verified framing used in the edit:
 - Public Bitget spot market pages are read-only in this demonstration; no exchange credentials are connected.

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 45;
 
 function authorize(request: Request) {
-  const expected = process.env.CRON_SECRET;
+  const expected = process.env.TIC_RESEARCH_CRON_SECRET;
   const provided = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
   if (!expected || !provided) return false;
   const left = Buffer.from(expected), right = Buffer.from(provided);
@@ -57,3 +57,6 @@ export async function GET(request: Request) {
     }
   }
 }
+
+// Supabase pg_net invokes the worker over HTTPS with its Vault-held bearer.
+export const POST = GET;

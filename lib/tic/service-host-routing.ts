@@ -17,5 +17,10 @@ export function resolveServiceHostRoute(hostname: string, pathname: string): Ser
     if (pathname === "/status" || pathname === "/api/health") return { kind: "rewrite", pathname };
     return { kind: "not-found" };
   }
+  if (host === "dev.tidelight.app") {
+    if (pathname === "/" || pathname === "/api") return { kind: "rewrite", pathname: "/developers/docs" };
+    if (pathname === "/developers/docs") return { kind: "rewrite", pathname };
+    return { kind: "not-found" };
+  }
   return null;
 }

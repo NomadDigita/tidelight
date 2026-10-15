@@ -115,7 +115,10 @@ export async function sendSignedWebhook(input: { url: string; encryptedSecret: s
         "Tidelight-Event": input.eventType,
         "Tidelight-Signature": `t=${timestamp},v1=${signature}`,
       },
-      lookup: (_hostname, _options, callback) => callback(null, target.address, target.family),
+      lookup: (_hostname, options, callback) => {
+        if (options.all) callback(null, [{ address: target.address, family: target.family }]);
+        else callback(null, target.address, target.family);
+      },
     }, response => {
       let received = 0;
       response.on("data", chunk => { received += Buffer.byteLength(chunk); if (received > MAX_RESPONSE_BYTES) req.destroy(new Error("webhook_response_too_large")); });

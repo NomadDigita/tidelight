@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { issueSecret, sameOrigin } from "@/lib/tic/credentials";
+import { getProjectRole, listAccessibleProjects } from "@/lib/tic/organizations";
+import { canRevokeOrganizationKey, canWriteOrganization } from "@/lib/tic/organization-rbac";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const FIELDS = "id,project_id,name,environment,key_prefix,scopes,minute_limit,monthly_limit,expires_at,revoked_at,last_used_at,created_at";
+const FIELDS = "id,project_id,owner_id,name,environment,key_prefix,scopes,minute_limit,monthly_limit,expires_at,revoked_at,last_used_at,created_at";
 const KEY_SCOPES = ["market:read", "research:run"] as const;
 
 export async function GET() {
@@ -11,7 +13,10 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: "Sign in to manage keys." }, { status: 401 });
   try {
-    const { data, error } = await createAdminClient().from("developer_api_keys").select(FIELDS).eq("owner_id", user.id).order("created_at", { ascending: false });
+    const admin = createAdminClient();
+    const projects = await listAccessibleProjects(admin, user.id);
+    if (!projects.length) return Response.json({ keys: [] }, { headers: { "Cache-Control": "no-store" } });
+    const { data, error } = await admin.from("developer_api_keys").select(FIELDS).in("project_id", projects.map(project => project.id)).order("created_at", { ascending: false });
     if (error) throw error;
     return Response.json({ keys: data }, { headers: { "Cache-Control": "no-store" } });
   } catch { return Response.json({ error: "Keys are temporarily unavailable." }, { status: 503 }); }
@@ -37,9 +42,9 @@ export async function POST(request: Request) {
   if (!UUID.test(projectId) || name.length < 2 || name.length > 80 || (environment !== "test" && environment !== "production") || !Number.isInteger(expiresInDays) || (expiresInDays as number) < 1 || (expiresInDays as number) > 365) return Response.json({ error: "Invalid project, name, environment, or expiration." }, { status: 400 });
   try {
     const admin = createAdminClient();
-    const { data: project, error: projectError } = await admin.from("developer_projects").select("id").eq("id", projectId).eq("owner_id", user.id).maybeSingle();
-    if (projectError) throw projectError;
-    if (!project) return Response.json({ error: "Project not found." }, { status: 404 });
+    const role = await getProjectRole(admin, projectId, user.id);
+    if (!role) return Response.json({ error: "Project not found." }, { status: 404 });
+    if (!canWriteOrganization(role)) return Response.json({ error: "Your organization role cannot create credentials." }, { status: 403 });
     const { count, error: countError } = await admin.from("developer_api_keys").select("id", { count: "exact", head: true }).eq("project_id", projectId).is("revoked_at", null);
     if (countError) throw countError;
     if ((count ?? 0) >= 10) return Response.json({ error: "Active key limit reached." }, { status: 429 });
@@ -64,7 +69,14 @@ export async function DELETE(request: Request) {
   } catch { return Response.json({ error: "Send a JSON object." }, { status: 400 }); }
   if (typeof body.id !== "string" || !UUID.test(body.id)) return Response.json({ error: "Invalid key ID." }, { status: 400 });
   try {
-    const { data, error } = await createAdminClient().from("developer_api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", body.id).eq("owner_id", user.id).is("revoked_at", null).select("id").maybeSingle();
+    const admin = createAdminClient();
+    const { data: key, error: keyError } = await admin.from("developer_api_keys").select("id,project_id,owner_id").eq("id", body.id).maybeSingle();
+    if (keyError) throw keyError;
+    if (!key) return Response.json({ error: "Active key not found." }, { status: 404 });
+    const role = await getProjectRole(admin, key.project_id, user.id);
+    if (!role) return Response.json({ error: "Active key not found." }, { status: 404 });
+    if (!canRevokeOrganizationKey(role, key.owner_id === user.id)) return Response.json({ error: "Your organization role cannot revoke this credential." }, { status: 403 });
+    const { data, error } = await admin.from("developer_api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", body.id).is("revoked_at", null).select("id").maybeSingle();
     if (error) throw error;
     if (!data) return Response.json({ error: "Active key not found." }, { status: 404 });
     return Response.json({ revoked: true }, { headers: { "Cache-Control": "no-store" } });

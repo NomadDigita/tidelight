@@ -14,7 +14,7 @@ Start by checking out the current `TidelightOrg/tidelight` `main`, reading this 
 ### First actions, in order
 
 1. **Verify the PR #141 baseline in the new environment.** Run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build` once after environment setup. The last recorded results were 139 application tests passing plus typecheck, lint, and production build passing. If the new environment lacks installed dependencies, install from the lockfile first.
-2. **Close the last analytics production inspection gap.** Sign in through the normal Tidelight email-code flow when a valid owner-provided session/code is available. Inspect `/developers` → Usage at desktop and narrow mobile widths; confirm the loaded 30-day summary, UTC chart/table, and latest request rows render and refresh without overflow or browser errors. The API's anonymous 401 is expected. Do not put OTPs, sessions, API secrets, or credentials in this document or logs. If sign-in is unavailable, record the blocker and proceed to the MCP test below.
+2. **Analytics production inspection is complete.** The authenticated Usage page was inspected at desktop and mobile sizes; the account had no developer projects, so its honest production state was zero activity and empty chart/request states. The page had no overflow or browser errors, and the selected mobile nav item was confirmed visible. Populated buckets and latency remain covered by database fixture tests. See [`TIC_IMPLEMENTATION.md`](TIC_IMPLEMENTATION.md#milestone-10--request-usage-analytics).
 3. **Begin TIC milestone 11: third-party MCP interoperability.** Test named clients individually against `https://mcp.tidelight.app/mcp` using the deployed OAuth discovery/consent and PKCE flow. Record client and version, exact connection procedure, scopes, tool discovery, a real read-only invocation, refresh/revocation behavior, and client-specific failures. Only list clients as supported after a repeatable successful test; never imply broad compatibility from protocol-level tests alone. The existing REST/MCP/API-key and MCP OAuth implementation is complete and production verified; interoperability certification is the next TIC milestone.
 4. **After the API/MCP verification gate, continue product roadmap P0 proof.** Verify the existing Research → Strategy Lab → Nightwatch symbol and research-run lineage in a fresh production browser session, then verify one opted-in scheduled paper run under [`OPERATIONS_RUNBOOK.md`](OPERATIONS_RUNBOOK.md). This is production evidence for already implemented behavior, not a request to rebuild it.
 
@@ -61,7 +61,7 @@ The ordered TIC milestones below are complete in code. Their full file lists, mi
 
 ### Last known build and visual checks
 
-At PR #141 / commit `5cc3b9d`, `npm test` passed 139 tests; `npm run typecheck`, `npm run lint`, and `npm run build` all passed. PR #141 is merged into `TidelightOrg/tidelight/main`. The new Codex environment should rerun these commands once to detect setup drift. Previous browser inspection covered the public landing, signed-out console/login, docs, and theme/mobile layouts; the authenticated Usage view itself is the remaining visual check. Production anonymous API requests return 401 as designed. Do not treat that response as an outage.
+At PR #141 / commit `5cc3b9d`, `npm test` passed 139 tests; `npm run typecheck`, `npm run lint`, and `npm run build` all passed. PR #141 is merged into `TidelightOrg/tidelight/main`. These checks were rerun in the new environment and passed again. The authenticated Usage view has now also been inspected at 390 px and 1440 px; the test account has no projects, so the production output is honestly empty. Production anonymous API requests return 401 as designed. Do not treat that response as an outage.
 
 ## Prioritized full roadmap
 
@@ -111,7 +111,7 @@ Publish Python/TypeScript SDK packages only after their owners, credentials, CI/
 - **Organization invitations:** accounts already registered can be added; verified sender and Auth templates are needed for email invites.
 - **Backup restore rehearsal:** not performed. Never test by overwriting production.
 - **Live trading:** disabled / outside TIC scopes. Nightwatch is paper-only.
-- **Production visual inspection:** authenticated analytics view remains pending. Do not store OTP or ask a user to paste secrets in the repo.
+- **Production visual inspection:** authenticated analytics view completed for an account with no projects; populated analytics are validated by database fixtures. Do not store OTP or ask a user to paste secrets in the repo.
 
 ## Repository map and source of truth
 

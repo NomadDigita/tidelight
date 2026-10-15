@@ -9,6 +9,7 @@ export function resolveServiceHostRoute(hostname: string, pathname: string): Ser
   }
   if (host === "mcp.tidelight.app") {
     if (pathname === "/" || pathname === "/mcp" || pathname === "/api/mcp") return { kind: "rewrite", pathname: "/api/mcp" };
+    if (pathname === "/.well-known/oauth-protected-resource/mcp") return { kind: "rewrite", pathname: "/api/oauth/mcp-resource" };
     return { kind: "not-found" };
   }
   if (host === "status.tidelight.app") {

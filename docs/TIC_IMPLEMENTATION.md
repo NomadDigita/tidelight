@@ -4,7 +4,7 @@
 
 Tidelight is a single Next.js 16 application on Vercel with Supabase Auth and Postgres. Existing market adapters live in `lib/bitget-market.ts`; SEC company facts, evidence collection, Agent Flow, strategy backtests, token pulse, and Nightwatch each have existing modules and routes. The current Agent Flow request has a 60 second Vercel duration and streams directly from the web request. Existing research data is owned by `user_id` and protected by RLS. The UI has Tidelight theme variables, branding assets, a workspace shell, and mobile styles.
 
-Current capabilities are uneven. Bitget Reality spot rTokens and stock perpetuals are distinguished in the market adapter. The developer platform now has durable asynchronous company snapshot jobs, organization workspaces, and permission-scoped credentials. Commercial billing, OAuth authorization, and an SDK release pipeline are not active. No public developer credentials existed before these milestones. Existing live trading routes remain outside developer scopes.
+Current capabilities are uneven. Bitget Reality spot rTokens and stock perpetuals are distinguished in the market adapter. The developer platform now has durable asynchronous company snapshot jobs, organization workspaces, and permission-scoped credentials. Commercial billing and an SDK release pipeline are not active. MCP OAuth implementation is in progress as a separate authorization service; its routes must not be advertised until the database migration and production verification are complete. Existing live trading routes remain outside developer scopes.
 
 ## Architecture boundary
 
@@ -44,7 +44,7 @@ The first production owner/member smoke test found that `list_developer_organiza
 
 ## Milestone 4 — remote MCP server (complete for the current supported capability set)
 
-The implementation uses the official TypeScript MCP SDK 1.32.1 with Streamable HTTP over Web Standard `Request`/`Response`, stateless mode, JSON responses, a 16 KB body limit, and DNS rebinding host/origin checks. `POST /api/mcp` exposes only tools available to the credential's scopes. Tool calls invoke the existing market/research REST handlers directly, so existing key authorization, request quotas, idempotency, and usage records remain in force. The current tool set is instrument search, tokenized equity lookup, company research start, job status, and job cancellation. API keys are the current bearer authentication mechanism; OAuth, MCP resources/prompts, and trading tools are not enabled.
+The implementation uses the official TypeScript MCP SDK 1.32.1 with Streamable HTTP over Web Standard `Request`/`Response`, stateless mode, JSON responses, a 16 KB body limit, and DNS rebinding host/origin checks. `POST /api/mcp` exposes only tools available to the credential's scopes. Tool calls invoke the existing market/research REST handlers directly, so existing key authorization, request quotas, idempotency, and usage records remain in force. The current tool set is instrument search, tokenized equity lookup, company research start, job status, and job cancellation. Direct API keys are active. This OAuth milestone adds protected-resource discovery, a separate authorization server, and scoped OAuth connections; verify the deployed end-to-end flow before marking it available. MCP prompts, additional resources, and trading tools remain out of scope.
 
 Protocol tests use the official SDK client and server transports to validate initialization, tool discovery by scope, market provenance results, research job lifecycle calls, and denied tools. PR #124 deployed the endpoint. The production client test verified all five tools, a live Bitget Reality spot response with provenance, research start/cancel/status, market-only tool filtering, denied unauthorized calls, usage accounting, and immediate key revocation. It exposed a successful `error: null` status payload being misclassified; PR #125 fixed that behavior, with regression coverage, and deployed it to production. Production retest passed after deployment. The temporary account, organizations, projects, keys, jobs, and usage rows were removed; all corresponding database counts were confirmed zero. MCP documentation was visually checked in Chromium at 390 px and 1440 px with no horizontal overflow or page errors. Named third party MCP clients will not be advertised until individually tested. OAuth, resources, prompts, and trading tools remain disabled.
 
@@ -70,27 +70,19 @@ Verification: TypeScript SDK build and six tests passed; Python SDK eight tests 
 
 ## Remaining milestones in dependency order
 
-1. Evaluate MCP OAuth resource metadata and consent, then validate specific external MCP clients before naming them as supported.
+1. Complete MCP OAuth integration tests and production verification, then validate specific external MCP clients before naming them as supported.
 2. Measure provider and compute costs, define entitlements and credit budgets, then select a Nigerian merchant compatible payment provider and configure approved pricing. Billing UI must show actual records only.
 3. Complete account recovery and stronger abuse controls.
 4. Run remaining cross-theme accessibility and SDK integration checks, abuse tests, staging smoke tests, and controlled production verification for each new capability.
 
 ## External configuration still needed
 
-The API, MCP, status, and developer documentation hosts are attached to Vercel. Durable worker dispatch requires the dedicated `TIC_RESEARCH_CRON_SECRET` in Vercel Production plus `tic_research_worker_url` and `tic_research_worker_secret` in Supabase Vault before applying the scheduler migration. MCP OAuth requires issuer, client registration, consent, and token lifecycle infrastructure. SDK publishing requires package ownership and publishing credentials. Commercial billing needs pricing approval, payment provider eligibility and account configuration. Provider licensing must be confirmed before broad redistribution of market data.
+The API, MCP, status, and developer documentation hosts are attached to Vercel and their public routes have been smoke-tested. Durable worker dispatch requires the dedicated `TIC_RESEARCH_CRON_SECRET` in Vercel Production plus `tic_research_worker_url` and `tic_research_worker_secret` in Supabase Vault before applying the scheduler migration. The current PR adds the OAuth issuer, consent, token lifecycle, and database schema; production OAuth remains unavailable until this work is merged, the additive migration is applied, and live protocol tests pass. SDK publishing requires package ownership and publishing credentials. Commercial billing needs pricing approval, payment provider eligibility and account configuration. Provider licensing must be confirmed before broad redistribution of market data.
 
-## Service host routing milestone — implementation complete, DNS pending
+## Service host routing milestone — complete
 
 The application now routes `api.tidelight.app/v1/*` to the existing versioned REST handlers, `mcp.tidelight.app/mcp` (and `/`) to the existing Streamable HTTP MCP handler, and `status.tidelight.app` to a live status page and health endpoint. The API hostname root returns a service index. Host-specific routing denies unrelated paths; it does not add alternate authorization or bypass the existing API key scopes, request quotas, or usage accounting. SDK defaults and the OpenAPI server URL now use `https://api.tidelight.app/v1`.
 
-Production deployment #134 is READY. The status page and `/api/health` were verified on production; both application and database returned operational. The `api`, `mcp`, and `status` hostnames are now attached to the Vercel project, but Vercel reports their DNS configuration as misconfigured because the active authoritative nameservers are external Cloudoon. Add these records in the Cloudoon DNS zone:
-
-| Type | Name | Target |
-| --- | --- | --- |
-| CNAME | `api` | `cname.vercel-dns.com` |
-| CNAME | `mcp` | `cname.vercel-dns.com` |
-| CNAME | `status` | `cname.vercel-dns.com` |
-
-`dev.tidelight.app` is a Vercel CNAME (`cname.vercel-dns.com`) and is attached to the project. It routes to the existing developer docs page; `/` and `/api` are aliases, while unrelated paths return not found. `docs.tidelight.app` is Tidelight Research's live GitBook custom domain; preserve its DNS and content.
+Production deployment #134 is READY. `api.tidelight.app/v1`, `mcp.tidelight.app/mcp`, and `status.tidelight.app` are attached to Vercel and respond as expected. PR #136 attached `dev.tidelight.app` to the same project and maps `/` and `/api` to the existing developer guide; unrelated paths return not found. Production browser checks at desktop and 390 px confirmed the guide renders without horizontal overflow or browser errors. `docs.tidelight.app` remains Tidelight Research's live GitBook custom domain; its DNS and content were preserved.
 
 Email invitation links require a verified transactional email sender and configured Supabase Auth templates. Until then, organization owners can add accounts that already exist in Tidelight.

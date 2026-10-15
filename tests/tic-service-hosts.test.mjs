@@ -10,6 +10,7 @@ test("the API hostname exposes only the versioned API service", () => {
 
 test("the MCP hostname maps only its public Streamable HTTP path", () => {
   for (const path of ["/", "/mcp", "/api/mcp"]) assert.deepEqual(resolveServiceHostRoute("mcp.tidelight.app", path), { kind: "rewrite", pathname: "/api/mcp" });
+  assert.deepEqual(resolveServiceHostRoute("mcp.tidelight.app", "/.well-known/oauth-protected-resource/mcp"), { kind: "rewrite", pathname: "/api/oauth/mcp-resource" });
   assert.deepEqual(resolveServiceHostRoute("mcp.tidelight.app", "/developers"), { kind: "not-found" });
 });
 

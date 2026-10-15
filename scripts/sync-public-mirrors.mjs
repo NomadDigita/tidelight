@@ -3,6 +3,7 @@ import { cp, mkdir, readFile, readdir, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { getTrackedMirrorFiles } from "./public-mirror-files.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(await readFile(path.join(root, ".github/tidelight-mirrors.json"), "utf8"));
@@ -16,12 +17,13 @@ const head = option("--head") ?? "HEAD";
 const runId = process.env.GITHUB_RUN_ID ?? `${Date.now()}`;
 const dispatchAll = !base || base === "0".repeat(40);
 const changed = dispatchAll ? [] : execFileSync("git", ["diff", "--name-only", `${base}...${head}`], { cwd: root, encoding: "utf8" }).trim().split("\n").filter(Boolean);
+const syncInfrastructurePaths = [".github/tidelight-mirrors.json", "scripts/check-public-mirrors.mjs", "scripts/public-mirror-files.mjs", "scripts/sync-public-mirrors.mjs"];
 const managedPaths = {
-  api: ["public/components/api/", "docs/tic-openapi.yaml", ".github/tidelight-mirrors.json"],
-  mcp: ["public/components/mcp/", ".github/tidelight-mirrors.json"],
-  typescript: ["sdk/typescript/", ".github/tidelight-mirrors.json"],
-  python: ["sdk/python/", ".github/tidelight-mirrors.json"],
-  examples: ["public/components/examples/", ".github/tidelight-mirrors.json"],
+  api: ["public/components/api/", "docs/tic-openapi.yaml", ...syncInfrastructurePaths],
+  mcp: ["public/components/mcp/", ...syncInfrastructurePaths],
+  typescript: ["sdk/typescript/", ...syncInfrastructurePaths],
+  python: ["sdk/python/", ...syncInfrastructurePaths],
+  examples: ["public/components/examples/", ...syncInfrastructurePaths],
 };
 const selected = Object.entries(config.mirrors).filter(([name]) => dispatchAll || changed.some((file) => managedPaths[name].some((prefix) => file.startsWith(prefix))));
 if (!selected.length) {
@@ -32,15 +34,24 @@ if (!selected.length) {
 const run = (cmd, argv, opts = {}) => execFileSync(cmd, argv, { stdio: "inherit", ...opts });
 const capture = (cmd, argv, opts = {}) => execFileSync(cmd, argv, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], ...opts }).trim();
 const exists = async (file) => { try { await stat(file); return true; } catch { return false; } };
-const copyFileTree = async (source, destination) => {
+const copyTrackedMapping = async (mapping, workspace) => {
+  const source = path.resolve(root, mapping.source);
   if (!(await exists(source))) throw new Error(`Missing canonical path: ${path.relative(root, source)}`);
-  const info = await stat(source);
-  if (info.isDirectory()) {
-    await mkdir(destination, { recursive: true });
-    for (const item of await readdir(source)) await copyFileTree(path.join(source, item), path.join(destination, item));
-  } else {
+  const sourceInfo = await stat(source);
+  const tracked = getTrackedMirrorFiles(root, mapping.source);
+  if (tracked.length === 0) throw new Error(`No Git-tracked files in canonical path: ${mapping.source}`);
+  for (const trackedPath of tracked) {
+    const file = path.resolve(root, trackedPath);
+    if (!file.startsWith(`${source}${path.sep}`) && file !== source) throw new Error(`Tracked path escapes mapping: ${trackedPath}`);
+    const info = await stat(file);
+    if (!info.isFile()) throw new Error(`Only regular files can be mirrored: ${trackedPath}`);
+    const relative = sourceInfo.isDirectory() ? path.relative(source, file) : "";
+    const destination = sourceInfo.isDirectory()
+      ? path.resolve(workspace, mapping.destination, relative)
+      : path.resolve(workspace, mapping.destination);
+    if (!destination.startsWith(`${workspace}${path.sep}`) && destination !== workspace) throw new Error(`${mapping.source}: unsafe destination mapping`);
     await mkdir(path.dirname(destination), { recursive: true });
-    await cp(source, destination);
+    await cp(file, destination);
   }
 };
 const tmp = await import("node:fs/promises").then((fs) => fs.mkdtemp(path.join(os.tmpdir(), "tidelight-mirror-")));
@@ -67,12 +78,7 @@ try {
     }
     const entries = await readdir(workspace);
     for (const entry of entries) if (entry !== ".git") await rm(path.join(workspace, entry), { recursive: true, force: true });
-    for (const mapping of mirror.paths) {
-      const source = path.resolve(root, mapping.source);
-      const destination = path.resolve(workspace, mapping.destination);
-      if (!destination.startsWith(`${workspace}${path.sep}`) && destination !== workspace) throw new Error(`${name}: unsafe destination mapping`);
-      await copyFileTree(source, destination);
-    }
+    for (const mapping of mirror.paths) await copyTrackedMapping(mapping, workspace);
     run("git", ["add", "--all"], { cwd: workspace });
     if (!bootstrapping && capture("git", ["status", "--porcelain"], { cwd: workspace }) === "") {
       console.log(`${name}: already synchronized; no changes.`);

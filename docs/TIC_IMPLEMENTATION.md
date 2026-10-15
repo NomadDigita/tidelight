@@ -4,7 +4,7 @@
 
 Tidelight is a single Next.js 16 application on Vercel with Supabase Auth and Postgres. Existing market adapters live in `lib/bitget-market.ts`; SEC company facts, evidence collection, Agent Flow, strategy backtests, token pulse, and Nightwatch each have existing modules and routes. The current Agent Flow request has a 60 second Vercel duration and streams directly from the web request. Existing research data is owned by `user_id` and protected by RLS. The UI has Tidelight theme variables, branding assets, a workspace shell, and mobile styles.
 
-Current capabilities are uneven. Bitget Reality spot rTokens and stock perpetuals are distinguished in the market adapter. Some research is durable in `research_runs`, but execution itself is not queue backed and cannot yet support a public asynchronous job contract. There is no organization model, commercial billing, OAuth server, SDK release pipeline, or webhook dispatcher. No public developer credentials existed before this milestone. Existing live trading routes must remain outside developer scopes.
+Current capabilities are uneven. Bitget Reality spot rTokens and stock perpetuals are distinguished in the market adapter. The developer platform now has durable asynchronous company snapshot jobs, organization workspaces, and permission-scoped credentials. Commercial billing, OAuth authorization, an SDK release pipeline, and webhook dispatch are not active. No public developer credentials existed before these milestones. Existing live trading routes remain outside developer scopes.
 
 ## Architecture boundary
 
@@ -40,15 +40,21 @@ The new migration backfills each existing developer into a private personal work
 
 Local PostgreSQL checks pass: fresh migrations backfilled an existing project; the legacy project-creation insert still receives a personal workspace; a second member issued a scoped key and started a shared project job; developers could not grant admin; demoting a member to reader revoked that member's key; removing a member revoked their key; revoked keys failed authorization; the final owner could not be removed; and `anon`/`authenticated` had no direct membership table or management function access. Shared request/job history survives user deletion with personal attribution cleared.
 
-The first production owner/member smoke test found that `list_developer_organization_members` returned Auth's `varchar` email into a `text` result column, causing the member endpoint to return 503. A follow-up migration casts the value and permits membership rows to cascade when an organization itself is deleted, while preserving the live organization's last-owner check. The fix passes a local PostgreSQL 17 regression check with Auth email set to `varchar(255)`, member listing, organization cascade cleanup, and account cleanup. Production retest is pending this migration's review, merge, and deployment. The temporary test users, workspaces, organizations, projects, keys, and jobs were deleted; production counts are zero.
+The first production owner/member smoke test found that `list_developer_organization_members` returned Auth's `varchar` email into a `text` result column, causing the member endpoint to return 503. PR #121 adds the cast and allows organization deletion cascades while preserving the live organization's last-owner check. It passed a PostgreSQL 17 regression check with Auth email set to `varchar(255)`, member listing, organization cascade cleanup, and account cleanup. Production verification then passed owner/member/reader access, real market and async research calls, idempotent retry, cancellation, key revocation, 403 permission denials, and outsider isolation. All temporary production users, workspaces, organizations, projects, keys, jobs, and usage records were deleted and zero counts verified. Production inspection at 390 px also led to PRs #122 and #123, which remove internal user IDs from the member list, allow long email wrapping, and disable last-owner controls.
+
+## Milestone 4 — remote MCP server (implementation in progress)
+
+The implementation uses the official TypeScript MCP SDK 1.32.1 with Streamable HTTP over Web Standard `Request`/`Response`, stateless mode, JSON responses, a 16 KB body limit, and DNS rebinding host/origin checks. `POST /api/mcp` exposes only tools available to the credential's scopes. Tool calls invoke the existing market/research REST handlers directly, so existing key authorization, request quotas, idempotency, and usage records remain in force. The current tool set is instrument search, tokenized equity lookup, company research start, job status, and job cancellation. API keys are the current bearer authentication mechanism; OAuth, MCP resources/prompts, and trading tools are not enabled.
+
+Protocol tests use the official SDK client and server transports to validate initialization, tool discovery by scope, market provenance results, research job lifecycle calls, and denied tools. Production deployment and live MCP calls remain pending this feature branch's review, merge, and deployment. Named third party MCP clients will not be advertised until individually tested.
 
 ## Remaining milestones in dependency order
 
-1. Build a remote Streamable HTTP MCP server on the same intelligence services with scoped authentication and tested client connections. Return evidence and concise execution events; keep private model reasoning private.
+1. Complete MCP production testing, evaluate OAuth resource metadata and consent, and validate specific external MCP clients before naming them as supported.
 2. Add webhook delivery infrastructure with SSRF protection and signatures, and monitoring controls only for supported event sources.
 3. Measure provider and compute costs, define entitlements and credit budgets, then select a Nigerian merchant compatible payment provider and configure approved pricing. Billing UI must show actual records only.
 4. Complete account recovery, key rotation, security-log filtering, and stronger abuse controls.
-5. Run cross theme and mobile UI review, accessibility checks, MCP interoperability, SDK integration, abuse tests, staging smoke tests, then controlled production verification for each capability.
+5. Run cross theme and mobile UI review, accessibility checks, SDK integration, abuse tests, staging smoke tests, then controlled production verification for each capability.
 
 ## External configuration still needed
 

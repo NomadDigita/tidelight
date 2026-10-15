@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { safeInternalRedirect } from "@/lib/auth/safe-redirect";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,6 +28,11 @@ export default function LoginPage() {
   // hidden until that template is configured so users are never sent a link-only email.
   const emailCodesEnabled = process.env.NEXT_PUBLIC_SUPABASE_EMAIL_OTP_ENABLED === "true";
 
+  function requestedNext() {
+    const candidate = new URLSearchParams(window.location.search).get("next");
+    return safeInternalRedirect(candidate, window.location.origin) ?? "/";
+  }
+
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("recovery") !== "1") return;
     const timer = window.setTimeout(() => { setRecovering(true); setMethod("password"); }, 0);
@@ -39,7 +45,7 @@ export default function LoginPage() {
     try {
       const { error: passkeyError } = await createClient().auth.signInWithPasskey();
       if (passkeyError) setError("Passkey sign-in could not be completed. Check the passkey provider setup or choose another sign-in method.");
-      else { const client = createClient(); const { data: { user } } = await client.auth.getUser(); if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "passkey_signin", metadata: {} }); router.replace("/"); router.refresh(); }
+      else { const client = createClient(); const { data: { user } } = await client.auth.getUser(); if (user) await client.from("security_events").insert({ user_id: user.id, event_type: "passkey_signin", metadata: {} }); router.replace(requestedNext()); router.refresh(); }
     } catch {
       setError("Passkey sign-in is unavailable on this device or provider setup. Choose another sign-in method.");
     } finally { setPasskeyBusy(false); }
@@ -60,7 +66,7 @@ export default function LoginPage() {
         const { data: verified, error: verifyError } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
         if (verifyError) throw verifyError;
         const isNew = verified.user?.created_at && Date.now() - Date.parse(verified.user.created_at) < 10 * 60 * 1000;
-        router.replace(isNew ? "/settings?setup=username#profile" : "/");
+        router.replace(requestedNext() !== "/" ? requestedNext() : isNew ? "/settings?setup=username#profile" : "/");
         router.refresh();
         return;
       }
@@ -70,15 +76,15 @@ export default function LoginPage() {
       const authResult = method === "code"
         ? (await supabase.auth.signInWithOtp({ email })).error
         : method === "link"
-          ? (await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
+          ? (await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(requestedNext())}` } })).error
           : isSignUp
-            ? (await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })).error
+            ? (await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(requestedNext())}` } })).error
             : await supabase.auth.signInWithPassword({ email, password });
       const authError = authResult && typeof authResult === "object" && "error" in authResult ? authResult.error : authResult;
       if (authError) throw authError;
       if (method === "code") setCodeSent(true);
       else if (method === "link" || isSignUp) setSent(true);
-      else { router.replace("/"); router.refresh(); }
+      else { router.replace(requestedNext()); router.refresh(); }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "";
       const normalized = message.toLowerCase();

@@ -1,4 +1,4 @@
-import { apiError, developerKeyHashFromRequest, finishUsage, RESEARCH_SCOPE } from "@/lib/tic/credentials";
+import { apiError, resolveDeveloperCredential, finishUsage, RESEARCH_SCOPE } from "@/lib/tic/credentials";
 import { normalizeResearchTicker } from "@/lib/tic/research-snapshot";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -30,8 +30,11 @@ async function readBoundedJson(request: Request): Promise<unknown> {
 
 export async function POST(request: Request) {
   const started = performance.now();
-  const keyHash = developerKeyHashFromRequest(request);
-  if (!keyHash) return apiError(401, "unauthorized", "Provide a valid Tidelight bearer key.", crypto.randomUUID());
+  let credential: Awaited<ReturnType<typeof resolveDeveloperCredential>>;
+  try { credential = await resolveDeveloperCredential(request, RESEARCH_SCOPE); }
+  catch { return apiError(503, "service_unavailable", "Credential validation is temporarily unavailable.", crypto.randomUUID()); }
+  if (!credential) return apiError(401, "unauthorized", "Provide a valid Tidelight bearer key.", crypto.randomUUID());
+  if ("reason" in credential) return apiError(credential.reason === "insufficient_scope" ? 403 : 401, credential.reason, credential.reason === "insufficient_scope" ? `This credential lacks ${RESEARCH_SCOPE} access.` : "This credential is invalid, expired, or revoked.", crypto.randomUUID());
   let body: Record<string, unknown>;
   try {
     const parsed: unknown = await readBoundedJson(request);
@@ -46,7 +49,7 @@ export async function POST(request: Request) {
   if (!IDEMPOTENCY_KEY.test(idempotencyKey)) return apiError(400, "invalid_idempotency_key", "Provide an Idempotency-Key between 8 and 128 letters, numbers, dots, underscores, colons, or hyphens.", crypto.randomUUID());
   try {
     const admin = createAdminClient();
-    const { data, error } = await admin.rpc("enqueue_tic_research_job", { p_hash: keyHash, p_ticker: ticker, p_idempotency_key: idempotencyKey });
+    const { data, error } = await admin.rpc("enqueue_tic_research_job", { p_hash: credential.keyHash, p_ticker: ticker, p_idempotency_key: idempotencyKey });
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : null;
     const requestId = row?.request_id ?? crypto.randomUUID();

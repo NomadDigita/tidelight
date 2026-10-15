@@ -6,7 +6,7 @@ import { canRevokeOrganizationKey, canWriteOrganization } from "@/lib/tic/organi
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FIELDS = "id,project_id,owner_id,name,environment,key_prefix,scopes,minute_limit,monthly_limit,expires_at,revoked_at,last_used_at,created_at";
-const KEY_SCOPES = ["market:read", "research:run"] as const;
+const KEY_SCOPES = ["market:read", "research:run", "alerts:manage"] as const;
 
 export async function GET() {
   const supabase = await createClient();

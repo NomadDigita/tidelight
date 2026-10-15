@@ -4,7 +4,7 @@
 
 Tidelight is a single Next.js 16 application on Vercel with Supabase Auth and Postgres. Existing market adapters live in `lib/bitget-market.ts`; SEC company facts, evidence collection, Agent Flow, strategy backtests, token pulse, and Nightwatch each have existing modules and routes. The current Agent Flow request has a 60 second Vercel duration and streams directly from the web request. Existing research data is owned by `user_id` and protected by RLS. The UI has Tidelight theme variables, branding assets, a workspace shell, and mobile styles.
 
-Current capabilities are uneven. Bitget Reality spot rTokens and stock perpetuals are distinguished in the market adapter. The developer platform now has durable asynchronous company snapshot jobs, organization workspaces, and permission-scoped credentials. Commercial billing, OAuth authorization, an SDK release pipeline, and webhook dispatch are not active. No public developer credentials existed before these milestones. Existing live trading routes remain outside developer scopes.
+Current capabilities are uneven. Bitget Reality spot rTokens and stock perpetuals are distinguished in the market adapter. The developer platform now has durable asynchronous company snapshot jobs, organization workspaces, and permission-scoped credentials. Commercial billing, OAuth authorization, and an SDK release pipeline are not active. No public developer credentials existed before these milestones. Existing live trading routes remain outside developer scopes.
 
 ## Architecture boundary
 
@@ -34,7 +34,7 @@ The implementation adds a service role only `tic_research_jobs` queue with proje
 
 Verification: production build, security and queue behavior passed local PostgreSQL tests; JavaScript (115), TypeScript SDK (3), and Python SDK (5) tests passed. The signed in production journey created a project and scoped key, read a live market instrument, started an NVDA snapshot, replayed its idempotency key, cancelled an AAPL job, and received the completed snapshot from the worker. The account-scoped console reported both statuses and seven authorized requests. The test key was revoked and immediately returned 401; the temporary user and its project, key, two jobs, and seven request records were deleted, with all related counts verified zero. The production Vercel worker accepted only authenticated requests. Supabase Cron dispatched through Vault-backed `pg_net` and received HTTP 200; the deployed worker returned a safe empty-queue response. Browser review covered the signed-out console and docs on mobile/desktop. Research-job view rendered at 390 px with no page overflow. A follow-up polish keeps the active navigation item in view when changing console sections on narrow screens.
 
-## Milestone 3 — organization tenancy (implementation in progress)
+## Milestone 3 — organization tenancy (complete)
 
 The new migration backfills each existing developer into a private personal workspace and attaches their existing projects without changing API keys or idempotency history. New organizations support owner, admin, developer, and reader roles. Memberships, organization changes, audit history, projects, keys, usage, and jobs remain server mediated; anon/authenticated roles have no direct table or mutation-function grants. Existing project creator IDs become nullable attribution so project access is decided by organization membership. Adding or removing a member is limited to already registered Tidelight accounts because invitation email delivery is not configured. Removing a member or demoting them to reader revokes the API keys they issued in that organization. Job and usage views include all accessible organization projects. The console adds organization selection, member management, role updates/removal, and manager-only audit history.
 
@@ -48,13 +48,18 @@ The implementation uses the official TypeScript MCP SDK 1.32.1 with Streamable H
 
 Protocol tests use the official SDK client and server transports to validate initialization, tool discovery by scope, market provenance results, research job lifecycle calls, and denied tools. PR #124 deployed the endpoint. The production client test verified all five tools, a live Bitget Reality spot response with provenance, research start/cancel/status, market-only tool filtering, denied unauthorized calls, usage accounting, and immediate key revocation. It exposed a successful `error: null` status payload being misclassified; PR #125 fixed that behavior, with regression coverage, and deployed it to production. Production retest passed after deployment. The temporary account, organizations, projects, keys, jobs, and usage rows were removed; all corresponding database counts were confirmed zero. MCP documentation was visually checked in Chromium at 390 px and 1440 px with no horizontal overflow or page errors. Named third party MCP clients will not be advertised until individually tested. OAuth, resources, prompts, and trading tools remain disabled.
 
+## Milestone 5 — durable webhooks (complete for supported research events)
+
+Production adds owner-scoped webhook endpoint management, encrypted one-time signing secrets, signature verification headers, bounded delivery retries, durable attempt records, and scheduled cleanup. URL validation rejects local, reserved, private, and unsafe destinations; DNS answers are pinned through connection setup to reduce rebinding risk. The worker is authenticated with the existing Vercel cron secret and dispatches only supported research completion events. Console controls cover endpoint creation, enable/disable, secret rotation, and delivery history.
+
+The migrations `20261015063058_tic_webhooks.sql` and `20261015063324_tic_webhook_scheduler.sql` are applied in production. Tables are service-role only with RLS enabled and no client policies. Local database checks confirmed retry progression, attempt persistence, and `anon`/`authenticated` denial. JavaScript tests, typecheck, lint, production build, and mobile/desktop browser review passed. PR #127 added the system; PR #128 fixed Node auto-select DNS lookup compatibility. Both are merged and the latter is deployed to production. A real production research event first recorded two network errors; after the fix, the retained delivery succeeded on attempt 3 with HTTP 204. SSRF rejection returned 400 `unsafe_destination`. The temporary test account and its resources were deleted, with user, project, job, and request counts verified zero.
+
 ## Remaining milestones in dependency order
 
-1. Add webhook delivery infrastructure with SSRF protection and signatures, and monitoring controls only for supported event sources.
-2. Evaluate MCP OAuth resource metadata and consent, then validate specific external MCP clients before naming them as supported.
-3. Measure provider and compute costs, define entitlements and credit budgets, then select a Nigerian merchant compatible payment provider and configure approved pricing. Billing UI must show actual records only.
-4. Complete account recovery, key rotation, security-log filtering, and stronger abuse controls.
-5. Run cross theme and mobile UI review, accessibility checks, SDK integration, abuse tests, staging smoke tests, then controlled production verification for each capability.
+1. Evaluate MCP OAuth resource metadata and consent, then validate specific external MCP clients before naming them as supported.
+2. Measure provider and compute costs, define entitlements and credit budgets, then select a Nigerian merchant compatible payment provider and configure approved pricing. Billing UI must show actual records only.
+3. Complete account recovery, stronger abuse controls, and remaining security-log filters.
+4. Run remaining cross-theme accessibility and SDK integration checks, abuse tests, staging smoke tests, and controlled production verification for each new capability.
 
 ## External configuration still needed
 

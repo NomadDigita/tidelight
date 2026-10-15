@@ -59,7 +59,7 @@ class ApiError(Exception):
 
 
 class Client:
-    def __init__(self, api_key: str, *, base_url: str = "https://tidelight.app/api/v1", timeout: float = 10, max_retries: int = 2, opener: Callable[..., Any] = urlopen, sleeper: Callable[[float], None] = time.sleep):
+    def __init__(self, api_key: str, *, base_url: str = "https://api.tidelight.app/v1", timeout: float = 10, max_retries: int = 2, opener: Callable[..., Any] = urlopen, sleeper: Callable[[float], None] = time.sleep):
         if not re.fullmatch(r"tl_(test|live)_[A-Za-z0-9_-]{43}", api_key):
             raise ValueError("A valid Tidelight API key is required.")
         parsed = urlparse(base_url)

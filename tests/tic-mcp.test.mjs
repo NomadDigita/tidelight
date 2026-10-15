@@ -53,7 +53,7 @@ test("research scope exposes durable start, status, and cancellation tools over 
   const client = await clientFor(new Set(["research:run"]), async operation => {
     operations.push(operation);
     if (operation.operation === "research.start") return Response.json({ job_id: "d475bd46-5035-4ae5-9f19-e2959a4f0734", status: "queued", duplicate: false, request_id: "start-request" }, { status: 202 });
-    if (operation.operation === "research.get") return Response.json({ job_id: operation.jobId, ticker: "NVDA", status: "complete", result: { type: "company_snapshot" }, request_id: "status-request" });
+    if (operation.operation === "research.get") return Response.json({ job_id: operation.jobId, ticker: "NVDA", status: "complete", result: { type: "company_snapshot" }, error: null, request_id: "status-request" });
     return Response.json({ job_id: operation.jobId, status: "cancelled", request_id: "cancel-request" }, { status: 202 });
   });
   try {
@@ -64,6 +64,7 @@ test("research scope exposes durable start, status, and cancellation tools over 
     assert.equal(start.structuredContent.status, "queued");
     assert.match(operations[0].idempotencyKey, /^[A-Za-z0-9._:-]{8,128}$/);
     const status = await client.callTool({ name: "tidelight_get_research_job", arguments: { job_id: jobId } });
+    assert.equal(status.isError, undefined);
     assert.equal(status.structuredContent.result.type, "company_snapshot");
     const cancel = await client.callTool({ name: "tidelight_cancel_research_job", arguments: { job_id: jobId } });
     assert.equal(cancel.structuredContent.status, "cancelled");

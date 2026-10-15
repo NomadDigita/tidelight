@@ -30,7 +30,7 @@ async function asToolResult(response: Response, select?: (data: Record<string, u
   return {
     content: [{ type: "text" as const, text: JSON.stringify(result) }],
     structuredContent: result,
-    ...(!response.ok || "error" in body ? { isError: true } : {}),
+    ...(!response.ok || ("error" in body && body.error !== null && body.error !== undefined) ? { isError: true } : {}),
   };
 }
 

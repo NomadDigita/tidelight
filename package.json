@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --test tests/*.test.mjs",
+    "test:public-mirrors": "node scripts/check-public-mirrors.mjs && node --test tests/public-mirrors.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

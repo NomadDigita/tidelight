@@ -1,0 +1,79 @@
+name: GitHub SDK release
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk:
+        description: SDK mirror to release
+        required: true
+        type: choice
+        options: [typescript, python]
+      version:
+        description: Exact version already present in the synchronized SDK manifest
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Validate version and run SDK tests
+        id: version
+        env:
+          SDK: ${{ inputs.sdk }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          node scripts/check-public-mirrors.mjs
+          if [[ "$SDK" == "typescript" ]]; then
+            VERSION=$(node -p "require('./sdk/typescript/package.json').version")
+            npm test --prefix sdk/typescript
+          else
+            VERSION=$(python -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('sdk/python/pyproject.toml').read(), re.M).group(1))")
+            PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+          fi
+          [[ "$VERSION" == "$REQUESTED_VERSION" ]] || { echo "Requested version must match canonical SDK version $VERSION"; exit 1; }
+          [[ "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]] || { echo "Version must follow SemVer"; exit 1; }
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$SDK" == "typescript" ]]; then echo "repo=tidelight-sdk" >> "$GITHUB_OUTPUT"; else echo "repo=tidelight-python" >> "$GITHUB_OUTPUT"; fi
+      - name: Create scoped GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.TIDELIGHT_SYNC_APP_ID }}
+          private-key: ${{ secrets.TIDELIGHT_SYNC_APP_PRIVATE_KEY }}
+          owner: TidelightOrg
+          repositories: ${{ steps.version.outputs.repo }}
+          permission-contents: write
+      - name: Publish source release in SDK mirror
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          REPOSITORY: TidelightOrg/${{ steps.version.outputs.repo }}
+        run: |
+          git clone --depth 1 "https://github.com/$REPOSITORY.git" sdk-mirror
+          cd sdk-mirror
+          if [[ "${{ inputs.sdk }}" == "typescript" ]]; then
+            MIRROR_VERSION=$(node -p "require('./package.json').version")
+            npm test
+          else
+            MIRROR_VERSION=$(python -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('pyproject.toml').read(), re.M).group(1))")
+            PYTHONPATH=src python -m unittest discover -s tests -v
+          fi
+          [[ "$MIRROR_VERSION" == "$VERSION" ]] || { echo "Synchronized mirror version $MIRROR_VERSION does not match canonical version $VERSION"; exit 1; }
+          TARGET_SHA=$(git rev-parse HEAD)
+          gh release create "v$VERSION" --repo "$REPOSITORY" --target "$TARGET_SHA" --title "Tidelight SDK v$VERSION" --generate-notes
+

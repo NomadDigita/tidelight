@@ -114,6 +114,8 @@ One production manual completed-candle check then returned HTTP 200 and recorded
 
 Do not trigger `vercel crons run /api/cron/nightwatch` early to force this account's test: that endpoint invokes the global cron across every opted-in account and would advance other users outside their scheduled window. Observe the next normal 09:00–09:59 UTC run, correlate only the owner's paper run, verify its guardrails and unchanged no-email setting, and leave the saved opt-in in place. The manual no-action result is not a substitute for the pending scheduled execution.
 
+Deployment note after PR #158: GitHub `main` is at `6400b6411d7931bda88629ffac27148c75150588`. Vercel returned status `Deployment rate limited — retry in 24 hours` for that commit. PR #158 contains documentation only, so no application code changed; the latest READY application deployment remains `dpl_2gsqMCQXLRDPZ5tU6JnmYvm3F5L3` from PR #157 commit `fd52a8ae7e386fc7880cb0c10718bd18b906a8f8`. The live health endpoint still returned operational. Do not bypass the Vercel deployment quota; retry once the limit resets or after an owner-approved plan change.
+
 ## Remaining milestones in dependency order
 
 1. Validate specific external MCP clients before naming them as supported.

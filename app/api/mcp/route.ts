@@ -88,6 +88,10 @@ export const POST = handle;
 export const GET = handle;
 export const DELETE = handle;
 export function OPTIONS(request: Request) {
+  let host: string;
+  try { host = new URL(request.url).host.toLowerCase(); }
+  catch { return Response.json({ error: "Invalid host." }, { status: 400 }); }
+  if (!safeHost(host)) return Response.json({ error: "Host is not supported." }, { status: 421, headers: { "Cache-Control": "no-store" } });
   const origin = request.headers.get("origin");
   if (origin && !ALLOWED_ORIGINS.includes(origin)) return Response.json({ error: "Origin is not allowed." }, { status: 403, headers: { "Cache-Control": "no-store" } });
   return new Response(null, { status: 204, headers: { ...Object.fromEntries(ticMcpCorsHeaders(origin, ALLOWED_ORIGINS)), "Cache-Control": "no-store" } });

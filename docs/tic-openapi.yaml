@@ -7,7 +7,7 @@ info:
     url: https://tidelight.app/terms
   description: The versioned developer API exposes read only market data and permission scoped asynchronous research jobs. Tokenized equity spot data is distinct from underlying US stock and perpetual contract data.
 servers:
-  - url: https://tidelight.app/api/v1
+  - url: https://api.tidelight.app/v1
 security:
   - tidelightKey: []
 paths:

@@ -24,7 +24,7 @@ export default function ApiExplorer({ projects, keys, currentTime }: { projects:
     const query = `kind=rtoken&limit=${limit}${safeCursor ? `&cursor=${encodeURIComponent(safeCursor)}` : ""}`;
     if (language === "typescript") return `import { TidelightClient } from "@tidelight/sdk";\n\nconst client = new TidelightClient({ apiKey: process.env.TIDELIGHT_API_KEY! });\nconst page = await client.listTokenizedEquities({ limit: ${limit}${safeCursor ? `, cursor: "${safeCursor}"` : ""} });\nconsole.log(page.data);`;
     if (language === "python") return `import os\nfrom tidelight import Client\n\nclient = Client(os.environ["TIDELIGHT_API_KEY"])\npage = client.list_tokenized_equities(limit=${limit}${safeCursor ? `, cursor="${safeCursor}"` : ""})\nprint(page.data)`;
-    return `curl 'https://tidelight.app/api/v1/market/instruments?${query}' \\\n  -H 'Authorization: Bearer YOUR_TIDELIGHT_KEY'`;
+    return `curl 'https://api.tidelight.app/v1/market/instruments?${query}' \\\n  -H 'Authorization: Bearer YOUR_TIDELIGHT_KEY'`;
   }, [cursor, language, limit]);
   async function execute(event: React.FormEvent) {
     event.preventDefault();

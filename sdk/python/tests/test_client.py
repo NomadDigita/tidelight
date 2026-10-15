@@ -33,6 +33,8 @@ class ClientTests(unittest.TestCase):
         client = Client(KEY, opener=opener)
         started = client.start_company_research("NVDA", "request-0001")
         self.assertEqual(started["status"], "queued")
+        self.assertEqual(urlparse(calls[0][1]).netloc, "api.tidelight.app")
+        self.assertEqual(urlparse(calls[0][1]).path, "/v1/research/jobs")
         self.assertEqual(calls[0][2], "request-0001")
         job = client.get_research_job(job_id)
         self.assertEqual(job.status, "complete")

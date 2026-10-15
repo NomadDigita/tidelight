@@ -122,6 +122,7 @@ export default function ProductQuickActions() {
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   }
 
+  if (pathname === "/status") return null;
   return <>
     <nav
       className={`product-quick-actions${pathname === "/" ? " is-landing" : ""}${position ? " is-positioned" : ""}`}

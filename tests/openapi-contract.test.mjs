@@ -6,6 +6,10 @@ import { parseDocument } from "yaml";
 const document = parseDocument(readFileSync(new URL("../docs/tic-openapi.yaml", import.meta.url), "utf8"), { uniqueKeys: true });
 const spec = document.toJS();
 
+test("OpenAPI contract targets the dedicated versioned API service", () => {
+  assert.deepEqual(spec.servers, [{ url: "https://api.tidelight.app/v1" }]);
+});
+
 test("OpenAPI document parses without YAML errors and every local reference resolves", () => {
   assert.deepEqual(document.errors, []);
   function visit(value) {

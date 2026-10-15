@@ -56,7 +56,7 @@ export class TidelightApiError extends Error {
 
 type Fetch = typeof fetch;
 export type TidelightClientOptions = { apiKey: string; baseUrl?: string; timeoutMs?: number; maxRetries?: number; fetch?: Fetch };
-const DEFAULT_URL = "https://tidelight.app/api/v1";
+const DEFAULT_URL = "https://api.tidelight.app/v1";
 
 export class TidelightClient {
   private readonly apiKey: string;

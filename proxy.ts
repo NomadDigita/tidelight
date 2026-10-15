@@ -1,26 +1,22 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveServiceHostRoute } from "@/lib/tic/service-host-routing";
 
-export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return response;
-
-  const supabase = createServerClient(url, key, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-      },
-    },
+function notFound() {
+  return NextResponse.json({ error: { code: "not_found", message: "This service path is not available." } }, {
+    status: 404,
+    headers: { "Cache-Control": "no-store" },
   });
-  await supabase.auth.getClaims();
-  return response;
+}
+
+export function proxy(request: NextRequest) {
+  const route = resolveServiceHostRoute(request.nextUrl.hostname, request.nextUrl.pathname);
+  if (!route) return NextResponse.next();
+  if (route.kind === "not-found") return notFound();
+  const destination = request.nextUrl.clone();
+  destination.pathname = route.pathname;
+  return NextResponse.rewrite(destination);
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

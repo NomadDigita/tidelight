@@ -79,4 +79,10 @@ Verification: TypeScript SDK build and six tests passed; Python SDK eight tests 
 
 Separate `api` and `mcp` hosts require DNS and Vercel domain configuration. Durable worker dispatch requires the dedicated `TIC_RESEARCH_CRON_SECRET` in Vercel Production plus `tic_research_worker_url` and `tic_research_worker_secret` in Supabase Vault before applying the scheduler migration. MCP OAuth requires issuer, client registration, consent, and token lifecycle infrastructure. SDK publishing requires package ownership and publishing credentials. Commercial billing needs pricing approval, payment provider eligibility and account configuration. Provider licensing must be confirmed before broad redistribution of market data.
 
+## Service host routing milestone — implementation complete, DNS pending
+
+The application now routes `api.tidelight.app/v1/*` to the existing versioned REST handlers, `mcp.tidelight.app/mcp` (and `/`) to the existing Streamable HTTP MCP handler, and `status.tidelight.app` to a live status page and health endpoint. The API hostname root returns a service index. Host-specific routing denies unrelated paths; it does not add alternate authorization or bypass the existing API key scopes, request quotas, or usage accounting. SDK defaults and the OpenAPI server URL now use `https://api.tidelight.app/v1`.
+
+Production DNS is external to Vercel: `tidelight.app` uses Cloudoon nameservers. The API, MCP, and status hostnames must be attached to the Vercel project and their Vercel CNAME targets entered at Cloudoon before these public addresses are reachable. `docs.tidelight.app` is presently a live GitBook custom domain; its `/api` path returns GitBook 404. Do not reassign that host to Vercel without migrating or configuring the GitBook content. The in-app developer docs remain at `tidelight.app/developers/docs` until that path is added to the existing GitBook site or the docs host is intentionally migrated.
+
 Email invitation links require a verified transactional email sender and configured Supabase Auth templates. Until then, organization owners can add accounts that already exist in Tidelight.

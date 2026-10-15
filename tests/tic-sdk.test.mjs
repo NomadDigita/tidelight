@@ -54,7 +54,7 @@ test("research client submits an idempotent job and reads its completed snapshot
   const result = await client.waitForResearchJob(jobId, { intervalMs: 250, timeoutMs: 500 });
   assert.equal(result.status, "complete");
   assert.equal(result.result.type, "company_snapshot");
-  assert.equal(calls[1].url, `https://tidelight.app/api/v1/research/jobs/${jobId}`);
+  assert.equal(calls[1].url, `https://api.tidelight.app/v1/research/jobs/${jobId}`);
 });
 
 test("research client validates job identifiers and preserves scope failures", async () => {

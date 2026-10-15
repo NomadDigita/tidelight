@@ -82,6 +82,8 @@ The console now presents the exact rolling 30-day request count across accessibl
 
 Verification: PostgreSQL 17 transaction tests seeded successful, client-error, server-error, and pending requests and confirmed exact counts, average latency, zero-filled days, input validation, `SECURITY INVOKER`, and denied `anon`/`authenticated` execution. The test transaction rolled back all fixtures. The application suite passed 139 tests; typecheck, lint, and the production build passed.
 
+Production browser verification completed 15 October 2026: the authenticated developer console opened Usage successfully on the owner test account. That account has no developer projects, so production correctly displayed zero request totals and the empty chart/request states rather than fabricated activity. At 390 px and 1440 px there was no document overflow or browser error. The selected Request usage navigation item was confirmed visible in the mobile DOM; the unauthenticated usage endpoint returned 401 as expected. Populated analytics values remain covered by the PostgreSQL fixture tests above.
+
 ## Remaining milestones in dependency order
 
 1. Validate specific external MCP clients before naming them as supported.

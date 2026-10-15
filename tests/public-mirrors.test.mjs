@@ -15,15 +15,17 @@ test("public mirror allowlist validates without private paths or known secrets",
   assert.match(output, /Validated 5 explicit public mirror mappings/);
 });
 
-test("mirror file selection excludes untracked Python cache artifacts", async () => {
+test("mirror file selection excludes untracked build and Python cache artifacts", async () => {
   const temporary = await mkdtemp(path.join(os.tmpdir(), "tidelight-mirror-files-"));
   try {
     execFileSync("git", ["init", "--quiet"], { cwd: temporary });
     execFileSync("git", ["config", "user.name", "Mirror test"], { cwd: temporary });
     execFileSync("git", ["config", "user.email", "mirror-test@example.invalid"], { cwd: temporary });
     await mkdir(path.join(temporary, "sdk", "__pycache__"), { recursive: true });
+    await mkdir(path.join(temporary, "sdk", "dist"), { recursive: true });
     await writeFile(path.join(temporary, "sdk", "README.md"), "canonical file");
     await writeFile(path.join(temporary, "sdk", "__pycache__", "leak.pyc"), "generated artifact");
+    await writeFile(path.join(temporary, "sdk", "dist", "index.js"), "generated artifact");
     execFileSync("git", ["add", "sdk/README.md"], { cwd: temporary });
     execFileSync("git", ["commit", "--quiet", "-m", "add tracked SDK file"], { cwd: temporary });
     assert.deepEqual(getTrackedMirrorFiles(temporary, "sdk"), ["sdk/README.md"]);

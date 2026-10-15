@@ -5,7 +5,7 @@ import { getTrackedMirrorFiles } from "./public-mirror-files.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(await readFile(path.join(root, ".github/tidelight-mirrors.json"), "utf8"));
-const forbiddenPath = /(^|\/)(\.env(?:\.|$)|secrets?(?:\.|$)|credentials?(?:\.|$)|service-role|private-key|id_rsa|\.git(?:\/|$)|__pycache__(?:\/|$))|\.py[co]$/i;
+const forbiddenPath = /(^|\/)(\.env(?:\.|$)|secrets?(?:\.|$)|credentials?(?:\.|$)|service-role|private-key|id_rsa|\.git(?:\/|$)|__pycache__(?:\/|$)|node_modules(?:\/|$)|dist(?:\/|$)|coverage(?:\/|$)|\.next(?:\/|$))|\.(?:py[co]|tsbuildinfo)$/i;
 const forbiddenContent = [/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/, /sb_secret_[A-Za-z0-9_]+/, /service_role\s*[:=]/i, /tl_live_[A-Za-z0-9_-]{43}/, /AKIA[0-9A-Z]{16}/];
 const errors = [];
 const seenRepos = new Set();

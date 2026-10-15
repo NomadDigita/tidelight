@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/tidelight-mirrors.json'
-      - '.github/workflows/public-mirror-*.yml'
+      - '.github/workflows/**'
       - 'public/components/**'
       - 'docs/tic-openapi.yaml'
       - 'sdk/typescript/**'
@@ -15,7 +15,7 @@ on:
     branches: [main]
     paths:
       - '.github/tidelight-mirrors.json'
-      - '.github/workflows/public-mirror-*.yml'
+      - '.github/workflows/**'
       - 'public/components/**'
       - 'docs/tic-openapi.yaml'
       - 'sdk/typescript/**'

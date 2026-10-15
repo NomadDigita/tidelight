@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { createTidelightMcpServer, isTicMcpCredentialActive } from "../lib/tic/mcp-protocol.ts";
+import { createTidelightMcpServer, isTicMcpCredentialActive } from "../public/components/mcp/server/src/index.ts";
 
 async function clientFor(scopes, invoke) {
   const fetch = async (input, init) => {

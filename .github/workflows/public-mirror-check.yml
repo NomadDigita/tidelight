@@ -51,4 +51,10 @@ jobs:
         run: npm test --prefix sdk/typescript
       - name: Test Python SDK
         run: PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+      - name: Test published MCP protocol component
+        run: npm ci --prefix public/components/mcp/server && npm test --prefix public/components/mcp/server
+      - name: Test public API contract
+        run: npm ci --prefix public/components/api && npm test --prefix public/components/api
+      - name: Test API examples
+        run: npm test --prefix public/components/examples && npm run test:python --prefix public/components/examples
 

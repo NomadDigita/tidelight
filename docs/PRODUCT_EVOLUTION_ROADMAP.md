@@ -51,5 +51,6 @@ Research exposure cards will link to the matching Bitget Reality symbol in Strat
 
 1. Use a daily 09:00 UTC Vercel Cron schedule, compatible with Hobby's once-per-day limit. The owner reports that the Supabase server-only key is already in Vercel; keep it sensitive and Production-only. The existing `CRON_SECRET` is already configured.
 2. Deploy, then verify the health view, Mini multi-source research capture, Research → Strategy → Nightwatch lineage, and one scheduled paper run with an opted-in test account.
-4. Capture and review the frozen event benchmark before making further research prompt changes.
-5. Rehearse recovery against an isolated backup/branch, then run the judge/customer walkthrough and report measured results with limitations.
+3. Capture and review the frozen event benchmark before making further research prompt changes.
+4. Rehearse recovery against an isolated backup/branch, then run the judge/customer walkthrough and report measured results with limitations.
+5. After the backend verification above, complete the premium developer-platform design pass across `tidelight.app/developers`, the authenticated console and API explorer, and `dev.tidelight.app`. Preserve Tidelight branding, themes, and responsive behavior; use Supabase as a developer-experience reference. Verify real interactions, accessibility, and visual quality on desktop, tablet, and mobile.

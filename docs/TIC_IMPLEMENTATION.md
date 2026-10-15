@@ -114,7 +114,15 @@ One production manual completed-candle check then returned HTTP 200 and recorded
 
 Do not trigger `vercel crons run /api/cron/nightwatch` early to force this account's test: that endpoint invokes the global cron across every opted-in account and would advance other users outside their scheduled window. Observe the next normal 09:00–09:59 UTC run, correlate only the owner's paper run, verify its guardrails and unchanged no-email setting, and leave the saved opt-in in place. The manual no-action result is not a substitute for the pending scheduled execution.
 
-Deployment note after PR #158: GitHub `main` is at `6400b6411d7931bda88629ffac27148c75150588`. Vercel returned status `Deployment rate limited — retry in 24 hours` for that commit. PR #158 contains documentation only, so no application code changed; the latest READY application deployment remains `dpl_2gsqMCQXLRDPZ5tU6JnmYvm3F5L3` from PR #157 commit `fd52a8ae7e386fc7880cb0c10718bd18b906a8f8`. The live health endpoint still returned operational. Do not bypass the Vercel deployment quota; retry once the limit resets or after an owner-approved plan change.
+## Scheduled Nightwatch database guard tests — PR #160
+
+PR #160 adds a separate PostgreSQL 17 CI job that applies `20261005183731_nightwatch_research_lineage.sql` to an isolated fixture and executes `tests/postgres/nightwatch-scheduled.sql`. It verifies that only `service_role` can execute the scheduled wrapper; manual cadence, pause, changed symbols, and changed research links skip before reaching the paper tick; foreign-account research notes are rejected; and an accepted request carries the schedule owner's identity, trigger marker, selected symbol, and research-run lineage to the existing paper-only RPC. Invalid owners and symbols are rejected. No production code or user state changed.
+
+Verification on 15 October 2026: the isolated PostgreSQL migration and SQL test passed locally and in GitHub Actions. The PR also passed all 145 unit/contract tests, typecheck, lint, production build, and public mirror validation. This covers wrapper authorization and dispatch; it does not replace the pending real scheduled Cron observation and ledger reconciliation described above.
+
+The developer-platform visual extension pass remains queued after backend verification: give the public developer landing page, console, API explorer, and docs a complete Tidelight-branded premium design and architecture review, including desktop, tablet, mobile, theme, accessibility, and interaction inspection. Use Supabase as a developer-experience reference, not as a source of branding or copied assets.
+
+Deployment note after PR #160: GitHub `main` is at `3e979f57b186bc0abb52785ecb27f805f69d07c7`. PRs #158–#160 contained documentation or test coverage only, so no application code changed; the latest READY application deployment remains `dpl_2gsqMCQXLRDPZ5tU6JnmYvm3F5L3` from PR #157 commit `fd52a8ae7e386fc7880cb0c10718bd18b906a8f8`. The last Vercel response for a new main commit was “Deployment rate limited — retry in 24 hours.” Recheck the current deployment state before claiming anything about a new deployment. Do not bypass Vercel quotas; retry after reset or an owner-approved plan change.
 
 ## Remaining milestones in dependency order
 

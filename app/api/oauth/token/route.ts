@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createOAuthSecret, hashOAuthSecret, isOAuthRefreshToken, parseOAuthScopes, pkceChallengeMatches, TIC_MCP_RESOURCE, oauthNoStoreHeaders } from "@/lib/tic/oauth";
+import { createOAuthSecret, hashOAuthSecret, isOAuthRefreshToken, pkceChallengeMatches, TIC_MCP_RESOURCE, oauthNoStoreHeaders } from "@/lib/tic/oauth";
 import { reserveOAuthRateLimit } from "@/lib/tic/oauth-rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -65,21 +65,22 @@ export async function POST(request: Request) {
     if (grantType === "refresh_token") {
       const oldRefresh = params.get("refresh_token") ?? "";
       if (!isOAuthRefreshToken(oldRefresh)) return tokenError("invalid_grant");
-      const { data: session, error } = await admin.from("tic_oauth_sessions").select("id,key_id,scopes,resource").eq("client_id", clientId).eq("refresh_token_hash", hashOAuthSecret(oldRefresh)).eq("resource", resource).is("revoked_at", null).gt("refresh_token_expires_at", now.toISOString()).maybeSingle();
-      if (error) throw error;
-      if (!session) return tokenError("invalid_grant");
-      const requested = params.has("scope") ? parseOAuthScopes(params.get("scope"), session.scopes) : session.scopes;
-      if (!requested) return tokenError("invalid_scope");
-      const { data: key, error: keyError } = await admin.from("developer_api_keys").select("revoked_at,expires_at,scopes").eq("id", session.key_id).maybeSingle();
-      if (keyError) throw keyError;
-      if (!key || key.revoked_at || (key.expires_at && Date.parse(key.expires_at) <= now.getTime()) || !requested.every((scope: string) => key.scopes.includes(scope))) return tokenError("invalid_grant");
-      const { data: rotated, error: rotateError } = await admin.from("tic_oauth_sessions").update({
-        access_token_hash: hashOAuthSecret(accessToken), access_token_expires_at: new Date(now.getTime() + 15 * 60_000).toISOString(),
-        refresh_token_hash: hashOAuthSecret(refreshToken), refresh_token_expires_at: new Date(now.getTime() + 90 * 24 * 60 * 60_000).toISOString(), refreshed_at: now.toISOString(), scopes: requested,
-      }).eq("id", session.id).eq("refresh_token_hash", hashOAuthSecret(oldRefresh)).is("revoked_at", null).select("id").maybeSingle();
+      const requestedScopes = params.has("scope") ? (params.get("scope") ?? "").trim().split(/\s+/).filter(Boolean) : null;
+      const { data: rotation, error: rotateError } = await admin.rpc("rotate_tic_oauth_refresh_token", {
+        p_client_id: clientId,
+        p_old_refresh_hash: hashOAuthSecret(oldRefresh),
+        p_new_access_hash: hashOAuthSecret(accessToken),
+        p_new_refresh_hash: hashOAuthSecret(refreshToken),
+        p_requested_scopes: requestedScopes,
+        p_access_expires_at: new Date(now.getTime() + 15 * 60_000).toISOString(),
+        p_refresh_expires_at: new Date(now.getTime() + 90 * 24 * 60 * 60_000).toISOString(),
+      });
       if (rotateError) throw rotateError;
-      if (!rotated) return tokenError("invalid_grant");
-      return tokenResponse({ access_token: accessToken, token_type: "Bearer", expires_in: 900, refresh_token: refreshToken, scope: requested.join(" "), resource: TIC_MCP_RESOURCE });
+      if (!rotation || typeof rotation !== "object" || !("status" in rotation)) throw new Error("Refresh rotation returned an invalid result.");
+      const result = rotation as { status: unknown; scopes?: unknown };
+      if (result.status === "invalid_scope") return tokenError("invalid_scope");
+      if (result.status !== "rotated" || !Array.isArray(result.scopes) || result.scopes.some((scope) => typeof scope !== "string")) return tokenError("invalid_grant");
+      return tokenResponse({ access_token: accessToken, token_type: "Bearer", expires_in: 900, refresh_token: refreshToken, scope: result.scopes.join(" "), resource: TIC_MCP_RESOURCE });
     }
     return tokenError("unsupported_grant_type");
   } catch { return tokenError("temporarily_unavailable", 503); }

@@ -1,0 +1,68 @@
+name: Application checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: application-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit and contract tests
+        run: npm test
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+
+  oauth-database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tidelight_oauth_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tidelight_oauth_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: tidelight_oauth_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare isolated OAuth schema
+        run: psql -v ON_ERROR_STOP=1 -f tests/postgres/tic-oauth-refresh-prerequisites.sql
+      - name: Apply previous OAuth migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261015092907_tic_mcp_oauth.sql
+      - name: Apply refresh replay migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261015180000_tic_oauth_refresh_reuse_detection.sql
+      - name: Test refresh rotation, replay revocation, scopes, and grants
+        run: psql -v ON_ERROR_STOP=1 -f tests/postgres/tic-oauth-refresh-replay.sql

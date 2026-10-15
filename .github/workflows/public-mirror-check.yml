@@ -1,0 +1,50 @@
+name: Public mirror validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/tidelight-mirrors.json'
+      - '.github/workflows/**'
+      - 'public/components/**'
+      - 'docs/tic-openapi.yaml'
+      - 'sdk/typescript/**'
+      - 'sdk/python/**'
+      - 'scripts/check-public-mirrors.mjs'
+      - 'scripts/sync-public-mirrors.mjs'
+  push:
+    branches: [main]
+    paths:
+      - '.github/tidelight-mirrors.json'
+      - '.github/workflows/**'
+      - 'public/components/**'
+      - 'docs/tic-openapi.yaml'
+      - 'sdk/typescript/**'
+      - 'sdk/python/**'
+      - 'scripts/check-public-mirrors.mjs'
+      - 'scripts/sync-public-mirrors.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Validate public source boundaries
+        run: node scripts/check-public-mirrors.mjs
+      - name: Test TypeScript SDK
+        run: npm test --prefix sdk/typescript
+      - name: Test Python SDK
+        run: PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+

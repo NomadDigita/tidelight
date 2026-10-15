@@ -1,0 +1,62 @@
+name: Synchronize public repositories
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/tidelight-mirrors.json'
+      - 'public/components/**'
+      - 'docs/tic-openapi.yaml'
+      - 'sdk/typescript/**'
+      - 'sdk/python/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-mirror-sync
+  cancel-in-progress: false
+
+jobs:
+  synchronize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Validate public source boundaries
+        run: node scripts/check-public-mirrors.mjs
+      - run: npm ci
+      - name: Test SDK distributions
+        run: |
+          npm test --prefix sdk/typescript
+          PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+      - name: Create scoped GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.TIDELIGHT_SYNC_APP_ID }}
+          private-key: ${{ secrets.TIDELIGHT_SYNC_APP_PRIVATE_KEY }}
+          owner: TidelightOrg
+          repositories: |
+            tidelight-api
+            tidelight-mcp
+            tidelight-sdk
+            tidelight-python
+            tidelight-examples
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Synchronize changed components
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          MIRROR_BASE: ${{ github.event.before }}
+          MIRROR_HEAD: ${{ github.sha }}
+        run: node scripts/sync-public-mirrors.mjs --base "$MIRROR_BASE" --head "$MIRROR_HEAD"
+

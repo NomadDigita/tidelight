@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "canonicalRepository": "TidelightOrg/tidelight",
+  "mirrors": {
+    "api": {
+      "repository": "TidelightOrg/tidelight-api",
+      "paths": [
+        { "source": "public/components/api", "destination": "." },
+        { "source": "docs/tic-openapi.yaml", "destination": "openapi/tidelight.yaml" }
+      ]
+    },
+    "mcp": {
+      "repository": "TidelightOrg/tidelight-mcp",
+      "paths": [{ "source": "public/components/mcp", "destination": "." }]
+    },
+    "typescript": {
+      "repository": "TidelightOrg/tidelight-sdk",
+      "paths": [{ "source": "sdk/typescript", "destination": "." }],
+      "versionFile": "package.json",
+      "versionField": "version"
+    },
+    "python": {
+      "repository": "TidelightOrg/tidelight-python",
+      "paths": [{ "source": "sdk/python", "destination": "." }],
+      "versionFile": "pyproject.toml"
+    },
+    "examples": {
+      "repository": "TidelightOrg/tidelight-examples",
+      "paths": [{ "source": "public/components/examples", "destination": "." }]
+    }
+  }
+}

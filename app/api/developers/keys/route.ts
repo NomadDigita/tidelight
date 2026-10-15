@@ -22,7 +22,11 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: "Sign in to create a key." }, { status: 401 });
   let body: Record<string, unknown>;
-  try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON." }, { status: 400 }); }
+  try {
+    const parsed: unknown = await request.json();
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid body");
+    body = parsed as Record<string, unknown>;
+  } catch { return Response.json({ error: "Send a JSON object." }, { status: 400 }); }
   const projectId = typeof body.projectId === "string" ? body.projectId : "";
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const environment = body.environment;
@@ -50,7 +54,11 @@ export async function DELETE(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: "Sign in to revoke a key." }, { status: 401 });
   let body: Record<string, unknown>;
-  try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON." }, { status: 400 }); }
+  try {
+    const parsed: unknown = await request.json();
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid body");
+    body = parsed as Record<string, unknown>;
+  } catch { return Response.json({ error: "Send a JSON object." }, { status: 400 }); }
   if (typeof body.id !== "string" || !UUID.test(body.id)) return Response.json({ error: "Invalid key ID." }, { status: 400 });
   try {
     const { data, error } = await createAdminClient().from("developer_api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", body.id).eq("owner_id", user.id).is("revoked_at", null).select("id").maybeSingle();

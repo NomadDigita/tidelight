@@ -67,6 +67,7 @@ jobs:
           git clone --depth 1 "https://github.com/$REPOSITORY.git" sdk-mirror
           cd sdk-mirror
           if [[ "${{ inputs.sdk }}" == "typescript" ]]; then
+            npm install --ignore-scripts --no-audit --no-fund
             MIRROR_VERSION=$(node -p "require('./package.json').version")
             npm test
           else

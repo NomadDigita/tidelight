@@ -76,7 +76,7 @@ export function PackageLifecycleDemo({ packageName }: { packageName: keyof typeo
     </div>
     <div className="tic-package-lifecycle-shell">
       <div className="tic-package-lifecycle-rail" role="group" aria-label="Walkthrough steps">
-        {flow.steps.map((item, index) => <button key={item.title} type="button" className={index === active ? "is-active" : ""} aria-current={index === active ? "step" : undefined} onClick={() => setActive(index)}>
+        {flow.steps.map((item, index) => <button key={item.title} type="button" className={index === active ? "is-active" : ""} aria-label={`${String(index + 1).padStart(2, "0")}: ${item.title}`} aria-current={index === active ? "step" : undefined} onClick={() => setActive(index)}>
           <span>{String(index + 1).padStart(2, "0")}</span><span>{item.title}</span>
         </button>)}
       </div>

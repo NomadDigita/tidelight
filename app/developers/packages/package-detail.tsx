@@ -5,10 +5,27 @@ import { useState } from "react";
 const snippets = {
   typescript: `import { TidelightClient } from "@tidelight/sdk";\n\nconst client = new TidelightClient({\n  apiKey: process.env.TIDELIGHT_API_KEY!,\n});\n\nconst page = await client.listTokenizedEquities({\n  limit: 20,\n  underlyingTicker: "AAPL",\n});\n\nfor (const instrument of page.data) {\n  console.log(instrument.symbol, instrument.underlying_ticker);\n}`,
   research: `const accepted = await client.startCompanyResearch(\n  "NVDA",\n  crypto.randomUUID(),\n);\n\nconst result = await client.waitForResearchJob(\n  accepted.job_id,\n  { intervalMs: 2_000, timeoutMs: 120_000 },\n);\n\nif (result.status === "complete") {\n  console.log(result.result);\n}`,
+  webhook: `import { TidelightClient } from "@tidelight/sdk";
+
+const apiKey = process.env.TIDELIGHT_API_KEY;
+if (!apiKey) throw new Error("Set TIDELIGHT_API_KEY in your server environment.");
+const client = new TidelightClient({ apiKey });
+
+const created = await client.createWebhook({
+  name: "Research events",
+  url: "https://your-service.example/tidelight",
+  events: ["research.job.completed", "research.job.failed"],
+});
+
+if (!created.signing_secret) {
+  throw new Error("The one-time signing secret was not returned.");
+}
+// TODO: Save the secret with your approved secrets manager before finishing setup.
+// Do not print it; it cannot be recovered by listing the endpoint.`,
   local: `git clone https://github.com/TidelightOrg/tidelight.git\ncd tidelight/sdk/typescript\nnpm install --ignore-scripts --no-audit --no-fund\nnpm test\nnpm run build`,
 };
 type Snippet = keyof typeof snippets;
-const labels: Record<Snippet, string> = { typescript: "After npm release", research: "Research job", local: "Build from source" };
+const labels: Record<Snippet, string> = { typescript: "After npm release", research: "Research job", webhook: "Webhook secret", local: "Build from source" };
 
 export function PackageDetail() {
   const [selected, setSelected] = useState<Snippet>("typescript");

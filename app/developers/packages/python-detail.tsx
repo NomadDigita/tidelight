@@ -31,9 +31,23 @@ job = client.wait_for_research_job(
 )
 if job.status == "complete":
     print(job.result)`,
+  webhook: `import os
+from tidelight import Client
+
+client = Client(os.environ["TIDELIGHT_API_KEY"])
+created = client.create_webhook(
+    name="Research events",
+    url="https://your-service.example/tidelight",
+    events=["research.job.completed", "research.job.failed"],
+)
+signing_secret = created.get("signing_secret")
+if not signing_secret:
+    raise RuntimeError("The one-time signing secret was not returned")
+# TODO: Save it with your approved secrets manager before finishing setup.
+# Do not print it; it cannot be recovered by listing the endpoint.`,
 };
 type Snippet = keyof typeof snippets;
-const labels: Record<Snippet, string> = { install: "Build from source", market: "Market instruments", research: "Research job" };
+const labels: Record<Snippet, string> = { install: "Build from source", market: "Market instruments", research: "Research job", webhook: "Webhook secret" };
 
 export function PythonPackageDetail() {
   const [selected, setSelected] = useState<Snippet>("install");

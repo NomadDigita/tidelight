@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { containsSecretMaterial, validatePackageArchiveListing } from "../scripts/check-npm-package-archive.mjs";
 
 const manifest = {
+  files: ["dist", "README.md", "tidelight.css"],
   exports: { ".": { types: "./dist/index.d.ts", import: "./dist/index.js" }, "./styles.css": "./tidelight.css" },
   bin: { tidelight: "./dist/bin.js" },
 };
@@ -32,28 +33,39 @@ test("npm archive validator rejects package-to-tarball drift", () => {
   );
 });
 
+test("npm archive validator rejects files outside the manifest allowlist", () => {
+  assert.throws(
+    () => validatePackageArchiveListing(
+      { files: ["README.md"] },
+      [{ path: "package.json" }, { path: "README.md" }, { path: "server-only.js" }],
+      ["package/package.json", "package/README.md", "package/server-only.js"],
+    ),
+    /outside package.json files allowlist/,
+  );
+});
+
 test("npm archive validator rejects credential paths and missing declared files", () => {
   assert.throws(
-    () => validatePackageArchiveListing({}, [{ path: "package.json" }, { path: "README.md" }, { path: ".env.production" }], ["package/package.json", "package/README.md", "package/.env.production"]),
+    () => validatePackageArchiveListing({ files: ["README.md", ".env.production"] }, [{ path: "package.json" }, { path: "README.md" }, { path: ".env.production" }], ["package/package.json", "package/README.md", "package/.env.production"]),
     /credential or private-key file/,
   );
   assert.throws(
-    () => validatePackageArchiveListing({ exports: { ".": "./dist/missing.js" } }, [{ path: "package.json" }, { path: "README.md" }], ["package/package.json", "package/README.md"]),
+    () => validatePackageArchiveListing({ files: ["README.md"], exports: { ".": "./dist/missing.js" } }, [{ path: "package.json" }, { path: "README.md" }], ["package/package.json", "package/README.md"]),
     /missing declared package file/,
   );
   assert.throws(
-    () => validatePackageArchiveListing({}, [{ path: "package.json" }, { path: "README.md" }, { path: "node_modules/dep/index.js" }], ["package/package.json", "package/README.md", "package/node_modules/dep/", "package/node_modules/dep/index.js"]),
+    () => validatePackageArchiveListing({ files: ["README.md", "node_modules"] }, [{ path: "package.json" }, { path: "README.md" }, { path: "node_modules/dep/index.js" }], ["package/package.json", "package/README.md", "package/node_modules/dep/", "package/node_modules/dep/index.js"]),
     /nested dependencies/,
   );
 });
 
 test("npm archive validator rejects traversal and secret-like token material", () => {
   assert.throws(
-    () => validatePackageArchiveListing({}, [{ path: "../outside" }], ["package/package.json", "package/README.md"]),
+    () => validatePackageArchiveListing({ files: ["README.md"] }, [{ path: "../outside" }], ["package/package.json", "package/README.md"]),
     /unsafe archive path/,
   );
   assert.throws(
-    () => validatePackageArchiveListing({}, [], ["package/../outside/"]),
+    () => validatePackageArchiveListing({ files: ["README.md"] }, [], ["package/../outside/"]),
     /unsafe archive path/,
   );
   assert.equal(containsSecretMaterial("-----BEGIN PRIVATE KEY-----"), true);

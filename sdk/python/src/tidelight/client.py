@@ -78,14 +78,18 @@ class Client:
         self._opener = opener
         self._sleeper = sleeper
 
-    def list_tokenized_equities(self, *, limit: int = 20, cursor: str | None = None) -> InstrumentPage:
+    def list_tokenized_equities(self, *, limit: int = 20, cursor: str | None = None, underlying_ticker: str | None = None) -> InstrumentPage:
         if not isinstance(limit, int) or not 1 <= limit <= 100:
             raise ValueError("limit must be 1 to 100.")
         if cursor is not None and not re.fullmatch(r"[A-Z0-9]{2,32}", cursor):
             raise ValueError("Invalid instrument cursor.")
+        if underlying_ticker is not None and not re.fullmatch(r"[A-Z][A-Z0-9.]{0,9}", underlying_ticker.upper()):
+            raise ValueError("Invalid underlying_ticker.")
         params = {"kind": "rtoken", "limit": str(limit)}
         if cursor is not None:
             params["cursor"] = cursor
+        if underlying_ticker is not None:
+            params["underlying_ticker"] = underlying_ticker.upper()
         url = f"{self._base_url}/market/instruments?{urlencode(params)}"
         request = Request(url, headers={"Authorization": f"Bearer {self._api_key}", "Accept": "application/json"})
         for attempt in range(self._max_retries + 1):

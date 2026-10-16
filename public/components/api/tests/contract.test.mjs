@@ -42,6 +42,7 @@ test("contract preserves async idempotency and distinct financial instrument pro
   assert.equal(schemas.Instrument.properties.instrument_type.const, "tokenized_equity_spot");
   assert.equal(schemas.StockPerpetual.properties.instrument_type.const, "stock_perpetual");
   assert.notEqual(schemas.Instrument.properties.source.const, schemas.StockPerpetual.properties.source.const);
+  assert.equal(spec.paths["/market/instruments"].get.parameters.find(parameter => parameter.name === "underlying_ticker")?.schema.pattern, "^[A-Za-z][A-Za-z0-9.]{0,9}$");
 });
 
 test("webhook secrets are documented as one-time output and excluded from list schema", () => {

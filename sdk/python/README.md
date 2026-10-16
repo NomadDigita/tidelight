@@ -9,7 +9,7 @@ import os
 from tidelight import Client
 
 client = Client(os.environ["TIDELIGHT_API_KEY"])
-page = client.list_tokenized_equities(limit=20)
+page = client.list_tokenized_equities(limit=20, underlying_ticker="AAPL")
 for instrument in page.data:
     print(instrument.symbol, instrument.underlying_ticker)
 

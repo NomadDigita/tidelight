@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     body = parsed as Record<string, unknown>;
   } catch { return apiError(400, "invalid_request", "Send a JSON object.", requestId); }
   const keyId = typeof body.keyId === "string" ? body.keyId : "";
-  const query = validateInstrumentQuery(body.kind ?? "rtoken", String(body.limit ?? "20"), body.cursor ?? null);
+  const query = validateInstrumentQuery(body.kind ?? "rtoken", String(body.limit ?? "20"), body.cursor ?? null, body.underlyingTicker ?? null);
   if (!UUID.test(keyId) || !query) return apiError(400, "invalid_request", "Select a key and valid instrument parameters.", requestId);
   try {
     const admin = createAdminClient();
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       return apiError(reason === "quota_exceeded" ? 429 : reason === "insufficient_scope" ? 403 : 401, reason ?? "unauthorized", reason === "quota_exceeded" ? "This key has reached its request limit." : "This key is expired, revoked, or lacks market:read access.", requestId);
     }
     try {
-      const result = await listTokenizedEquityInstruments(query.limit, query.cursor);
+      const result = await listTokenizedEquityInstruments(query.limit, query.cursor, query.underlyingTicker);
       await finishUsage(admin, record.request_id, 200, started);
       return Response.json({ ...result, request_id: requestId, duration_ms: Math.round(performance.now() - started), usage: { requests: 1, credits: null } }, { headers: { "Cache-Control": "private, no-store", "X-Request-Id": requestId } });
     } catch {

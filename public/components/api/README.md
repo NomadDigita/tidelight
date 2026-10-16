@@ -6,7 +6,7 @@ The live, versioned REST API is at `https://api.tidelight.app/v1`. The OpenAPI 3
 
 | Operation | Scope | Purpose |
 | --- | --- | --- |
-| `GET /market/instruments` | `market:read` | List supported Reality tokenized-equity spot instruments |
+| `GET /market/instruments` | `market:read` | List supported Reality tokenized-equity spot instruments; optionally filter by `underlying_ticker` before pagination |
 | `POST /research/jobs` | `research:run` | Start an asynchronous, idempotent company snapshot |
 | `GET /research/jobs/{job_id}` | `research:run` | Read status/result within the key's project |
 | `DELETE /research/jobs/{job_id}` | `research:run` | Cancel queued work or request cancellation |
@@ -23,7 +23,7 @@ export TIDELIGHT_API_KEY='tl_test_…'
 curl --fail-with-body \
   -H "Authorization: Bearer $TIDELIGHT_API_KEY" \
   -H 'Accept: application/json' \
-  'https://api.tidelight.app/v1/market/instruments?kind=rtoken&limit=10'
+  'https://api.tidelight.app/v1/market/instruments?kind=rtoken&underlying_ticker=AAPL&limit=10'
 ```
 
 Responses include a request ID and market provenance, including the provider source and timestamp. rToken spot instruments are tokenized products; they are not underlying shares or stock perpetual contracts. An unavailable provider returns a safe service error instead of fabricated values. Async research responses include a job ID; reuse the same `Idempotency-Key` when retrying a start request.

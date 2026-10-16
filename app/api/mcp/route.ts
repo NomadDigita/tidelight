@@ -31,7 +31,11 @@ function makeInvoker(secret: string): TicMcpInvoker {
   return async (operation: TicMcpOperation): Promise<Response> => {
     switch (operation.operation) {
       case "market.list":
-        return listInstruments(apiRequest(secret, `/api/v1/market/instruments?kind=rtoken&limit=${operation.limit}`, "GET"));
+        {
+          const params = new URLSearchParams({ kind: "rtoken", limit: String(operation.limit) });
+          if (operation.underlyingTicker) params.set("underlying_ticker", operation.underlyingTicker);
+          return listInstruments(apiRequest(secret, `/api/v1/market/instruments?${params}`, "GET"));
+        }
       case "research.start":
         return startResearch(apiRequest(secret, "/api/v1/research/jobs", "POST", { ticker: operation.ticker }, operation.idempotencyKey));
       case "research.get":

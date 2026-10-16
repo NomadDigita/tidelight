@@ -16,14 +16,18 @@ test("market scope exposes only the two market tools and preserves structured so
   const calls = [];
   const { server, client } = await connect(["market:read"], async operation => {
     calls.push(operation);
-    return Response.json({ data: [{ underlying_ticker: "NVDA", source: "Bitget Reality spot" }], request_id: "req-test" });
+    const instruments = [{ underlying_ticker: "NVDA", source: "Bitget Reality spot" }, { underlying_ticker: "AAPL", source: "Bitget Reality spot" }];
+    return Response.json({ data: operation.underlyingTicker ? instruments.filter(item => item.underlying_ticker === operation.underlyingTicker) : instruments.slice(0, operation.limit), request_id: "req-test" });
   });
   const { tools } = await client.listTools();
   assert.deepEqual(tools.map(tool => tool.name).sort(), ["tidelight_get_tokenized_equity", "tidelight_search_tokenized_equities"]);
   const result = await client.callTool({ name: "tidelight_get_tokenized_equity", arguments: { ticker: "nvda" } });
   assert.equal(result.structuredContent.request_id, "req-test");
   assert.equal(result.structuredContent.data[0].source, "Bitget Reality spot");
-  assert.deepEqual(calls, [{ operation: "market.list", limit: 100 }]);
+  assert.deepEqual(calls, [{ operation: "market.list", limit: 100, underlyingTicker: "NVDA" }]);
+  const filtered = await client.callTool({ name: "tidelight_search_tokenized_equities", arguments: { underlying_ticker: "AAPL", limit: 1 } });
+  assert.equal(filtered.structuredContent.data[0].underlying_ticker, "AAPL");
+  assert.deepEqual(calls[1], { operation: "market.list", limit: 1, underlyingTicker: "AAPL" });
   await client.close();
   await server.close();
 });

@@ -30,10 +30,11 @@ test("official Streamable HTTP client discovers scoped market tools and receives
   const operations = [];
   const client = await clientFor(new Set(["market:read"]), async operation => {
     operations.push(operation);
-    return Response.json({ data: [
+    const instruments = [
       { symbol: "RNVDAUSDT", underlying_ticker: "NVDA", instrument_type: "tokenized_equity_spot", source: "Bitget Reality spot", provider_timestamp: "2026-10-15T00:00:00Z" },
       { symbol: "RAAPLUSDT", underlying_ticker: "AAPL", instrument_type: "tokenized_equity_spot", source: "Bitget Reality spot", provider_timestamp: "2026-10-15T00:00:00Z" },
-    ], next_cursor: null, generated_at: 1, request_id: "market-request" });
+    ];
+    return Response.json({ data: operation.underlyingTicker ? instruments.filter(item => item.underlying_ticker === operation.underlyingTicker) : instruments.slice(0, operation.limit), next_cursor: null, generated_at: 1, request_id: "market-request" });
   });
   try {
     const tools = await client.listTools();
@@ -42,7 +43,10 @@ test("official Streamable HTTP client discovers scoped market tools and receives
     assert.equal(result.isError, undefined);
     assert.equal(result.structuredContent.data.length, 1);
     assert.equal(result.structuredContent.data[0].source, "Bitget Reality spot");
-    assert.equal(operations[0].operation, "market.list");
+    assert.deepEqual(operations[0], { operation: "market.list", limit: 100, underlyingTicker: "NVDA" });
+    const search = await client.callTool({ name: "tidelight_search_tokenized_equities", arguments: { underlying_ticker: "AAPL", limit: 1 } });
+    assert.equal(search.structuredContent.data[0].underlying_ticker, "AAPL");
+    assert.deepEqual(operations[1], { operation: "market.list", limit: 1, underlyingTicker: "AAPL" });
     const denied = await client.callTool({ name: "tidelight_start_company_research", arguments: { ticker: "NVDA" } });
     assert.equal(denied.isError, true);
   } finally { await client.close(); }

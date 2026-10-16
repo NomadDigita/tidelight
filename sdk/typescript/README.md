@@ -8,7 +8,7 @@ Build locally with `npm run build` in this directory. Keep the API key on your s
 import { TidelightClient } from "@tidelight/sdk";
 
 const client = new TidelightClient({ apiKey: process.env.TIDELIGHT_API_KEY! });
-const page = await client.listTokenizedEquities({ limit: 20 });
+const page = await client.listTokenizedEquities({ limit: 20, underlyingTicker: "AAPL" });
 for (const instrument of page.data) console.log(instrument.symbol, instrument.underlying_ticker);
 
 for await (const instrument of client.tokenizedEquities({ limit: 50 })) {

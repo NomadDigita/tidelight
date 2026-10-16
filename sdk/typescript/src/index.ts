@@ -79,14 +79,17 @@ export class TidelightClient {
     this.transport = options.fetch ?? fetch;
   }
 
-  async listTokenizedEquities(options: { limit?: number; cursor?: string; signal?: AbortSignal } = {}): Promise<InstrumentPage> {
+  async listTokenizedEquities(options: { limit?: number; cursor?: string; underlyingTicker?: string; signal?: AbortSignal } = {}): Promise<InstrumentPage> {
     const limit = options.limit ?? 20;
     if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new RangeError("limit must be 1 to 100.");
     if (options.cursor !== undefined && !/^[A-Z0-9]{2,32}$/.test(options.cursor)) throw new TypeError("Invalid instrument cursor.");
+    const underlyingTicker = options.underlyingTicker?.toUpperCase();
+    if (underlyingTicker !== undefined && !/^[A-Z][A-Z0-9.]{0,9}$/.test(underlyingTicker)) throw new TypeError("Invalid underlyingTicker.");
     const url = new URL(`${this.baseUrl}/market/instruments`);
     url.searchParams.set("kind", "rtoken");
     url.searchParams.set("limit", String(limit));
     if (options.cursor) url.searchParams.set("cursor", options.cursor);
+    if (underlyingTicker) url.searchParams.set("underlying_ticker", underlyingTicker);
     for (let attempt = 0; ; attempt++) {
       const controller = new AbortController();
       const onAbort = () => controller.abort();

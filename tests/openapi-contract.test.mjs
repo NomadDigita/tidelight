@@ -41,6 +41,11 @@ test("versioned API contract covers every implemented public endpoint and method
   ]);
 });
 
+test("market instrument contract exposes server-side underlying ticker filtering", () => {
+  const parameters = spec.paths["/market/instruments"].get.parameters;
+  assert.equal(parameters.find(parameter => parameter.name === "underlying_ticker")?.schema.pattern, "^[A-Za-z][A-Za-z0-9.]{0,9}$");
+});
+
 test("webhook contract matches the supported event set and keeps secrets one-time", () => {
   const schemas = spec.components.schemas;
   assert.deepEqual(schemas.WebhookEvent.enum, ["research.job.completed", "research.job.failed"]);

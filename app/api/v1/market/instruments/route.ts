@@ -10,13 +10,14 @@ export async function GET(request: Request) {
   const kind = params.get("kind") ?? "rtoken";
   const limitRaw = params.get("limit") ?? "20";
   const cursor = params.get("cursor");
-  const query = validateInstrumentQuery(kind, limitRaw, cursor);
+  const underlyingTicker = params.get("underlying_ticker");
+  const query = validateInstrumentQuery(kind, limitRaw, cursor, underlyingTicker);
   if (!query) {
     await finishUsage(admin, usageId, 400, started);
-    return apiError(400, "invalid_request", "Use kind=rtoken, limit=1..100, and an instrument symbol cursor.", requestId);
+    return apiError(400, "invalid_request", "Set kind=rtoken and limit=1..100; cursor must be an instrument symbol, and underlying_ticker must be a valid ticker when provided.", requestId);
   }
   try {
-    const result = await listTokenizedEquityInstruments(query.limit, query.cursor);
+    const result = await listTokenizedEquityInstruments(query.limit, query.cursor, query.underlyingTicker);
     await finishUsage(admin, usageId, 200, started);
     return Response.json({ ...result, request_id: requestId }, { headers: { "Cache-Control": "private, no-store", "X-Request-Id": requestId } });
   } catch {

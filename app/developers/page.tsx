@@ -21,7 +21,7 @@ export default function DevelopersPage() {
   return <main className="tic tic-landing tic-premium-landing">
     <nav className="tic-top tic-premium-top" aria-label="Developer navigation">
       <Link href="/developers" className="tic-brand"><Image src="/tidelight-mark.svg" alt="" width={30} height={30} priority /> <span className="tic-brand-name">Tidelight</span><span className="tic-brand-divider" aria-hidden="true"/><span>Intelligence Cloud</span></Link>
-      <div><Link href="https://dev.tidelight.app">Docs</Link><ThemeQuickSwitch/><Link href="/developers/console" className="tic-button tic-nav-cta">Open console <span aria-hidden="true">↗</span></Link></div>
+      <div><Link href="https://dev.tidelight.app">Docs</Link><Link href="/developers/packages">Packages</Link><ThemeQuickSwitch/><Link href="/developers/console" className="tic-button tic-nav-cta">Open console <span aria-hidden="true">↗</span></Link></div>
     </nav>
 
     <section className="tic-premium-hero">
@@ -63,6 +63,6 @@ export default function DevelopersPage() {
     </section>
 
     <section className="tic-cta-band"><div><p className="tic-eyebrow">BUILD WITH TIDELIGHT</p><h2>Start with the service that fits your workflow.</h2><p>Set up a project, grant only what you need, then explore the live API or connect an MCP client.</p></div><div><Link href="/developers/console" className="tic-button tic-primary">Open developer console <span aria-hidden="true">→</span></Link><Link href="https://dev.tidelight.app#quickstart" className="tic-cta-text">Read the quickstart ↗</Link></div></section>
-    <footer className="tic-footer tic-premium-footer"><Link href="/developers" className="tic-brand"><Image src="/tidelight-mark.svg" alt="" width={24} height={24}/><span className="tic-brand-name">Tidelight</span><span>Intelligence Cloud</span></Link><span>Source-aware intelligence infrastructure</span><div><Link href="https://dev.tidelight.app">Documentation</Link><Link href="/developers/console">Console</Link><Link href="/">Tidelight home</Link></div></footer>
+    <footer className="tic-footer tic-premium-footer"><Link href="/developers" className="tic-brand"><Image src="/tidelight-mark.svg" alt="" width={24} height={24}/><span className="tic-brand-name">Tidelight</span><span>Intelligence Cloud</span></Link><span>Source-aware intelligence infrastructure</span><div><Link href="/developers/packages">Packages</Link><Link href="https://dev.tidelight.app">Documentation</Link><Link href="/developers/console">Console</Link><Link href="/">Tidelight home</Link></div></footer>
   </main>;
 }

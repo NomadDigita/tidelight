@@ -75,7 +75,7 @@ export default function ApiExplorer({ projects, keys, currentTime }: { projects:
       <label>Project<select value={projectId} onChange={event => { setProjectId(event.target.value); setKeyId(""); }}>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
       <label>Credential<select value={selectedKeyId} onChange={event => setKeyId(event.target.value)} required>{availableKeys.length ? availableKeys.map(key => <option key={key.id} value={key.id}>{key.name} · {key.environment}</option>) : <option value="">No active key</option>}</select></label>
       <label>Limit<input type="number" min="1" max="100" value={limit} onChange={event => setLimit(Number(event.target.value))} required /></label>
-      <label>Underlying ticker <span>(optional)</span><input aria-label="Underlying ticker" value={underlyingTicker} onChange={event => setUnderlyingTicker(event.target.value.toUpperCase())} pattern="[A-Z][A-Z0-9.]{0,9}" placeholder="e.g. AAPL" /></label>
+      <label>Underlying ticker <span>(optional)</span><input value={underlyingTicker} onChange={event => setUnderlyingTicker(event.target.value.toUpperCase())} pattern="[A-Z][A-Z0-9.]{0,9}" placeholder="e.g. AAPL" /></label>
       <label>Cursor <span>(optional)</span><input value={cursor} onChange={event => setCursor(event.target.value.toUpperCase())} pattern="[A-Z0-9]{2,32}" placeholder="Next cursor from a response" /></label>
       <button type="submit" className="tic-button tic-primary" disabled={busy || !selectedKeyId} aria-busy={busy}>{busy ? <><span className="tic-explorer-spinner" aria-hidden="true" />Executing request…</> : "Execute request"}</button>
     </form>
@@ -87,7 +87,7 @@ export default function ApiExplorer({ projects, keys, currentTime }: { projects:
       {busy ? <div className="tic-response-state" role="status"><span className="tic-explorer-spinner" aria-hidden="true" /><div><strong>Request in progress</strong><p>Waiting for the authorized API response…</p></div></div> : result ? <>
         <div className="tic-response-meta"><span>Request ID <code>{requestId || "Unavailable"}</code></span><span>Response time <code>{duration ?? "—"} ms</code></span><span>Usage <code>{typeof result === "object" && result !== null && "usage" in result && result.usage && typeof result.usage === "object" && "requests" in result.usage && result.usage.requests === 1 ? "1 request" : "Unavailable"}</code></span></div>
         <pre tabIndex={0} aria-label="JSON response"><code>{JSON.stringify(result, null, 2)}</code></pre>
-      </> : <div className="tic-response-empty"><span aria-hidden="true">↗</span><div><strong>Your response will appear here</strong><p>Run the request to inspect live data, request metadata, and any API errors.</p></div></div>}
+      </> : <div className="tic-response-empty"><span aria-hidden="true" /><div><strong>Your response will appear here</strong><p>Run the request to inspect live data, request metadata, and any API errors.</p></div></div>}
     </section>
 
     <section className="tic-panel tic-code-example" aria-labelledby="tic-code-title">

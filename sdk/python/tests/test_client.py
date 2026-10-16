@@ -1,6 +1,8 @@
 import io
 import json
+import threading
 import unittest
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlparse
 
@@ -84,6 +86,10 @@ class ClientTests(unittest.TestCase):
     def test_input_validation(self):
         with self.assertRaises(ValueError):
             Client(KEY, base_url="http://example.com/api/v1")
+        with self.assertRaises(ValueError):
+            Client(KEY, base_url="https://attacker.example/v1")
+        with self.assertRaises(ValueError):
+            Client(KEY, base_url="https://api.tidelight.app:8443/v1")
         client = Client(KEY, opener=lambda *_args, **_kwargs: self.fail("transport called"))
         with self.assertRaises(ValueError):
             client.list_tokenized_equities(limit=101)
@@ -91,6 +97,46 @@ class ClientTests(unittest.TestCase):
             client.list_tokenized_equities(cursor="../../etc")
         with self.assertRaises(ValueError):
             client.list_tokenized_equities(underlying_ticker="AAPL?")
+
+    def test_default_transport_does_not_follow_redirects(self):
+        seen = []
+
+        class RedirectHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                seen.append(self.path)
+                self.send_response(302)
+                self.send_header("Location", "https://attacker.example/collect")
+                self.end_headers()
+
+            def log_message(self, *_args):
+                pass
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), RedirectHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            client = Client(KEY, base_url=f"http://127.0.0.1:{server.server_port}/v1", max_retries=0)
+            with self.assertRaises(ApiError) as caught:
+                client.list_tokenized_equities()
+            self.assertEqual(caught.exception.status, 302)
+            self.assertEqual(seen, ["/v1/market/instruments?kind=rtoken&limit=20"])
+        finally:
+            server.shutdown()
+            thread.join(timeout=2)
+            server.server_close()
+
+    def test_provider_terms_gate_is_not_retried(self):
+        calls = []
+
+        def denied(request, timeout):
+            calls.append(request.full_url)
+            raise HTTPError(request.full_url, 503, "Unavailable", {}, io.BytesIO(b'{"error":{"code":"provider_terms_unconfirmed","message":"Market redistribution terms are not confirmed."}}'))
+
+        client = Client(KEY, opener=denied, max_retries=3, sleeper=lambda _: None)
+        with self.assertRaises(ApiError) as caught:
+            client.list_tokenized_equities()
+        self.assertEqual(caught.exception.code, "provider_terms_unconfirmed")
+        self.assertEqual(len(calls), 1)
 
     def test_underlying_ticker_is_normalized_and_sent_before_pagination(self):
         calls = []

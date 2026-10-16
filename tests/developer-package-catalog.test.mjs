@@ -18,7 +18,7 @@ test("the directory lists each source distribution once and links its matching d
   assert.deepEqual(entries.map(entry => entry.id), ["sdk", "mcp", "python", "react", "cli"]);
   assert.equal(new Set(entries.map(entry => entry.source.path)).size, entries.length);
   for (const entry of entries) {
-    assert.equal(entry.source.available, true);
+    assert.equal(entry.source.present, true);
     assert.equal(entry.display.name, entry.distribution.intendedName);
     assert.equal(entry.display.href, `/developers/packages/${entry.id}`);
   }
@@ -38,6 +38,7 @@ test("manifest versions and npm private flags feed the source label", async () =
     }
     assert.equal("installCommand" in entry.display, false);
     assert.notEqual(entry.distribution.state.kind, "published");
+    assert.equal("checkedAt" in entry.distribution.state, false);
   }
 });
 
@@ -64,6 +65,10 @@ test("directory renders the generated catalog and never derives installability f
   assert.doesNotMatch(page, /const packages\s*=\s*\[/);
   assert.match(page, /Registry status · not checked live/);
   assert.match(page, /item\.display\.stateLabel/);
+  assert.match(page, /Source files present/);
+  assert.match(page, /Browse packages/);
+  assert.doesNotMatch(page, /source ready/i);
+  assert.doesNotMatch(page, /checkedAt/);
 });
 
 
@@ -72,8 +77,8 @@ test("package detail compatibility copy distinguishes declared support from test
   assert.match(pythonPage, /Python CI tested<\/span><strong>3\.10 · 3\.12/);
   assert.match(pythonPage, /declares Python <code>&gt;=3\.10<\/code>/);
   const reactPage = await readFile(new URL("app/developers/packages/react-detail.tsx", root), "utf8");
-  assert.match(reactPage, /Declared React 18\/19 · CI tested 19\.2\.8/);
-  assert.doesNotMatch(reactPage, /React 18 &amp; 19/);
+  assert.match(reactPage, /PackageSourceBadges packageId="react"/);
+  assert.doesNotMatch(reactPage, /React 18 &amp; 19|Version 0\.1\.0 private/);
 });
 
 test("mirror workflow runs package catalog freshness check for source and catalog changes", async () => {
@@ -81,4 +86,46 @@ test("mirror workflow runs package catalog freshness check for source and catalo
   assert.equal((workflow.match(/app\/developers\/packages\/\*\*/g) ?? []).length, 2);
   assert.equal((workflow.match(/scripts\/generate-developer-package-catalog\.mjs/g) ?? []).length, 2);
   assert.match(workflow, /run: npm run check:package-catalog/);
+});
+
+
+test("detail headers share generated source, release, and compatibility metadata", async () => {
+  const details = [
+    ["package-detail.tsx", "sdk"], ["mcp-detail.tsx", "mcp"],
+    ["python-detail.tsx", "python"], ["react-detail.tsx", "react"],
+    ["cli-detail.tsx", "cli"],
+  ];
+  for (const [file, id] of details) {
+    const source = await readFile(new URL(`app/developers/packages/${file}`, root), "utf8");
+    assert.match(source, new RegExp(`PackageSourceBadges packageId="${id}"`));
+    assert.doesNotMatch(source, /Version 0\.1\.0 (?:private|source)/);
+  }
+  const badges = await readFile(new URL("app/developers/packages/package-source-badges.tsx", root), "utf8");
+  assert.match(badges, /packageCatalog\.find/);
+  assert.match(badges, /compatibilityLabel/);
+  assert.match(badges, /name unresolved/);
+  assert.match(badges, /Source present · unpublished/);
+  assert.doesNotMatch(badges, /Source available|source ready/i);
+});
+
+test("package section navigation follows visible sections and exposes the current location", async () => {
+  const routes = ["package-detail.tsx", "mcp-detail.tsx", "python-detail.tsx", "react-detail.tsx", "cli-detail.tsx"];
+  for (const file of routes) {
+    const source = await readFile(new URL(`app/developers/packages/${file}`, root), "utf8");
+    assert.match(source, /<PackageSectionNav sections=\{/);
+    const ids = [...source.matchAll(/\{ id: "([^"]+)", label:/g)].map(match => match[1]);
+    assert.ok(ids.length >= 5, `${file} should expose its package sections`);
+    for (const id of ids) assert.match(source, new RegExp(`<section id=["']${id}["']`), `${file} links to missing #${id}`);
+  }
+  const component = await readFile(new URL("app/developers/packages/package-section-nav.tsx", root), "utf8");
+  assert.match(component, /new IntersectionObserver/);
+  assert.match(component, /aria-current=\{ids\[index\] === activeSection \? "location" : undefined\}/);
+  assert.match(component, /hashchange/);
+  const css = await readFile(new URL("app/developers/packages/packages.css", root), "utf8");
+  assert.match(css, /tic-package-detail-nav>a\[aria-current="location"\]/);
+});
+
+test("package detail clipping preserves sticky section navigation", async () => {
+  const css = await readFile(new URL("app/developers/packages/packages.css", root), "utf8");
+  assert.match(css, /tic-package-detail-page\{max-width:none;overflow:clip\}/);
 });

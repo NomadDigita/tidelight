@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const packages = [
   { name: "@tidelight/sdk", type: "TypeScript · JavaScript", summary: "Typed client for supported Tidelight API v1 endpoints, async research jobs, and webhooks.", state: "Source exists · unpublished", version: "0.1.0 private", href: "/developers/packages/sdk", glyph: "TS", available: true },
   { name: "@tidelight/mcp", type: "Node.js · MCP stdio", summary: "Bridge stdio-only MCP clients to Tidelight's hosted, scope-filtered Streamable HTTP service.", state: "Source ready · unpublished", version: "0.1.0 private", href: "/developers/packages/mcp", glyph: "M", available: true },
-  { name: "tidelight", type: "Python", summary: "Python client source for supported market, research, and webhook workflows.", state: "Source exists · metadata says tidelight-sdk", version: "0.1.0 manifest", href: null, glyph: "Py", available: true },
+  { name: "tidelight", type: "Python SDK", summary: "Python client for supported market, research-job, and webhook workflows.", state: "Source ready · package name review", version: "0.1.0 manifest", href: "/developers/packages/python", glyph: "Py", available: true },
   { name: "@tidelight/react", type: "React · hooks & UI", summary: "Typed hooks and accessible market components backed by the official SDK contract.", state: "Source ready · unpublished", version: "0.1.0 private", href: "/developers/packages/react", glyph: "R", available: true },
   { name: "@tidelight/cli", type: "Node.js · command line", summary: "Keychain-backed terminal workflows for supported market, research-job, and webhook API operations.", state: "Source ready · unpublished", version: "0.1.0 private", href: "/developers/packages/cli", glyph: "$", available: true },
 ];

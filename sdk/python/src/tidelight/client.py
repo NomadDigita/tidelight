@@ -9,7 +9,14 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    """Keep bearer credentials on the configured API origin."""
+
+    def redirect_request(self, request, response, code, message, headers, new_url):
+        return None
 
 
 @dataclass(frozen=True)
@@ -59,12 +66,14 @@ class ApiError(Exception):
 
 
 class Client:
-    def __init__(self, api_key: str, *, base_url: str = "https://api.tidelight.app/v1", timeout: float = 10, max_retries: int = 2, opener: Callable[..., Any] = urlopen, sleeper: Callable[[float], None] = time.sleep):
+    def __init__(self, api_key: str, *, base_url: str = "https://api.tidelight.app/v1", timeout: float = 10, max_retries: int = 2, opener: Callable[..., Any] | None = None, sleeper: Callable[[float], None] = time.sleep):
         if not re.fullmatch(r"tl_(test|live)_[A-Za-z0-9_-]{43}", api_key):
             raise ValueError("A valid Tidelight API key is required.")
         parsed = urlparse(base_url)
         if parsed.scheme != "https" and not (parsed.scheme == "http" and parsed.hostname in {"localhost", "127.0.0.1"}):
             raise ValueError("The API URL must use HTTPS.")
+        if parsed.scheme == "https" and (parsed.hostname != "api.tidelight.app" or parsed.port not in (None, 443)):
+            raise ValueError("The API URL must use api.tidelight.app over HTTPS.")
         if parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise ValueError("The API URL cannot contain credentials, query, or fragment.")
         if not 0.1 <= timeout <= 120:
@@ -75,7 +84,7 @@ class Client:
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
         self._max_retries = max_retries
-        self._opener = opener
+        self._opener = opener or build_opener(_NoRedirect()).open
         self._sleeper = sleeper
 
     def list_tokenized_equities(self, *, limit: int = 20, cursor: str | None = None, underlying_ticker: str | None = None) -> InstrumentPage:
@@ -109,7 +118,7 @@ class Client:
                     details = json.load(error).get("error", {})
                 except (ValueError, AttributeError):
                     details = {}
-                if error.code in {429, 502, 503, 504} and attempt < self._max_retries:
+                if error.code in {429, 502, 503, 504} and details.get("code") != "provider_terms_unconfirmed" and attempt < self._max_retries:
                     self._pause(attempt, error.headers.get("Retry-After"))
                     continue
                 raise ApiError(error.code, details.get("code", "api_error"), details.get("message", "Tidelight API request failed."), details.get("request_id") or error.headers.get("X-Request-Id")) from None
@@ -238,7 +247,7 @@ class Client:
                     details = json.load(error).get("error", {})
                 except (ValueError, AttributeError):
                     details = {}
-                if error.code in {429, 502, 503, 504} and attempt < retry_limit:
+                if error.code in {429, 502, 503, 504} and details.get("code") != "provider_terms_unconfirmed" and attempt < retry_limit:
                     self._pause(attempt, error.headers.get("Retry-After")); continue
                 raise ApiError(error.code, details.get("code", "api_error"), details.get("message", "Tidelight API request failed."), details.get("request_id") or error.headers.get("X-Request-Id")) from None
             except (URLError, TimeoutError, OSError):

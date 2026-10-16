@@ -41,6 +41,7 @@ jobs:
           if [[ "$SDK" == "typescript" ]]; then
             VERSION=$(node -p "require('./sdk/typescript/package.json').version")
             npm test --prefix sdk/typescript
+            node scripts/check-npm-package-archive.mjs sdk/typescript
             REPO=tidelight-sdk
           elif [[ "$SDK" == "python" ]]; then
             VERSION=$(python -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('sdk/python/pyproject.toml').read(), re.M).group(1))")
@@ -51,7 +52,7 @@ jobs:
             VERSION=$(node -p "require('./public/components/mcp/server/package.json').version")
             npm ci --prefix public/components/mcp/server
             npm test --prefix public/components/mcp/server
-            npm pack --dry-run --json --prefix public/components/mcp/server
+            node scripts/check-npm-package-archive.mjs public/components/mcp/server
             REPO=tidelight-mcp
           fi
           [[ "$VERSION" == "$REQUESTED_VERSION" ]] || { echo "Requested version must match canonical SDK version $VERSION"; exit 1; }
@@ -70,26 +71,17 @@ jobs:
           CANONICAL_SHA=$(git rev-parse HEAD)
           echo "mirror_sha=$MIRROR_SHA" >> "$GITHUB_OUTPUT"
           echo "canonical_sha=$CANONICAL_SHA" >> "$GITHUB_OUTPUT"
-      - name: Create scoped GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.TIDELIGHT_SYNC_APP_ID }}
-          private-key: ${{ secrets.TIDELIGHT_SYNC_APP_PRIVATE_KEY }}
-          owner: TidelightOrg
-          repositories: ${{ steps.version.outputs.repo }}
-          permission-contents: write
-      - name: Publish source release in SDK mirror
+      - name: Verify synchronized package without release credentials
+        id: mirror-verification
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.version.outputs.version }}
-          REPOSITORY: TidelightOrg/${{ steps.version.outputs.repo }}
         run: |
           cd sdk-mirror
           if [[ "${{ inputs.sdk }}" == "typescript" ]]; then
             npm install --ignore-scripts --no-audit --no-fund
             MIRROR_VERSION=$(node -p "require('./package.json').version")
             npm test
+            node "$GITHUB_WORKSPACE/scripts/check-npm-package-archive.mjs" .
           elif [[ "${{ inputs.sdk }}" == "python" ]]; then
             MIRROR_VERSION=$(python -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('pyproject.toml').read(), re.M).group(1))")
             PYTHONPATH=src python -m unittest discover -s tests -v
@@ -99,12 +91,32 @@ jobs:
             npm ci
             MIRROR_VERSION=$(node -p "require('./package.json').version")
             npm test
-            npm pack --dry-run --json
+            node "$GITHUB_WORKSPACE/scripts/check-npm-package-archive.mjs" .
           fi
           [[ "$MIRROR_VERSION" == "$VERSION" ]] || { echo "Synchronized mirror version $MIRROR_VERSION does not match canonical version $VERSION"; exit 1; }
           TARGET_SHA=$(git rev-parse HEAD)
           [[ "$TARGET_SHA" == "${{ steps.parity.outputs.mirror_sha }}" ]] || { echo "Mirror changed after parity validation; refusing to tag a different commit"; exit 1; }
           if [[ "${{ inputs.sdk }}" == "mcp" ]]; then PACKAGE="MCP"; else PACKAGE="SDK"; fi
-          NOTES=$(printf 'Mother repository commit: %s\nTested mirror commit: %s\n\nThis release was created from byte-for-byte source verified against the Tidelight mother repository.' "${{ steps.parity.outputs.canonical_sha }}" "$TARGET_SHA")
+          echo "target_sha=$TARGET_SHA" >> "$GITHUB_OUTPUT"
+          echo "package=$PACKAGE" >> "$GITHUB_OUTPUT"
+      - name: Create scoped GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.TIDELIGHT_SYNC_APP_ID }}
+          private-key: ${{ secrets.TIDELIGHT_SYNC_APP_PRIVATE_KEY }}
+          owner: TidelightOrg
+          repositories: ${{ steps.version.outputs.repo }}
+          permission-contents: write
+      - name: Publish verified source release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          REPOSITORY: TidelightOrg/${{ steps.version.outputs.repo }}
+          TARGET_SHA: ${{ steps.mirror-verification.outputs.target_sha }}
+          PACKAGE: ${{ steps.mirror-verification.outputs.package }}
+          CANONICAL_SHA: ${{ steps.parity.outputs.canonical_sha }}
+        run: |
+          NOTES=$(printf 'Mother repository commit: %s\nTested mirror commit: %s\n\nThis release was created from byte-for-byte source verified against the Tidelight mother repository.' "$CANONICAL_SHA" "$TARGET_SHA")
           gh release create "v$VERSION" --repo "$REPOSITORY" --target "$TARGET_SHA" --title "Tidelight $PACKAGE v$VERSION" --notes "$NOTES"
 

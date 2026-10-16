@@ -15,6 +15,8 @@ on:
       - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
       - 'scripts/check-python-package.py'
+      - 'scripts/check-npm-package-archive.mjs'
+      - 'tests/npm-package-archive.test.mjs'
       - 'tests/public-mirrors.test.mjs'
   push:
     branches: [main]
@@ -31,6 +33,8 @@ on:
       - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
       - 'scripts/check-python-package.py'
+      - 'scripts/check-npm-package-archive.mjs'
+      - 'tests/npm-package-archive.test.mjs'
       - 'tests/public-mirrors.test.mjs'
 
 permissions:
@@ -71,18 +75,18 @@ jobs:
       - run: npm ci
       - name: Validate public source boundaries
         run: node scripts/check-public-mirrors.mjs
-      - name: Test TypeScript SDK
-        run: npm ci --prefix sdk/typescript && npm test --prefix sdk/typescript && (cd sdk/typescript && npm pack --dry-run --json)
+      - name: Test TypeScript SDK archive
+        run: npm ci --prefix sdk/typescript && npm test --prefix sdk/typescript && node scripts/check-npm-package-archive.mjs sdk/typescript
       - name: Test React integration and validate packed files
-        run: npm ci --prefix packages/react && npm test --prefix packages/react && (cd packages/react && npm pack --dry-run --json)
+        run: npm ci --prefix packages/react && npm test --prefix packages/react && node scripts/check-npm-package-archive.mjs packages/react
       - name: Test CLI and validate packed files
-        run: npm ci --prefix packages/cli && npm test --prefix packages/cli && (cd packages/cli && npm pack --dry-run --json)
+        run: npm ci --prefix packages/cli && npm test --prefix packages/cli && node scripts/check-npm-package-archive.mjs packages/cli
       - name: Test Python SDK and validate wheel
         run: |
           PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
           python scripts/check-python-package.py sdk/python
       - name: Test MCP package and validate packed files
-        run: npm ci --prefix public/components/mcp/server && npm test --prefix public/components/mcp/server && cd public/components/mcp/server && npm pack --dry-run --json
+        run: npm ci --prefix public/components/mcp/server && npm test --prefix public/components/mcp/server && node scripts/check-npm-package-archive.mjs public/components/mcp/server
       - name: Test public API contract
         run: npm ci --prefix public/components/api && npm test --prefix public/components/api
       - name: Test API examples

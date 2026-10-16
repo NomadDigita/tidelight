@@ -56,3 +56,8 @@ Python SDK follow-up (2026-10-16): `PYTHONPATH=sdk/python/src python -m unittest
 
 
 Clean consumer rehearsal (2026-10-16): `npm run test:package-consumers` validates SDK imports, React SSR and CSS export, and CLI help plus safe rejection before requests when credentials are absent. It builds a temporary CLI release-candidate copy whose SDK dependency is pinned to the exact local SDK version. This is a local tarball check only; no registry publication or user data is involved.
+
+
+## Registry publication guide
+
+The exact npm and PyPI readiness gates, trusted-publishing setup, package order, validation commands, and post-release checks are in [PUBLISHING.md](./PUBLISHING.md). Current source and name blockers are stated there; this guide does not mark an unpublished package installable.

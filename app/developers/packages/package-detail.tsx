@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PackageLifecycleDemo } from "./package-lifecycle-demo";
 
 const snippets = {
   typescript: `import { TidelightClient } from "@tidelight/sdk";\n\nconst client = new TidelightClient({\n  apiKey: process.env.TIDELIGHT_API_KEY!,\n});\n\nconst page = await client.listTokenizedEquities({\n  limit: 20,\n  underlyingTicker: "AAPL",\n});\n\nfor (const instrument of page.data) {\n  console.log(instrument.symbol, instrument.underlying_ticker);\n}`,
@@ -41,6 +42,7 @@ export function PackageDetail() {
         <span className="tic-package-flow-label">REQUEST PATH / SERVER SIDE</span><div className="tic-flow-line"><div className="tic-flow-node"><span>01</span><strong>Your service</strong><small>API key stays server-side</small></div><i aria-hidden="true">→</i><div className="tic-flow-node flow-active"><span>02</span><strong>Tidelight SDK</strong><small>Types · retries · timeout</small></div><i aria-hidden="true">→</i><div className="tic-flow-node"><span>03</span><strong>API v1</strong><small>Scope and quota enforced</small></div></div><div className="tic-flow-response"><span>STRUCTURED RESPONSE</span><b>data</b><b>request_id</b><b>provenance</b></div>
       </div>
     </header>
+    <PackageLifecycleDemo packageName="sdk" />
     <div className="tic-package-detail-layout">
       <nav className="tic-package-detail-nav" aria-label="Package sections"><span>ON THIS PAGE</span><a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#api">API surface</a><a href="#compatibility">Compatibility</a><a href="#security">Security</a><a href="#releases">Releases</a></nav>
       <article className="tic-package-detail-content">

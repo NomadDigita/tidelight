@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PackageLifecycleDemo } from "./package-lifecycle-demo";
 
 const snippets = {
   install: `git clone https://github.com/TidelightOrg/tidelight.git
@@ -61,6 +62,7 @@ export function PythonPackageDetail() {
       <div className="tic-package-detail-copy"><p className="tic-eyebrow">OFFICIAL PACKAGE / PYTHON SDK</p><div className="tic-package-detail-title"><span className="tic-package-glyph" aria-hidden="true">Py</span><h1>Python SDK</h1></div><p>A small Python client for supported Tidelight API v1 market, asynchronous research, and webhook workflows. Keep project credentials on trusted servers and work with typed response objects.</p><div className="tic-package-detail-badges"><span className="tic-package-state-pill"><i/> Source ready · unpublished</span><span>Version 0.1.0 source</span><span>Python 3.10+</span></div><div className="tic-package-detail-actions"><a className="tic-button tic-primary" href="#quickstart">Build from source <span aria-hidden="true">↓</span></a><a className="tic-button" href="https://github.com/TidelightOrg/tidelight/tree/main/sdk/python" target="_blank" rel="noreferrer">View source <span aria-hidden="true">→</span></a></div><p className="tic-package-publication-note">No PyPI release is available. Intended distribution name: <code>tidelight</code>; current project metadata says <code>tidelight-sdk</code>. Do not use a registry install command until that name is resolved and published.</p></div>
       <div className="tic-package-flow" role="img" aria-label="Python SDK workflow: a trusted Python service uses the Tidelight client, which sends a scoped request to API v1 and returns structured market or research data."><span className="tic-package-flow-label">PYTHON CLIENT / SERVER SIDE</span><div className="tic-flow-line"><div className="tic-flow-node"><span>01</span><strong>Your service</strong><small>Credential from environment</small></div><i aria-hidden="true">→</i><div className="tic-flow-node flow-active"><span>02</span><strong>Python SDK</strong><small>Typed results · bounded retries</small></div><i aria-hidden="true">→</i><div className="tic-flow-node"><span>03</span><strong>API v1</strong><small>Scope and quota enforced</small></div></div><div className="tic-flow-response"><span>RETURNED DATA</span><b>instruments</b><b>research job</b><b>request_id</b></div></div>
     </header>
+    <PackageLifecycleDemo packageName="python" />
     <div className="tic-package-detail-layout">
       <nav className="tic-package-detail-nav" aria-label="Package sections"><span>ON THIS PAGE</span><a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#api">API surface</a><a href="#compatibility">Compatibility</a><a href="#security">Security</a><a href="#releases">Releases</a></nav>
       <article className="tic-package-detail-content">

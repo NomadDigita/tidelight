@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PackageLifecycleDemo } from "./package-lifecycle-demo";
 
 const snippets = {
   source: `cd public/components/mcp/server\nnpm ci\nnpm test\nnpm run build\n\nexport TIDELIGHT_API_KEY='YOUR_TIDELIGHT_PROJECT_KEY'\nnode ./dist/cli.js`,
@@ -24,6 +25,7 @@ export function McpPackageDetail() {
         <span className="tic-package-flow-label">LOCAL ADAPTER · REMOTE INTELLIGENCE</span><div className="tic-flow-line"><div className="tic-flow-node"><span>01</span><strong>MCP client</strong><small>stdio transport</small></div><i aria-hidden="true">→</i><div className="tic-flow-node flow-active"><span>02</span><strong>Local bridge</strong><small>API key from env</small></div><i aria-hidden="true">→</i><div className="tic-flow-node"><span>03</span><strong>Hosted MCP</strong><small>Streamable HTTP</small></div></div><div className="tic-flow-response"><span>REMOTE AUTHORITY</span><b>scope filtering</b><b>quota checks</b><b>structured tools</b></div>
       </div>
     </header>
+    <PackageLifecycleDemo packageName="mcp" />
     <div className="tic-package-detail-layout">
       <nav className="tic-package-detail-nav" aria-label="Package sections"><span>ON THIS PAGE</span><a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#tools">API &amp; tools</a><a href="#examples">Examples</a><a href="#compatibility">Compatibility</a><a href="#security">Security</a><a href="#releases">Releases</a></nav>
       <article className="tic-package-detail-content">

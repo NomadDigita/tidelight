@@ -24,6 +24,24 @@ test("instrument hook calls the injected client and preserves the real source-la
   cleanup();
 });
 
+test("instrument hook reports request errors and refresh retries against the client", async () => {
+  let reads = 0, value;
+  const client = { listTokenizedEquities: async () => {
+    reads++;
+    if (reads === 1) throw new Error("Upstream unavailable");
+    return { data: [instrument], next_cursor: null, generated_at: 8, request_id: "market-2" };
+  } };
+  function Probe() { value = useTokenizedEquities(); return React.createElement("output", null, value.data?.data[0]?.symbol ?? "pending"); }
+  render(React.createElement(TidelightProvider, { client }, React.createElement(Probe)));
+  await waitFor(() => assert.equal(value.error?.message, "Upstream unavailable"));
+  assert.equal(value.isLoading, false);
+  await act(async () => value.refresh());
+  await waitFor(() => assert.equal(value.data?.data[0]?.symbol, "RNVDAUSDT"));
+  assert.equal(value.error, null);
+  assert.equal(reads, 2);
+  cleanup();
+});
+
 test("research job polling is opt-in and stops after a terminal result", async () => {
   let reads = 0, value;
   const client = { getResearchJob: async (_id, options) => {
@@ -34,6 +52,17 @@ test("research job polling is opt-in and stops after a terminal result", async (
   render(React.createElement(TidelightProvider, { client }, React.createElement(Probe)));
   await waitFor(() => assert.equal(value.data?.status, "complete"));
   assert.equal(reads, 2);
+  cleanup();
+});
+
+test("research job rejects invalid polling intervals without making a request", () => {
+  let reads = 0, value;
+  const client = { getResearchJob: async () => { reads++; throw new Error("must not run"); } };
+  function Probe() { value = useResearchJob("job", { pollIntervalMs: 30001 }); return React.createElement("output", null, "ready"); }
+  render(React.createElement(TidelightProvider, { client }, React.createElement(Probe)));
+  assert.equal(value.error instanceof RangeError, true);
+  assert.equal(value.error.message, "pollIntervalMs must be between 0 and 30000.");
+  assert.equal(reads, 0);
   cleanup();
 });
 

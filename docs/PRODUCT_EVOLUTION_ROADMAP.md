@@ -4,7 +4,7 @@
 
 **Product thesis:** one decision record follows a market event from sourced evidence, through mapped exposure and explicit scenarios, into reproducible strategy analysis and a guarded paper decision. The human remains accountable for investment decisions. Tidelight does not place live orders.
 
-**Current baseline:** live Bitget spot and Reality market data; source-bounded Qwen research briefs with quote validation and exposure mapping; deterministic SMA backtests with costs, holdout metrics, and archived candles; and manual plus configurable daily Nightwatch paper checks. Production activation of the custom schedule dispatcher is pending the application deployment.
+**Current baseline:** live Bitget spot and Reality market data; source-bounded Qwen research briefs with quote validation and exposure mapping; deterministic SMA backtests with costs, holdout metrics, and archived candles; and manual plus configurable daily Nightwatch paper checks. The custom schedule dispatcher is active in production; its first normal due execution is pending.
 
 **Security and sign-in:** confirmed complete by the product owner. Treat account isolation, authentication, and passkey checks as accepted release evidence; revisit only if a regression or new feature changes those boundaries.
 
@@ -38,9 +38,9 @@ Research exposure cards will link to the matching Bitget Reality symbol in Strat
 
 ## Latest delivery status · 2026-10-16
 
-Custom Nightwatch schedules are implemented in the current development branch and their database schema is applied in production. A schedule has an account-owned slot, Reality symbol, strategy playbook, optional owner-linked research run, local wall-clock time (including seconds), timezone, and append-only execution history. Each account may save up to ten. A worker lease, schedule revision, pause check, daily cap, and the existing bounded paper ledger protect each scheduled review. PostgreSQL 17 integration tests cover ownership, limits, DST conversion, retries, idempotence, pause/edit behavior, and unchanged account isolation.
+Custom Nightwatch schedules merged in PR #162 and are live. A schedule has an account-owned slot, Reality symbol, strategy playbook, optional owner-linked research run, local wall-clock time (including seconds), timezone, and append-only execution history. Each account may save up to ten. A worker lease, schedule revision, pause check, daily cap, and the existing bounded paper ledger protect each scheduled review. PostgreSQL 17 integration tests cover ownership, limits, DST conversion, retries, idempotence, pause/edit behavior, and unchanged account isolation.
 
-Hosted Supabase Cron runs at minute granularity. Seconds remain part of the configured local time, while execution begins at the first dispatcher poll after the due time; queued schedules may add further delay because the worker handles one claimed execution per poll. Do not advertise second-accurate execution. The dispatcher stays inactive until the Vercel worker deployment is READY and has been verified; then run `ops/activate-nightwatch-schedule-cron.sql` and confirm the authenticated readiness state.
+Hosted Supabase Cron runs at minute granularity. Seconds remain part of the configured local time, while execution begins at the first dispatcher poll after the due time; queued schedules may add further delay because the worker handles one claimed execution per poll. Do not advertise second-accurate execution. Production deployment `dpl_FexUvT9Q6vyAtNZR82Fq8YcZSxpu` is READY, and the `nightwatch-custom-schedules` minute poll is active. Its first tick succeeded with no due work; the first real due execution remains pending at 09:00 UTC.
 
 ## Delivery status · 2026-10-05
 
@@ -55,8 +55,9 @@ Hosted Supabase Cron runs at minute granularity. Seconds remain part of the conf
 
 ## Current next items
 
-1. Use a daily 09:00 UTC Vercel Cron schedule, compatible with Hobby's once-per-day limit. The owner reports that the Supabase server-only key is already in Vercel; keep it sensitive and Production-only. The existing `CRON_SECRET` is already configured.
-2. Deploy, then verify the health view, Mini multi-source research capture, Research → Strategy → Nightwatch lineage, and one scheduled paper run with an opted-in test account.
-3. Capture and review the frozen event benchmark before making further research prompt changes.
-4. Rehearse recovery against an isolated backup/branch, then run the judge/customer walkthrough and report measured results with limitations.
-5. After the backend verification above, complete the premium developer-platform design pass across `tidelight.app/developers`, the authenticated console and API explorer, and `dev.tidelight.app`. Preserve Tidelight branding, themes, and responsive behavior; use Supabase as a developer-experience reference. Verify real interactions, accessibility, and visual quality on desktop, tablet, and mobile.
+1. Observe the first normal 09:00 UTC custom Nightwatch schedule window on 16 October. Inspect the account's execution row, lineage, pause/revision checks, daily cap, and paper balance/position invariants. Do not invoke the global worker to force a run.
+2. Continue the production Research → Strategy → Nightwatch journey only with a research run that clears the existing evidence gate. Verify symbol and run lineage through each screen; held research must not offer a trade handoff.
+3. Run an authenticated FastMCP Streamable HTTP invocation using a temporary least-privilege credential, then revoke and clean up that credential. Keep client support claims limited to clients that pass end-to-end interoperability checks.
+4. Capture and review the frozen real-event research benchmark before making further research prompt changes.
+5. Rehearse recovery against an isolated backup, then run the judge/customer walkthrough and report measured results with limitations.
+6. Complete the premium developer-platform design pass across `tidelight.app/developers`, the authenticated console and API explorer, and `dev.tidelight.app`. Preserve Tidelight branding, themes, and responsive behavior; use Supabase as a developer-experience reference. Verify real interactions, accessibility, and visual quality on desktop, tablet, and mobile.

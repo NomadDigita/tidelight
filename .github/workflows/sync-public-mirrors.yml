@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/tidelight-mirrors.json'
+      - '.github/workflows/sync-public-mirrors.yml'
       - 'public/components/**'
       - 'docs/tic-openapi.yaml'
       - 'sdk/typescript/**'
@@ -42,7 +43,7 @@ jobs:
           PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
           npm ci --prefix public/components/mcp/server
           npm test --prefix public/components/mcp/server
-          cd public/components/mcp/server && npm pack --dry-run --json && cd ../../..
+          (cd public/components/mcp/server && npm pack --dry-run --json)
           npm ci --prefix public/components/api
           npm test --prefix public/components/api
           npm test --prefix public/components/examples

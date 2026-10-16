@@ -30,3 +30,5 @@ An empty instrument list means there is no matching supported tokenized spot ins
 Check the package with `cd server && npm ci && npm test && npm pack --dry-run --json`. The manifest stays private until first-release approval. Those protocol tests do not certify compatibility with an external client. Tidelight has not yet certified a named third-party MCP client's complete OAuth, refresh, invocation, and revocation flow. See the [developer guide](https://dev.tidelight.app/api) for current connection and troubleshooting instructions.
 
 This repository is synchronized from `TidelightOrg/tidelight`; propose source changes there.
+
+The mother repository owns package tests and the manual GitHub source-release workflow. That workflow creates source releases in this mirror; it does not publish `@tidelight/mcp` to npm.

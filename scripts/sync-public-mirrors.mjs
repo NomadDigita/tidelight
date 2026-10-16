@@ -17,7 +17,7 @@ const head = option("--head") ?? "HEAD";
 const runId = process.env.GITHUB_RUN_ID ?? `${Date.now()}`;
 const dispatchAll = !base || base === "0".repeat(40);
 const changed = dispatchAll ? [] : execFileSync("git", ["diff", "--name-only", `${base}...${head}`], { cwd: root, encoding: "utf8" }).trim().split("\n").filter(Boolean);
-const syncInfrastructurePaths = [".github/tidelight-mirrors.json", "scripts/check-public-mirrors.mjs", "scripts/public-mirror-files.mjs", "scripts/sync-public-mirrors.mjs"];
+const syncInfrastructurePaths = [".github/tidelight-mirrors.json", ".github/workflows/sync-public-mirrors.yml", "scripts/check-public-mirrors.mjs", "scripts/public-mirror-files.mjs", "scripts/sync-public-mirrors.mjs"];
 const managedPaths = {
   api: ["public/components/api/", "docs/tic-openapi.yaml", ...syncInfrastructurePaths],
   mcp: ["public/components/mcp/", ...syncInfrastructurePaths],

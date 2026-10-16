@@ -137,6 +137,6 @@ jobs:
       - name: Prepare isolated advisor schema
         run: psql -v ON_ERROR_STOP=1 -f tests/postgres/advisor-remediation-prerequisites.sql
       - name: Apply advisor remediation migration
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261016091317_advisor_policy_and_index_fixes.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261016093746_advisor_policy_and_index_fixes.sql
       - name: Verify policy boundaries, privileged RPCs, and foreign-key indexes
         run: psql -v ON_ERROR_STOP=1 -f tests/postgres/advisor-remediation.sql

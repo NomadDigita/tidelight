@@ -34,6 +34,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Validate public source boundaries
         run: node scripts/check-public-mirrors.mjs
       - run: npm ci
@@ -41,6 +44,9 @@ jobs:
         run: |
           npm test --prefix sdk/typescript
           PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+          npm ci --prefix packages/react
+          npm test --prefix packages/react
+          (cd packages/react && npm pack --dry-run --json)
           npm ci --prefix public/components/mcp/server
           npm test --prefix public/components/mcp/server
           (cd public/components/mcp/server && npm pack --dry-run --json)

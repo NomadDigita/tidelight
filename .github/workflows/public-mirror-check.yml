@@ -9,6 +9,7 @@ on:
       - 'docs/tic-openapi.yaml'
       - 'sdk/typescript/**'
       - 'sdk/python/**'
+      - 'packages/react/**'
       - 'scripts/check-public-mirrors.mjs'
       - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
@@ -22,6 +23,7 @@ on:
       - 'docs/tic-openapi.yaml'
       - 'sdk/typescript/**'
       - 'sdk/python/**'
+      - 'packages/react/**'
       - 'scripts/check-public-mirrors.mjs'
       - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
@@ -49,6 +51,8 @@ jobs:
         run: node scripts/check-public-mirrors.mjs
       - name: Test TypeScript SDK
         run: npm test --prefix sdk/typescript
+      - name: Test React integration and validate packed files
+        run: npm ci --prefix packages/react && npm test --prefix packages/react && (cd packages/react && npm pack --dry-run --json)
       - name: Test Python SDK
         run: PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
       - name: Test MCP package and validate packed files

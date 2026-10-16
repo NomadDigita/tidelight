@@ -16,6 +16,7 @@ on:
       - 'scripts/sync-public-mirrors.mjs'
       - 'scripts/check-python-package.py'
       - 'scripts/check-npm-package-archive.mjs'
+      - 'scripts/test-package-consumers.mjs'
       - 'tests/npm-package-archive.test.mjs'
       - 'tests/public-mirrors.test.mjs'
   push:
@@ -34,6 +35,7 @@ on:
       - 'scripts/sync-public-mirrors.mjs'
       - 'scripts/check-python-package.py'
       - 'scripts/check-npm-package-archive.mjs'
+      - 'scripts/test-package-consumers.mjs'
       - 'tests/npm-package-archive.test.mjs'
       - 'tests/public-mirrors.test.mjs'
 
@@ -81,6 +83,8 @@ jobs:
         run: npm ci --prefix packages/react && npm test --prefix packages/react && node scripts/check-npm-package-archive.mjs packages/react
       - name: Test CLI and validate packed files
         run: npm ci --prefix packages/cli && npm test --prefix packages/cli && node scripts/check-npm-package-archive.mjs packages/cli
+      - name: Install packed SDK, React and CLI into clean consumer projects
+        run: node scripts/test-package-consumers.mjs
       - name: Test Python SDK and validate wheel
         run: |
           PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v

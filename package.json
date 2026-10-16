@@ -8,8 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --test tests/*.test.mjs",
-    "test:public-mirrors": "node scripts/check-public-mirrors.mjs && node --test tests/public-mirrors.test.mjs && npm ci --prefix sdk/typescript && npm test --prefix sdk/typescript && PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v && python scripts/check-python-package.py sdk/python && npm ci --prefix packages/react && npm test --prefix packages/react && npm ci --prefix packages/cli && npm test --prefix packages/cli && npm ci --prefix public/components/api && npm test --prefix public/components/api && npm ci --prefix public/components/mcp/server && npm test --prefix public/components/mcp/server && npm ci --prefix public/components/examples && npm test --prefix public/components/examples && npm run test:python --prefix public/components/examples",
-    "typecheck": "tsc --noEmit"
+    "test:public-mirrors": "node scripts/check-public-mirrors.mjs && node --test tests/public-mirrors.test.mjs && npm ci --prefix sdk/typescript && npm test --prefix sdk/typescript && PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v && python scripts/check-python-package.py sdk/python && npm ci --prefix packages/react && npm test --prefix packages/react && npm ci --prefix packages/cli && npm test --prefix packages/cli && node scripts/test-package-consumers.mjs && npm ci --prefix public/components/api && npm test --prefix public/components/api && npm ci --prefix public/components/mcp/server && npm test --prefix public/components/mcp/server && npm ci --prefix public/components/examples && npm test --prefix public/components/examples && npm run test:python --prefix public/components/examples",
+    "typecheck": "tsc --noEmit",
+    "test:package-consumers": "node scripts/test-package-consumers.mjs"
   },
   "dependencies": {
     "@bitget-ai/bitget-agent-sdk": "3.0.0",

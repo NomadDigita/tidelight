@@ -4,7 +4,7 @@ The official Tidelight command-line client for supported API v1 workflows. This 
 
 ## Local source setup
 
-The CLI calls the canonical TypeScript SDK and does not reimplement its HTTP transport. Build the SDK first so its package exports are available, then build the CLI:
+The source CLI calls the canonical TypeScript SDK and does not reimplement its HTTP transport. Build the SDK first so its package exports are available, then build the CLI. CI also tests a temporary release-candidate manifest pinned to the exact SDK version by installing both packed archives in a clean consumer project. That local rehearsal does not make this private package installable from npm:
 
 ```sh
 cd sdk/typescript && npm ci && npm test
@@ -53,3 +53,6 @@ HTTP status, stable API error code, and request ID are shown when the API provid
 ## Release state and security
 
 The CLI is not installable from npm. The package remains `private` until the official SDK is published, package ownership and license are confirmed, trusted publishing/provenance is configured, security policy and disclosure contact are present, package contents are reviewed, and first-publication approval is recorded. See the parent repository’s [package ecosystem plan](../../docs/packages/README.md) and [changelog](./CHANGELOG.md).
+
+
+The clean consumer test is `npm run test:package-consumers` from the mother repository. It packs a temporary CLI copy with an exact SDK semver dependency, checks installed `--help`, then confirms an unauthenticated research command exits before making a network request. It does not publish either archive.

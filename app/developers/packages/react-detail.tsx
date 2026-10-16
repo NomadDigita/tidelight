@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PackageLifecycleDemo } from "./package-lifecycle-demo";
 
 const snippets = {
   source: `cd sdk/typescript && npm test
@@ -43,6 +44,7 @@ export function ReactPackageDetail() {
       <div className="tic-package-detail-copy"><p className="tic-eyebrow">OFFICIAL PACKAGE / REACT INTEGRATIONS</p><div className="tic-package-detail-title"><span className="tic-package-glyph" aria-hidden="true">R</span><h1>@tidelight/react</h1></div><p>Typed hooks and accessible components for market and research experiences. Connect your UI to an authenticated application backend while keeping Tidelight credentials server-side.</p><div className="tic-package-detail-badges"><span className="tic-package-state-pill"><i/> Source ready · unpublished</span><span>Version 0.1.0 private</span><span>React 18 &amp; 19</span></div><div className="tic-package-detail-actions"><a className="tic-button tic-primary" href="#quickstart">Explore the hooks <span aria-hidden="true">↓</span></a><a className="tic-button" href="https://github.com/TidelightOrg/tidelight/tree/main/packages/react" target="_blank" rel="noreferrer">View source <span aria-hidden="true">→</span></a></div><p className="tic-package-publication-note">This package is private and not published to npm. <code>npm install @tidelight/react</code> is not available yet.</p></div>
       <div className="tic-package-flow tic-react-flow" role="img" aria-label="Secure React flow: Tidelight UI hooks call an application backend, where the official SDK uses a server-side project key to call the Tidelight API and returns authorized structured data."><span className="tic-package-flow-label">BROWSER SAFE · SERVER AUTHORITY</span><div className="tic-flow-line"><div className="tic-flow-node"><span>01</span><strong>React UI</strong><small>hooks &amp; states</small></div><i aria-hidden="true">→</i><div className="tic-flow-node flow-active"><span>02</span><strong>App backend</strong><small>server-side SDK</small></div><i aria-hidden="true">→</i><div className="tic-flow-node"><span>03</span><strong>Tidelight API</strong><small>scope checks</small></div></div><div className="tic-flow-response"><span>CONTROLLED DATA</span><b>tenant auth</b><b>scoped results</b><b>source context</b></div></div>
     </header>
+    <PackageLifecycleDemo packageName="react" />
     <div className="tic-package-detail-layout">
       <nav className="tic-package-detail-nav" aria-label="Package sections"><span>ON THIS PAGE</span><a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#hooks">Hooks</a><a href="#components">Components</a><a href="#examples">Examples</a><a href="#security">Security</a><a href="#releases">Releases</a></nav>
       <article className="tic-package-detail-content">

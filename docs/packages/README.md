@@ -15,6 +15,8 @@ This document is the source-of-truth plan for developer packages. Package source
 
 The Developer Center package index is `/developers/packages`; first-party detail pages are `/developers/packages/sdk`, `/developers/packages/mcp`, `/developers/packages/react`, `/developers/packages/cli`, and `/developers/packages/python`. The Python page documents the source metadata name mismatch, exact scopes, redirect protection, and unresolved provider terms gate. No npm or PyPI package is currently installable. Do not show npm or pip install commands as working instructions until verified registry releases exist.
 
+Each package detail page includes an interactive, client-only walkthrough of a supported request lifecycle. These walkthroughs are illustrative, send no network requests, omit secret and result values, and show bounded research job states without promising a successful result. The React flow explicitly requires an application-owned authenticated backend; the package does not provide that backend. Market-data success is not used as a demo while redistribution terms remain unconfirmed.
+
 ## Package boundaries
 
 - Shared HTTP/auth/error behavior should be built from the versioned API contract, without importing application routes, Supabase service-role code, provider secrets, or private server modules into packages.

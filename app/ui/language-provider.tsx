@@ -63,11 +63,19 @@ export function LanguageProvider({ children, initialLanguage }: { children: Reac
     const timer = window.setTimeout(() => {
     document.documentElement.lang = language;
     document.documentElement.dataset.language = language;
-    document.title = language === "zh-CN" ? "Tidelight — 看清交易时段之间的市场信号" : "Tidelight — See the signal between sessions";
+    const englishTitle = "Tidelight — See the signal between sessions";
+    const chineseTitle = "Tidelight — 看清交易时段之间的市场信号";
+    // Keep route-specific metadata (for example the developer platform title)
+    // intact when the global language setting changes.
+    if (document.title === englishTitle || document.title === chineseTitle) {
+      document.title = language === "zh-CN" ? chineseTitle : englishTitle;
+    }
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
-    if (description) description.content = language === "zh-CN"
-      ? "面向代币化美股的市场研究工作台。沿着市场事件、证据、影响敞口和情景，做出更清晰的判断。"
-      : "An after-hours research desk for tokenized US equities. Follow market events with clear context, scenarios, and sources.";
+    const englishDescription = "An after-hours research desk for tokenized US equities. Follow market events with clear context, scenarios, and sources.";
+    const chineseDescription = "面向代币化美股的市场研究工作台。沿着市场事件、证据、影响敞口和情景，做出更清晰的判断。";
+    if (description && (description.content === englishDescription || description.content === chineseDescription)) {
+      description.content = language === "zh-CN" ? chineseDescription : englishDescription;
+    }
 
     const translateText = (node: Text) => {
       const current = node.nodeValue ?? "";

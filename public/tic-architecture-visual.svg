@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc" preserveAspectRatio="xMidYMid meet">
+  <title id="title">Tidelight Intelligence Cloud architecture</title>
+  <desc id="desc">Provenance-aware market and research sources flow into Tidelight's shared intelligence core. A server-side access boundary applies tenant isolation, scopes, quotas, and audit before serving the REST API, remote MCP server, and authenticated developer console.</desc>
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--tic-visual-surface, #10201d)"/><stop offset="1" stop-color="var(--tic-visual-surface-deep, #0a1513)"/></linearGradient>
+    <linearGradient id="coreTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--tic-visual-mint-hi, #b8f1d5)"/><stop offset=".5" stop-color="var(--tic-visual-mint, #67c99b)"/><stop offset="1" stop-color="var(--tic-visual-teal, #3b9a83)"/></linearGradient>
+    <linearGradient id="coreSide" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--tic-visual-teal, #3b9a83)"/><stop offset="1" stop-color="var(--tic-visual-deep, #164d43)"/></linearGradient>
+    <linearGradient id="cardWash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--tic-visual-card, #172724)"/><stop offset="1" stop-color="var(--tic-visual-card-deep, #101c1a)"/></linearGradient>
+    <radialGradient id="halo"><stop offset="0" stop-color="var(--tic-visual-mint, #67c99b)" stop-opacity=".19"/><stop offset="1" stop-color="var(--tic-visual-mint, #67c99b)" stop-opacity="0"/></radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="190%"><feGaussianBlur in="SourceAlpha" stdDeviation="16"/><feOffset dy="15"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="12" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M42 0H0V42" fill="none" stroke="var(--tic-visual-line, #29413b)" stroke-opacity=".32" stroke-width="1"/></pattern>
+    <style>
+      :root { color-scheme: light dark; --tic-visual-bg:#0b1413; --tic-visual-surface:#10201d; --tic-visual-surface-deep:#0a1513; --tic-visual-card:#172724; --tic-visual-card-deep:#101c1a; --tic-visual-ink:#edf7f1; --tic-visual-muted:#98ada4; --tic-visual-line:#29413b; --tic-visual-mint:#67c99b; --tic-visual-mint-hi:#b8f1d5; --tic-visual-teal:#3b9a83; --tic-visual-deep:#164d43; }
+      .canvas { fill:var(--tic-visual-bg, #0b1413); }
+      .grid { opacity:.58; }
+      text { font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill:var(--tic-visual-ink, #edf7f1); }
+      .mono { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing:.09em; }
+      .eyebrow { font-size:15px; font-weight:650; fill:var(--tic-visual-mint, #67c99b); letter-spacing:.15em; }
+      .title { font-size:34px; font-weight:620; letter-spacing:-.04em; }
+      .sub { font-size:19px; fill:var(--tic-visual-muted, #98ada4); }
+      .label { font-size:21px; font-weight:620; }
+      .core-copy { fill:#f4fff8; }
+      .core-subcopy { fill:#d3eee0; }
+      .small { font-size:17px; fill:var(--tic-visual-muted, #98ada4); }
+      .tiny { font-size:14px; fill:var(--tic-visual-muted, #98ada4); }
+      .route { font-size:15px; font-weight:600; fill:var(--tic-visual-mint, #67c99b); }
+      .card { fill:url(#cardWash); stroke:var(--tic-visual-line, #29413b); stroke-width:1.5; }
+      .hair { fill:none; stroke:var(--tic-visual-line, #29413b); stroke-width:2; }
+      .flow { fill:none; stroke:var(--tic-visual-mint, #67c99b); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+      .flow-muted { fill:none; stroke:var(--tic-visual-mint, #67c99b); stroke-opacity:.68; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+      .dashed { stroke-dasharray:7 9; }
+      .pill { fill:var(--tic-visual-mint, #67c99b); fill-opacity:.12; stroke:var(--tic-visual-mint, #67c99b); stroke-opacity:.38; }
+      .icon-stroke { fill:none; stroke:var(--tic-visual-mint, #67c99b); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+      @media (prefers-color-scheme: light) {
+        :root { --tic-visual-bg:#f5f8f4; --tic-visual-surface:#ffffff; --tic-visual-surface-deep:#edf4ee; --tic-visual-card:#ffffff; --tic-visual-card-deep:#f5f8f4; --tic-visual-ink:#18312a; --tic-visual-muted:#61766b; --tic-visual-line:#d3e0d6; --tic-visual-mint:#347b58; --tic-visual-mint-hi:#8cc8a1; --tic-visual-teal:#4d9b76; --tic-visual-deep:#276548; }
+      }
+      :root[data-theme="daylight"], [data-theme="daylight"] { --tic-visual-bg:#f5f8f4; --tic-visual-surface:#ffffff; --tic-visual-surface-deep:#edf4ee; --tic-visual-card:#ffffff; --tic-visual-card-deep:#f5f8f4; --tic-visual-ink:#18312a; --tic-visual-muted:#61766b; --tic-visual-line:#d3e0d6; --tic-visual-mint:#347b58; --tic-visual-mint-hi:#8cc8a1; --tic-visual-teal:#4d9b76; --tic-visual-deep:#276548; }
+      :root[data-theme="night"], [data-theme="night"] { --tic-visual-bg:#0b1413; --tic-visual-surface:#10201d; --tic-visual-surface-deep:#0a1513; --tic-visual-card:#172724; --tic-visual-card-deep:#101c1a; --tic-visual-ink:#edf7f1; --tic-visual-muted:#98ada4; --tic-visual-line:#29413b; --tic-visual-mint:#67c99b; --tic-visual-mint-hi:#b8f1d5; --tic-visual-teal:#3b9a83; --tic-visual-deep:#164d43; }
+      :root[data-theme="blue"], [data-theme="blue"] { --tic-visual-bg:#0b1420; --tic-visual-surface:#101d2d; --tic-visual-surface-deep:#0a1420; --tic-visual-card:#172638; --tic-visual-card-deep:#101b29; --tic-visual-ink:#edf5ff; --tic-visual-muted:#91a7bd; --tic-visual-line:#2b4056; --tic-visual-mint:#79cdb8; --tic-visual-mint-hi:#c1f0df; --tic-visual-teal:#4ba896; --tic-visual-deep:#1c5b54; }
+    </style>
+  </defs>
+  <rect class="canvas" width="1400" height="820" rx="28"/>
+  <rect class="grid" x="1" y="1" width="1398" height="818" rx="28" fill="url(#grid)"/>
+  <ellipse cx="594" cy="380" rx="335" ry="300" fill="url(#halo)"/>
+  <path d="M38 96H1362" class="hair" opacity=".7"/>
+  <text x="64" y="58" class="eyebrow mono">TIDELIGHT INTELLIGENCE CLOUD</text>
+  <text x="64" y="145" class="title">One intelligence core. Three secure ways in.</text>
+  <text x="64" y="180" class="sub">Shared services carry source lineage through every authorized interface.</text>
+
+  <!-- Source and provenance boundary -->
+  <g aria-label="Supported market and research sources with source lineage">
+    <text x="64" y="254" class="eyebrow mono">01 / EVIDENCE INPUTS</text>
+    <rect x="64" y="278" width="244" height="88" rx="16" class="card"/>
+    <circle cx="96" cy="322" r="16" class="pill"/><path d="M88 323h16M96 315v16" class="icon-stroke"/>
+    <text x="126" y="315" class="label">Market providers</text><text x="126" y="344" class="small">Timestamped observations</text>
+    <rect x="64" y="382" width="244" height="88" rx="16" class="card"/>
+    <circle cx="96" cy="426" r="16" class="pill"/><path d="M89 418h14v16H89zM92 414h8M92 422h8M92 427h6" class="icon-stroke"/>
+    <text x="126" y="419" class="label">Research sources</text><text x="126" y="448" class="small">Evidence &amp; attribution</text>
+    <rect x="64" y="494" width="244" height="64" rx="13" class="pill"/>
+    <path d="M86 516l8 8 14-17" class="icon-stroke"/><text x="123" y="520" class="route mono">PROVENANCE ATTACHED</text>
+    <text x="64" y="596" class="small">Source, freshness, and evidence</text><text x="64" y="623" class="small">remain distinguishable from inference.</text>
+  </g>
+
+  <!-- Provenance-aware service flow -->
+  <path d="M308 322H382V359H425" class="flow"/>
+  <path d="M308 426H356V400H425" class="flow-muted"/>
+  <circle cx="382" cy="322" r="5" fill="var(--tic-visual-mint, #67c99b)"/><circle cx="356" cy="426" r="5" fill="var(--tic-visual-mint, #67c99b)"/>
+  <text x="324" y="295" class="tiny mono">SOURCE-LINKED</text>
+
+  <!-- Isometric shared core -->
+  <g filter="url(#softShadow)" aria-label="Shared intelligence core: existing research and market services">
+    <text x="430" y="254" class="eyebrow mono">02 / SHARED SERVICES</text>
+    <path d="M430 350 560 280 690 350 560 420Z" fill="url(#coreTop)" stroke="var(--tic-visual-mint-hi, #b8f1d5)" stroke-opacity=".8" stroke-width="2"/>
+    <path d="M430 350 560 420V531L430 461Z" fill="url(#coreSide)" stroke="var(--tic-visual-mint, #67c99b)" stroke-opacity=".75" stroke-width="2"/>
+    <path d="M560 420 690 350V461L560 531Z" fill="var(--tic-visual-deep, #164d43)" stroke="var(--tic-visual-mint, #67c99b)" stroke-opacity=".48" stroke-width="2"/>
+    <path d="M468 350 560 301 652 350 560 399Z" fill="none" stroke="#ffffff" stroke-opacity=".52" stroke-width="1.5"/>
+    <path d="M560 322v70M490 350h140M510 337l100 26M610 337 510 363" fill="none" stroke="#ffffff" stroke-opacity=".25" stroke-width="1.4"/>
+    <circle cx="560" cy="350" r="31" fill="var(--tic-visual-surface, #10201d)" fill-opacity=".9" stroke="#ffffff" stroke-opacity=".55" stroke-width="1.5" filter="url(#glow)"/>
+    <path d="M548 350l8 8 17-18" fill="none" stroke="var(--tic-visual-mint-hi, #b8f1d5)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="560" y="455" text-anchor="middle" class="label core-copy">TIDELIGHT CORE</text>
+    <text x="560" y="484" text-anchor="middle" class="small core-subcopy">Research · Market · Evidence</text>
+  </g>
+  <rect x="453" y="557" width="214" height="39" rx="19.5" class="pill"/>
+  <text x="560" y="582" text-anchor="middle" class="tiny mono" fill="var(--tic-visual-mint, #67c99b)">REUSED SERVICE BOUNDARIES</text>
+
+  <!-- Server-side authorization gateway -->
+  <path d="M690 385H742" class="flow"/>
+  <g aria-label="Server-side access boundary applies tenant isolation, scopes, quotas, and audit">
+    <text x="744" y="254" class="eyebrow mono">03 / ACCESS BOUNDARY</text>
+    <rect x="744" y="278" width="236" height="278" rx="20" fill="url(#surface)" stroke="var(--tic-visual-mint, #67c99b)" stroke-opacity=".45" stroke-width="1.8"/>
+    <rect x="764" y="300" width="196" height="44" rx="11" class="pill"/>
+    <path d="M784 318v-4a7 7 0 0 1 14 0v4m-16 0h18v15h-18z" class="icon-stroke"/>
+    <text x="817" y="329" class="label" font-size="19">Server-side auth</text>
+    <path d="M768 366H956M768 411H956M768 456H956M768 501H956" class="hair" opacity=".7"/>
+    <circle cx="783" cy="388" r="5" fill="var(--tic-visual-mint, #67c99b)"/><text x="800" y="394" class="small">Tenant isolation</text>
+    <circle cx="783" cy="433" r="5" fill="var(--tic-visual-mint, #67c99b)"/><text x="800" y="439" class="small">Key scopes &amp; roles</text>
+    <circle cx="783" cy="478" r="5" fill="var(--tic-visual-mint, #67c99b)"/><text x="800" y="484" class="small">Quota &amp; rate limits</text>
+    <circle cx="783" cy="523" r="5" fill="var(--tic-visual-mint, #67c99b)"/><text x="800" y="529" class="small">Audited requests</text>
+  </g>
+
+  <!-- Three public/developer surfaces -->
+  <path d="M980 417H1014V311H1036M1014 417V449H1036M1014 449V587H1036" class="flow-muted"/>
+  <circle cx="1014" cy="417" r="5" fill="var(--tic-visual-mint, #67c99b)"/>
+  <g aria-label="REST API service">
+    <rect x="1036" y="267" width="300" height="88" rx="16" class="card"/>
+    <rect x="1056" y="288" width="42" height="42" rx="11" class="pill"/><path d="M1067 301h20M1067 309h14M1067 317h18" class="icon-stroke"/>
+    <text x="1114" y="300" class="label">REST API</text><text x="1114" y="329" class="route mono">api.tidelight.app/v1</text>
+  </g>
+  <g aria-label="Remote MCP server">
+    <rect x="1036" y="405" width="300" height="88" rx="16" class="card"/>
+    <rect x="1056" y="426" width="42" height="42" rx="11" class="pill"/><circle cx="1068" cy="447" r="4" class="icon-stroke"/><circle cx="1086" cy="439" r="4" class="icon-stroke"/><circle cx="1086" cy="455" r="4" class="icon-stroke"/><path d="M1072 445l10-5M1072 449l10 5" class="icon-stroke"/>
+    <text x="1114" y="438" class="label">Remote MCP</text><text x="1114" y="467" class="route mono">mcp.tidelight.app/mcp</text>
+  </g>
+  <g aria-label="Authenticated developer console">
+    <rect x="1036" y="543" width="300" height="88" rx="16" class="card"/>
+    <rect x="1056" y="564" width="42" height="42" rx="11" class="pill"/><rect x="1065" y="574" width="24" height="20" rx="3" class="icon-stroke"/><path d="M1065 580h24M1071 585h5M1071 589h10" class="icon-stroke"/>
+    <text x="1114" y="576" class="label">Developer console</text><text x="1114" y="605" class="route mono">tidelight.app/developers</text>
+  </g>
+
+  <!-- Principle strip -->
+  <path d="M64 690H1336" class="hair" opacity=".7"/>
+  <circle cx="76" cy="735" r="5" fill="var(--tic-visual-mint, #67c99b)"/><text x="95" y="741" class="small">Source lineage stays attached to supported outputs</text>
+  <circle cx="585" cy="735" r="5" fill="var(--tic-visual-mint, #67c99b)"/><text x="604" y="741" class="small">Access is checked at the service boundary</text>
+  <circle cx="1050" cy="735" r="5" fill="var(--tic-visual-mint, #67c99b)"/><text x="1069" y="741" class="small">No duplicated research logic</text>
+</svg>

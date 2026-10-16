@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Tidelight Intelligence Cloud research flow</title>
+  <desc id="desc">A conceptual, animated flow showing a research signal gaining source context before moving through scoped API and MCP access. The animation is decorative and does not represent live data or service status.</desc>
+  <defs>
+    <linearGradient id="surface" x1="96" y1="58" x2="891" y2="491" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBFCFA"/><stop offset="1" stop-color="#F2F6F3"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFFFF" stop-opacity=".92"/><stop offset="1" stop-color="#E8F0EC" stop-opacity=".78"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#9AE5C7"/><stop offset="1" stop-color="#4B9C81"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F2D8A6"/><stop offset="1" stop-color="#C89E5C"/>
+    </linearGradient>
+    <radialGradient id="halo"><stop stop-color="#74C7A4" stop-opacity=".22"/><stop offset="1" stop-color="#74C7A4" stop-opacity="0"/></radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#173D32" flood-opacity=".08"/></filter>
+    <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <style>
+      .bg{fill:url(#surface)}.panel{fill:url(#glass);stroke:#DDE7E1}.ink{fill:#19342D}.muted{fill:#75867F}.teal{fill:#528F79}.gold{fill:#BD9251}.line{stroke:#B6CFC3}.softline{stroke:#D9E5DE}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em}.sans{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+      .route{stroke-dasharray:7 8;animation:routeFlow 8s linear infinite}.orbit{transform-origin:500px 268px;animation:orbit 40s linear infinite}.floatA{animation:float 6s ease-in-out infinite}.floatB{animation:float 7s ease-in-out -2s infinite}.floatC{animation:float 8s ease-in-out -3s infinite}.pulse{transform-box:fill-box;transform-origin:center;animation:pulse 3.8s ease-in-out infinite}.traveler{offset-path:path("M 174 267 C 280 267 323 267 403 267 C 486 267 527 267 606 267 C 682 267 728 267 825 267");animation:travel 8s cubic-bezier(.65,0,.35,1) infinite}
+      @keyframes routeFlow{to{stroke-dashoffset:-120}}@keyframes orbit{to{transform:rotate(360deg)}}@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}@keyframes pulse{0%,100%{opacity:.52;transform:scale(.92)}50%{opacity:1;transform:scale(1.08)}}@keyframes travel{0%{offset-distance:0%;opacity:0}10%{opacity:1}88%{opacity:1}100%{offset-distance:100%;opacity:0}}
+      @media(prefers-reduced-motion:reduce){.route,.orbit,.floatA,.floatB,.floatC,.pulse,.traveler{animation:none!important}.traveler{display:none}}
+    </style>
+  </defs>
+  <rect x="1" y="1" width="998" height="538" rx="28" class="bg" stroke="#DCE6E0"/>
+  <circle cx="500" cy="268" r="238" fill="url(#halo)"/>
+  <path d="M92 268H905" class="softline" stroke-width="1"/>
+  <path d="M92 268H905" class="route line" stroke-width="1.5"/>
+  <circle cx="500" cy="268" r="186" class="orbit" stroke="#BBD6C9" stroke-opacity=".36" stroke-dasharray="2 11"/>
+  <circle cx="500" cy="268" r="142" class="orbit" stroke="#D2B77F" stroke-opacity=".32" stroke-dasharray="1 15" style="animation-direction:reverse;animation-duration:52s"/>
+
+  <g class="floatA" filter="url(#shadow)">
+    <rect x="55" y="196" width="210" height="144" rx="16" class="panel"/>
+    <text x="78" y="224" class="mono muted" font-size="10">01 / INPUT</text>
+    <text x="78" y="258" class="sans ink" font-size="17" font-weight="650">Research signal</text>
+    <text x="78" y="281" class="sans muted" font-size="11">A question enters the workflow</text>
+    <rect x="78" y="300" width="126" height="22" rx="6" fill="#EDF4F0" stroke="#D9E5DE"/>
+    <circle cx="91" cy="311" r="3" fill="url(#teal)" class="pulse"/>
+    <text x="101" y="315" class="mono teal" font-size="8">REQUEST CONTEXT</text>
+  </g>
+
+  <g class="floatB" filter="url(#shadow)">
+    <rect x="390" y="164" width="220" height="208" rx="20" class="panel"/>
+    <rect x="408" y="182" width="184" height="172" rx="14" fill="#F7FAF8" stroke="#E3ECE6"/>
+    <text x="428" y="211" class="mono muted" font-size="9">02 / CONTEXT</text>
+    <circle cx="500" cy="266" r="46" fill="#EDF6F1" stroke="#C7DDD1"/>
+    <circle cx="500" cy="266" r="31" fill="none" stroke="#B7D6C6" stroke-dasharray="2 5"/>
+    <path d="M481 266h38M500 247v38" stroke="#4C8D76" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="500" cy="266" r="6" fill="url(#teal)" filter="url(#glow)"/>
+    <g class="floatC"><circle cx="461" cy="247" r="5" fill="url(#gold)"/><circle cx="539" cy="246" r="5" fill="url(#teal)"/><circle cx="477" cy="302" r="4" fill="#86BCA2"/><circle cx="526" cy="301" r="4" fill="#D3B270"/></g>
+    <text x="500" y="338" text-anchor="middle" class="sans ink" font-size="12" font-weight="600">Source-grounded context</text>
+    <text x="500" y="353" text-anchor="middle" class="sans muted" font-size="9">Evidence · provenance · opposing views</text>
+  </g>
+
+  <g class="floatC" filter="url(#shadow)">
+    <rect x="735" y="196" width="210" height="144" rx="16" class="panel"/>
+    <text x="758" y="224" class="mono muted" font-size="10">03 / DELIVERY</text>
+    <text x="758" y="258" class="sans ink" font-size="17" font-weight="650">Scoped access</text>
+    <text x="758" y="281" class="sans muted" font-size="11">Only authorized tools respond</text>
+    <rect x="758" y="300" width="69" height="22" rx="6" fill="#EDF4F0" stroke="#D9E5DE"/>
+    <rect x="834" y="300" width="88" height="22" rx="6" fill="#F7F2E8" stroke="#E8DDC5"/>
+    <text x="792" y="315" text-anchor="middle" class="mono teal" font-size="8">API</text>
+    <text x="878" y="315" text-anchor="middle" class="mono gold" font-size="8">MCP</text>
+  </g>
+
+  <circle r="5" fill="#4E9B7F" class="traveler" filter="url(#glow)"/>
+  <g class="sans muted" font-size="9">
+    <text x="500" y="455" text-anchor="middle">Conceptual workflow · behavior depends on enabled services, data access, and key permissions</text>
+  </g>
+  <g class="mono muted" font-size="8">
+    <text x="72" y="493">TIDELIGHT</text><text x="928" y="493" text-anchor="end">INTELLIGENCE CLOUD</text>
+  </g>
+</svg>

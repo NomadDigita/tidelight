@@ -5,10 +5,10 @@ import { useState } from "react";
 const snippets = {
   source: `cd public/components/mcp/server\nnpm ci\nnpm test\nnpm run build\n\nexport TIDELIGHT_API_KEY='YOUR_TIDELIGHT_PROJECT_KEY'\nnode ./dist/cli.js`,
   client: `// General stdio client shape from the built source package\n{\n  "mcpServers": {\n    "tidelight": {\n      "command": "node",\n      "args": ["/absolute/path/to/tidelight/public/components/mcp/server/dist/cli.js"],\n      "env": {\n        "TIDELIGHT_API_KEY": "YOUR_TIDELIGHT_PROJECT_KEY"\n      }\n    }\n  }\n}`,
-  hosted: `// Direct connection for MCP clients that support Streamable HTTP + OAuth\nhttps://mcp.tidelight.app/mcp\n\n// Or use a scoped API key as a Bearer credential.\n// Never commit a live key to source control.`,
+  hosted: `Endpoint: https://mcp.tidelight.app/mcp\nTransport: Streamable HTTP\nAuthentication:\n  OAuth when supported, or a scoped key\n  with bearer auth on the client.\n\nThis is an endpoint and authentication\nreference, not client-specific config.\nNever put live keys in shared config\nor source control.`,
 };
 type Snippet = keyof typeof snippets;
-const labels: Record<Snippet, string> = { source: "Build from source", client: "Client config", hosted: "Hosted endpoint" };
+const labels: Record<Snippet, string> = { source: "Build from source", client: "Local client config", hosted: "Hosted endpoint details" };
 
 export function McpPackageDetail() {
   const [selected, setSelected] = useState<Snippet>("source");

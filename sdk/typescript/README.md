@@ -34,3 +34,16 @@ console.log(deliveries.deliveries);
 Webhook mutations are not retried automatically because the API does not yet accept webhook idempotency keys; this avoids duplicate endpoint creation or secret rotation after an ambiguous timeout. Webhook destination reachability and DNS safety are checked by the API. A client-side HTTPS check is not an authorization to deliver to a destination.
 
 The client retries network errors, 429, and transient 5xx statuses at most twice by default. It enforces a 10 second request timeout and returns `TidelightApiError` with status, code, and request ID.
+
+## Run the asynchronous research example
+
+From a mother-repository checkout:
+
+```sh
+npm ci --prefix sdk/typescript
+npm test --prefix sdk/typescript
+export TIDELIGHT_API_KEY='tl_test_…'
+node sdk/typescript/examples/research.mjs NVDA
+```
+
+The example calls the SDK company snapshot job flow and prints a result only after the API reports `complete`. It preserves job and request IDs and never prints the key. CI injects a mock transport and makes no network calls. A live run requires `research:run` and consumes project quota (10 jobs per rolling hour). This package is not available from npm; run from the repository source.

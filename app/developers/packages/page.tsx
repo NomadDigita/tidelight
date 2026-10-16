@@ -13,18 +13,18 @@ export const metadata: Metadata = {
 };
 
 const packages = [
-  { name: "@tidelight/sdk", type: "TypeScript · JavaScript", summary: "Typed client for supported Tidelight API v1 endpoints, async research jobs, and webhooks.", state: "Source exists · unpublished", version: "0.1.0 private", href: "/developers/packages/sdk", glyph: "TS", available: true },
-  { name: "@tidelight/mcp", type: "Node.js · MCP stdio", summary: "Bridge stdio-only MCP clients to Tidelight's hosted, scope-filtered Streamable HTTP service.", state: "Source ready · unpublished", version: "0.1.0 private", href: "/developers/packages/mcp", glyph: "M", available: true },
-  { name: "tidelight", type: "Python SDK", summary: "Python client for supported market, research-job, and webhook workflows.", state: "Source ready · package name review", version: "0.1.0 manifest", href: "/developers/packages/python", glyph: "Py", available: true },
-  { name: "@tidelight/react", type: "React · hooks & UI", summary: "Typed hooks and accessible market components backed by the official SDK contract.", state: "Source ready · unpublished", version: "0.1.0 private", href: "/developers/packages/react", glyph: "R", available: true },
-  { name: "@tidelight/cli", type: "Node.js · command line", summary: "Keychain-backed terminal workflows for supported market, research-job, and webhook API operations.", state: "Source ready · unpublished", version: "0.1.0 private", href: "/developers/packages/cli", glyph: "$", available: true },
+  { name: "@tidelight/sdk", type: "TypeScript · JavaScript", summary: "Typed client for supported Tidelight API v1 endpoints, async research jobs, and webhooks.", state: "npm · not published", version: "Source manifest: 0.1.0", href: "/developers/packages/sdk", glyph: "TS", sourceReady: true },
+  { name: "@tidelight/mcp", type: "Node.js · MCP stdio", summary: "Bridge stdio-only MCP clients to Tidelight's hosted, scope-filtered Streamable HTTP service.", state: "npm · not published", version: "Source manifest: 0.1.0", href: "/developers/packages/mcp", glyph: "M", sourceReady: true },
+  { name: "tidelight", type: "Python SDK", summary: "Python client for supported market, research-job, and webhook workflows.", state: "PyPI · name not confirmed", version: "Manifest: tidelight-sdk 0.1.0", href: "/developers/packages/python", glyph: "Py", sourceReady: true },
+  { name: "@tidelight/react", type: "React · hooks & UI", summary: "Typed hooks and accessible market components backed by the official SDK contract.", state: "npm · not published", version: "Source manifest: 0.1.0", href: "/developers/packages/react", glyph: "R", sourceReady: true },
+  { name: "@tidelight/cli", type: "Node.js · command line", summary: "Keychain-backed terminal workflows for supported market, research-job, and webhook API operations.", state: "npm · not published", version: "Source manifest: 0.1.0", href: "/developers/packages/cli", glyph: "$", sourceReady: true },
 ];
 
 export default function DeveloperPackagesPage() {
   return <main className="tic tic-landing tic-packages-page">
     <nav className="tic-top"><Link href="/developers" className="tic-brand"><Image src="/tidelight-mark.svg" alt="" width={28} height={28}/><span className="tic-brand-name">Tidelight</span><span>Intelligence Cloud</span></Link><div><Link href="https://dev.tidelight.app">Docs</Link><ThemeQuickSwitch/><Link href="/developers/console" className="tic-button">Open console <span aria-hidden="true">→</span></Link></div></nav>
     <header className="tic-packages-hero">
-      <div><p className="tic-eyebrow"><span className="tic-status-dot"/> OFFICIAL DEVELOPER PACKAGES</p><h1>One intelligence layer.<br/><em>Every developer workflow.</em></h1><p>Explore the planned package ecosystem and inspect the source that is ready today. Each status reflects verified repository and registry state.</p>
+      <div><p className="tic-eyebrow"><span className="tic-status-dot"/> OFFICIAL DEVELOPER PACKAGES</p><h1>One intelligence layer.<br/><em>Every developer workflow.</em></h1><p>Explore package source maintained in the Tidelight mother repository. Registry availability is not checked live here; each card clearly states the known publication status.</p>
         <div className="tic-package-hero-meta"><span><i>01</i> Mother repository: <code>TidelightOrg/tidelight</code></span><span><i>02</i> Public release: approval required</span></div>
       </div>
       <div className="tic-package-constellation" role="img" aria-label="Diagram of Tidelight's shared API at the center connected to SDK, MCP, Python, React, and CLI packages. Package availability varies.">
@@ -34,11 +34,11 @@ export default function DeveloperPackagesPage() {
       </div>
     </header>
     <section className="tic-package-directory" aria-labelledby="package-directory-title">
-      <div className="tic-package-section-head"><div><p className="tic-eyebrow">PACKAGE DIRECTORY / 05</p><h2 id="package-directory-title">Choose your entry point</h2><p>Package publication is intentionally separate from source readiness. No package below is currently presented as published.</p></div><span className="tic-package-live-label"><i/> Registry checked · 16 Oct 2026</span></div>
-      <div className="tic-package-grid">{packages.map((item, index) => <article className={`tic-package-card${item.available ? " is-source-ready" : " is-planned"}`} key={item.name}>
+      <div className="tic-package-section-head"><div><p className="tic-eyebrow">PACKAGE DIRECTORY / 05</p><h2 id="package-directory-title">Choose your entry point</h2><p>Source readiness, manifest metadata, and registry publication are separate facts. No package below is currently presented as published.</p></div><span className="tic-package-live-label"><i/> Registry status · not checked live</span></div>
+      <div className="tic-package-grid">{packages.map((item, index) => <article className={`tic-package-card${item.sourceReady ? " is-source-ready" : " is-planned"}`} key={item.name}>
         <div className="tic-package-card-top"><span className="tic-package-glyph" aria-hidden="true">{item.glyph}</span><span className="tic-package-number">0{index + 1} / {item.type}</span></div>
         <h3>{item.name}</h3><p>{item.summary}</p>
-        <div className="tic-package-card-status"><span className={`tic-package-status-mark${item.available ? "" : " is-pending"}`} aria-hidden="true">{item.available ? "✓" : "·"}</span><span>{item.state}</span><code>{item.version}</code></div>
+        <div className="tic-package-card-status"><span className="tic-package-status-mark is-source" aria-hidden="true">S</span><span>{item.state}</span><code>{item.version}</code></div>
         {item.href ? <Link className="tic-package-card-link" href={item.href}>Explore package <span aria-hidden="true">→</span></Link> : <span className="tic-package-card-link is-disabled" aria-label={`${item.name}: documentation will be added when package source is ready`}>Details will follow source readiness <span aria-hidden="true">→</span></span>}
       </article>)}</div>
     </section>

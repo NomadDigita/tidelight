@@ -17,6 +17,21 @@ The API checks a high entropy Bearer key through a service role only RPC. The RP
 
 The contract uses `api.tidelight.app/v1`. The developer portal is `tidelight.app/developers`, developer documentation is `dev.tidelight.app`, the MCP service is `mcp.tidelight.app`, and system status is `status.tidelight.app`. `docs.tidelight.app` remains Tidelight Research's GitBook site. The landing page and docs inherit current Tidelight theme tokens and the developer routes bypass the trading workspace chrome.
 
+### Canonical Intelligence Cloud pages and service hosts (verified 16 October 2026)
+
+These are the five dedicated Intelligence Cloud destinations. All five production domains were confirmed `verified: true` on Vercel project `tidelight`; the developer landing's REST, MCP, and documentation route cards link to the corresponding service hosts. Keep the main application areas at their existing Tidelight routes. Do not create or repoint additional subdomains as part of this mapping, and do not change `docs.tidelight.app`.
+
+| Product surface | Canonical URL | Host behavior | Production check |
+|---|---|---|---|
+| Developer portal | [`https://tidelight.app/developers`](https://tidelight.app/developers) | Existing main application route | HTTP 200; branded developer landing |
+| Developer console | [`https://tidelight.app/developers/console`](https://tidelight.app/developers/console) | Signed-in console on the main application host | HTTP 200; signed-out check showed the expected sign-in gate |
+| REST API | [`https://api.tidelight.app/v1`](https://api.tidelight.app/v1) | `/` and `/v1/*` rewrite to the existing versioned API handlers; other paths return service 404 | Index HTTP 200; unauthenticated market request HTTP 401; unrelated `/research` path HTTP 404 |
+| Remote MCP | [`https://mcp.tidelight.app/mcp`](https://mcp.tidelight.app/mcp) | `/`, `/mcp`, and `/api/mcp` reach the same Streamable HTTP handler; protected-resource metadata has its own well-known path | Protected-resource metadata HTTP 200; unauthenticated MCP request HTTP 401 |
+| Developer documentation | [`https://dev.tidelight.app`](https://dev.tidelight.app) | `/` and `/api` serve the existing docs page; `/developers/docs` is also supported; unrelated console paths are rejected | Root and canonical docs path HTTP 200; `/developers/console` HTTP 404 |
+| System status | [`https://status.tidelight.app`](https://status.tidelight.app) | `/` serves live status; `/health` reaches the existing application health endpoint | Status page and health endpoint HTTP 200 |
+
+`www.tidelight.app` redirects to the main site. These checks confirm domain assignment and host routing; API and MCP authorization behavior remains enforced by the existing handlers. The root MCP endpoint's unauthenticated 401 is expected and does not indicate an outage.
+
 ## Milestone 1 — developer foundation
 
 Acceptance: a signed in user creates a project, issues a test or production key, receives the secret once, lists and revokes keys, calls a versioned real provider backed read only endpoint, and sees the request in usage. Calls with no key, a revoked key, malformed inputs, or exceeded limits receive structured errors. The public response separates a tokenized equity spot instrument from its underlying stock and provides source and provider timestamp.

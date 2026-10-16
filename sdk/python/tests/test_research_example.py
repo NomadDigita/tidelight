@@ -1,20 +1,30 @@
-import io
-import json
+import importlib.util
+from pathlib import Path
 import unittest
+
 from tidelight import Client
-from examples.research import run_company_research
+
+example_path = Path(__file__).parents[1] / "examples" / "research.py"
+spec = importlib.util.spec_from_file_location("tidelight_research_example", example_path)
+example = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(example)
+run_company_research = example.run_company_research
+
 KEY = "tl_test_" + "a" * 43
 JOB_ID = "01234567-89ab-4cde-8fab-0123456789ab"
 
-class FakeResponse(io.BytesIO):
+class FakeResponse:
     def __init__(self, payload, status):
-        super().__init__(json.dumps(payload).encode())
+        import io, json
+        self._stream = io.BytesIO(json.dumps(payload).encode())
         self.status = status
         self.headers = {}
     def __enter__(self):
         return self
     def __exit__(self, *_args):
-        self.close()
+        self._stream.close()
+    def read(self, *args):
+        return self._stream.read(*args)
 
 def snapshot(status, result=None, error=None):
     return {"job_id": JOB_ID, "ticker": "NVDA", "status": status, "attempts": 1, "max_attempts": 3,

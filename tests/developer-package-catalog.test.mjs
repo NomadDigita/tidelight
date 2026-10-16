@@ -124,3 +124,8 @@ test("package section navigation follows visible sections and exposes the curren
   const css = await readFile(new URL("app/developers/packages/packages.css", root), "utf8");
   assert.match(css, /tic-package-detail-nav>a\[aria-current="location"\]/);
 });
+
+test("package detail clipping preserves sticky section navigation", async () => {
+  const css = await readFile(new URL("app/developers/packages/packages.css", root), "utf8");
+  assert.match(css, /tic-package-detail-page\{max-width:none;overflow:clip\}/);
+});

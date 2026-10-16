@@ -52,7 +52,7 @@
 .tic-package-policy>p{margin:0;color:var(--tic-muted);font-size:12px;line-height:1.75}
 .tic-package-policy>a{grid-column:2;color:var(--tic-accent);font-size:11px;font-weight:650}
 .tic-packages-page>.tic-footer{margin-top:0}
-.tic-package-detail-page{max-width:none}
+.tic-package-detail-page{max-width:none;overflow:clip}
 .tic-package-breadcrumb{width:min(1180px,100%);margin:0 auto;padding:19px 28px 0;display:flex;gap:10px;color:var(--tic-muted);font-size:10px}
 .tic-package-breadcrumb a:hover{color:var(--tic-accent)}
 .tic-package-detail-hero{position:relative;display:grid;grid-template-columns:minmax(0,1.04fr) minmax(390px,.96fr);align-items:center;gap:clamp(35px,5.5vw,76px);width:min(1220px,100%);min-height:445px;margin:0 auto;padding:54px 30px 70px}

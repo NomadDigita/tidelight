@@ -13,6 +13,7 @@ on:
       - 'scripts/check-public-mirrors.mjs'
       - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
+      - 'scripts/check-python-package.py'
   workflow_dispatch:
 
 permissions:
@@ -46,6 +47,7 @@ jobs:
           npm test --prefix sdk/typescript
           (cd sdk/typescript && npm pack --dry-run --json)
           PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+          python scripts/check-python-package.py sdk/python
           npm ci --prefix packages/react
           npm test --prefix packages/react
           (cd packages/react && npm pack --dry-run --json)

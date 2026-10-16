@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 const packages = [
   { name: "@tidelight/sdk", type: "TypeScript · JavaScript", summary: "Typed client for supported Tidelight API v1 endpoints, async research jobs, and webhooks.", state: "Source exists · unpublished", version: "0.1.0 private", href: "/developers/packages/sdk", glyph: "TS", available: true },
-  { name: "@tidelight/mcp", type: "MCP integration", summary: "Connect compatible AI clients to Tidelight's scoped research and market tools.", state: "Package not prepared", version: "—", href: null, glyph: "M", available: false },
+  { name: "@tidelight/mcp", type: "Node.js · MCP stdio", summary: "Bridge stdio-only MCP clients to Tidelight's hosted, scope-filtered Streamable HTTP service.", state: "Source ready · unpublished", version: "0.1.0 private", href: "/developers/packages/mcp", glyph: "M", available: true },
   { name: "tidelight", type: "Python", summary: "Python client source for supported market, research, and webhook workflows.", state: "Source exists · metadata says tidelight-sdk", version: "0.1.0 manifest", href: null, glyph: "Py", available: true },
   { name: "@tidelight/react", type: "React", summary: "Reusable React hooks and interface helpers for Tidelight-powered products.", state: "Not started", version: "—", href: null, glyph: "R", available: false },
   { name: "@tidelight/cli", type: "Command line", summary: "A secure terminal workflow for Tidelight authentication, requests, and local development.", state: "Not started", version: "—", href: null, glyph: "$", available: false },
@@ -29,7 +29,7 @@ export default function DeveloperPackagesPage() {
       </div>
       <div className="tic-package-constellation" role="img" aria-label="Diagram of Tidelight's shared API at the center connected to SDK, MCP, Python, React, and CLI packages. Package availability varies.">
         <div className="tic-package-orbit tic-orbit-one"/><div className="tic-package-orbit tic-orbit-two"/><div className="tic-package-core"><span>ONE CORE</span><strong>TIDELIGHT</strong><small>API · AUTH · CONTRACTS</small></div>
-        <span className="tic-package-node node-sdk">SDK <small>source ready</small></span><span className="tic-package-node node-mcp">MCP <small>planned</small></span><span className="tic-package-node node-python">PYTHON <small>source ready</small></span><span className="tic-package-node node-react">REACT <small>planned</small></span><span className="tic-package-node node-cli">CLI <small>planned</small></span>
+        <span className="tic-package-node node-sdk">SDK <small>source ready</small></span><span className="tic-package-node node-mcp">MCP <small>source ready</small></span><span className="tic-package-node node-python">PYTHON <small>source ready</small></span><span className="tic-package-node node-react">REACT <small>planned</small></span><span className="tic-package-node node-cli">CLI <small>planned</small></span>
         <span className="tic-package-connector connector-a"/><span className="tic-package-connector connector-b"/><span className="tic-package-connector connector-c"/><span className="tic-package-connector connector-d"/><span className="tic-package-connector connector-e"/>
       </div>
     </header>

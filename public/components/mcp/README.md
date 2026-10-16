@@ -25,8 +25,8 @@ An empty instrument list means there is no matching supported tokenized spot ins
 
 ## Public implementation boundary
 
-`server/` contains the host-agnostic MCP protocol core and scope/schema tests. Production uses this same code. The application host enforces authentication, OAuth, tenant isolation, quotas, logging, provider access and operational controls before it invokes the protocol core. Those host adapters and private service boundaries remain in the mother repository and are not mirrored here. This package alone does not run the production endpoint.
+`server/` contains the host-agnostic MCP protocol core, the `@tidelight/mcp` local stdio bridge, and scope/schema/proxy tests. Production uses the same protocol core. The local bridge forwards discovery and tool calls to the hosted service; it does not replace or run the production endpoint. The application host enforces authentication, OAuth, tenant isolation, quotas, logging, provider access and operational controls. Private service adapters remain in the mother repository and are not mirrored here.
 
-Check the public component with `cd server && npm ci && npm test`. Those protocol tests do not certify compatibility with an external client. Tidelight has not yet certified a named third-party MCP client's complete OAuth, refresh, invocation, and revocation flow. See the [developer guide](https://dev.tidelight.app/api) for current connection and troubleshooting instructions.
+Check the package with `cd server && npm ci && npm test && npm pack --dry-run --json`. The manifest stays private until first-release approval. Those protocol tests do not certify compatibility with an external client. Tidelight has not yet certified a named third-party MCP client's complete OAuth, refresh, invocation, and revocation flow. See the [developer guide](https://dev.tidelight.app/api) for current connection and troubleshooting instructions.
 
 This repository is synchronized from `TidelightOrg/tidelight`; propose source changes there.

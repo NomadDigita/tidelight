@@ -42,6 +42,7 @@ jobs:
           PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
           npm ci --prefix public/components/mcp/server
           npm test --prefix public/components/mcp/server
+          cd public/components/mcp/server && npm pack --dry-run --json && cd ../../..
           npm ci --prefix public/components/api
           npm test --prefix public/components/api
           npm test --prefix public/components/examples

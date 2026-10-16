@@ -8,12 +8,12 @@ This document is the source-of-truth plan for developer packages. Package source
 |---|---|---|---|---|
 | TypeScript / JavaScript SDK | `sdk/typescript` | `@tidelight/sdk` | Implemented source, tests and build; private manifest `0.1.0` | npm lookup returned 404; unpublished |
 | Python SDK | `sdk/python` | `tidelight` | Implemented source and tests; project metadata currently says `tidelight-sdk` `0.1.0` | PyPI lookups for `tidelight` and `tidelight-sdk` found no distribution; unpublished. Align metadata only after name and mirror ownership are verified |
-| MCP integration | `public/components/mcp/server` | `@tidelight/mcp` | Private `@tidelight/mcp-server-core` component exists; it is not the intended installable package | npm lookup returned 404; unpublished |
+| MCP integration | `public/components/mcp/server` | `@tidelight/mcp` | MCP protocol core plus local stdio-to-remote bridge, tests, package metadata, and dry-run tarball; manifest stays private | npm lookup returned 404; unpublished |
 | API contract | `public/components/api` and `docs/tic-openapi.yaml` | no npm package promised yet | Private contract validation package and OpenAPI document | No public package |
 | React integration | none | `@tidelight/react` | Not started | npm lookup returned 404; not published |
 | CLI | none | `@tidelight/cli` | Not started | npm lookup returned 404; not published |
 
-The Developer Center package index is `/developers/packages`; the first package detail is `/developers/packages/sdk`. Only the TypeScript SDK has a detail page in this milestone. No npm or PyPI package is currently installable. Do not show `npm install @tidelight/sdk` or `pip install tidelight` as working install instructions until verified registry releases exist.
+The Developer Center package index is `/developers/packages`; first-party detail pages are `/developers/packages/sdk` and `/developers/packages/mcp`. No npm or PyPI package is currently installable. Do not show `npm install @tidelight/sdk` or `pip install tidelight` as working install instructions until verified registry releases exist.
 
 ## Package boundaries
 
@@ -29,15 +29,15 @@ Use SemVer after first public release. While packages are pre-release, keep them
 
 ## CI and release policy
 
-Each package must pass lint/typecheck, unit and integration tests against the OpenAPI contract, packaging validation, secret scanning, dependency review, and a clean install test. The mother repository remains canonical; mirror sync is path-scoped and must not copy secrets or server-only internals. Release workflows are manual/tagged, validate canonical version and mirror SHA, and use OIDC trusted publishing/provenance where registry support and organization configuration permit. Public publication remains blocked until explicit owner approval, verified namespace ownership, registry credentials/OIDC configuration, package contents review, and a successful dry run.
+Each package must pass lint/typecheck, unit and integration tests against the API/MCP contract, packaging validation, secret scanning, dependency review, and a clean install test. The MCP package dry-run includes only compiled distribution files, its executable bridge, and its README; its manifest remains private. The mother repository remains canonical; mirror sync is path-scoped and must not copy secrets or server-only internals. Release workflows are manual/tagged, validate canonical version and mirror SHA, and use OIDC trusted publishing/provenance where registry support and organization configuration permit. Public publication remains blocked until explicit owner approval, verified namespace ownership, registry credentials/OIDC configuration, package contents review, and a successful dry run.
 
-Existing `.github/workflows/release-sdk.yml` creates source releases in the TypeScript/Python GitHub mirrors; it does not publish to npm or PyPI. Do not describe it as a registry release pipeline.
+`.github/workflows/release-sdk.yml` creates manual GitHub source releases in the TypeScript, Python, and MCP mirrors; it does not publish to npm or PyPI. Do not describe it as a registry release pipeline.
 
 ## First-release gates
 
 1. Confirm `TidelightOrg/tidelight` owns each registry namespace and publish access is correctly configured.
 2. Decide whether the Python distribution should be named `tidelight` or retain `tidelight-sdk`; no silent rename.
-3. Complete the intended `@tidelight/mcp` package surface and protocol interoperability tests.
+3. Extend MCP interoperability tests to named external clients before certifying them; the local stdio proxy currently has official SDK protocol coverage only.
 4. Implement and test React and CLI packages before presenting them as available.
 5. Add package-specific changelogs, security policy links, licenses, release compatibility matrices, SBOM and provenance checks.
 6. Review redistribution and provider licensing limits against each example and package capability.
@@ -45,4 +45,4 @@ Existing `.github/workflows/release-sdk.yml` creates source releases in the Type
 
 ## Verification performed for this milestone
 
-Read-only registry checks on 2026-10-16: `npm view` returned 404 for `@tidelight/sdk`, `@tidelight/mcp`, `@tidelight/react`, and `@tidelight/cli`; `python -m pip index versions` found no distribution for `tidelight` or `tidelight-sdk`. These establish that the checked names are not presently installable, not that all other names are available. The UI uses source state rather than fabricated release dates or versions.
+Read-only registry checks on 2026-10-16: `npm view` returned 404 for `@tidelight/sdk`, `@tidelight/mcp`, `@tidelight/react`, and `@tidelight/cli`; `python -m pip index versions` found no distribution for `tidelight` or `tidelight-sdk`. These establish that the checked names are not presently installable, not that all other names are available. The UI uses source state rather than fabricated release dates or versions. MCP source verification: `npm test` passed 7 protocol/proxy/package-gate tests; the packed tarball contains only the package README and changelog, executable CLI wrapper, compiled code, and manifest, and a local install plus missing-credential CLI check passed. The package remains private, and no named external MCP client has been certified.

@@ -1,15 +1,15 @@
-name: GitHub SDK release
+name: Tidelight package source release
 
 on:
   workflow_dispatch:
     inputs:
       sdk:
-        description: SDK mirror to release
+        description: Package source mirror to release
         required: true
         type: choice
-        options: [typescript, python]
+        options: [typescript, python, mcp]
       version:
-        description: Exact version already present in the synchronized SDK manifest
+        description: Exact version already present in the synchronized package manifest
         required: true
         type: string
 
@@ -41,14 +41,22 @@ jobs:
           if [[ "$SDK" == "typescript" ]]; then
             VERSION=$(node -p "require('./sdk/typescript/package.json').version")
             npm test --prefix sdk/typescript
-          else
+            REPO=tidelight-sdk
+          elif [[ "$SDK" == "python" ]]; then
             VERSION=$(python -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('sdk/python/pyproject.toml').read(), re.M).group(1))")
             PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+            REPO=tidelight-python
+          else
+            VERSION=$(node -p "require('./public/components/mcp/server/package.json').version")
+            npm ci --prefix public/components/mcp/server
+            npm test --prefix public/components/mcp/server
+            npm pack --dry-run --json --prefix public/components/mcp/server
+            REPO=tidelight-mcp
           fi
           [[ "$VERSION" == "$REQUESTED_VERSION" ]] || { echo "Requested version must match canonical SDK version $VERSION"; exit 1; }
           [[ "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]] || { echo "Version must follow SemVer"; exit 1; }
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          if [[ "$SDK" == "typescript" ]]; then echo "repo=tidelight-sdk" >> "$GITHUB_OUTPUT"; else echo "repo=tidelight-python" >> "$GITHUB_OUTPUT"; fi
+          echo "repo=$REPO" >> "$GITHUB_OUTPUT"
       - name: Create scoped GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v1
@@ -70,11 +78,18 @@ jobs:
             npm install --ignore-scripts --no-audit --no-fund
             MIRROR_VERSION=$(node -p "require('./package.json').version")
             npm test
-          else
+          elif [[ "${{ inputs.sdk }}" == "python" ]]; then
             MIRROR_VERSION=$(python -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('pyproject.toml').read(), re.M).group(1))")
             PYTHONPATH=src python -m unittest discover -s tests -v
+          else
+            cd server
+            npm ci
+            MIRROR_VERSION=$(node -p "require('./package.json').version")
+            npm test
+            npm pack --dry-run --json
           fi
           [[ "$MIRROR_VERSION" == "$VERSION" ]] || { echo "Synchronized mirror version $MIRROR_VERSION does not match canonical version $VERSION"; exit 1; }
           TARGET_SHA=$(git rev-parse HEAD)
-          gh release create "v$VERSION" --repo "$REPOSITORY" --target "$TARGET_SHA" --title "Tidelight SDK v$VERSION" --generate-notes
+          if [[ "${{ inputs.sdk }}" == "mcp" ]]; then PACKAGE="MCP"; else PACKAGE="SDK"; fi
+          gh release create "v$VERSION" --repo "$REPOSITORY" --target "$TARGET_SHA" --title "Tidelight $PACKAGE v$VERSION" --generate-notes
 

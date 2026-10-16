@@ -58,6 +58,18 @@ jobs:
           [[ "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]] || { echo "Version must follow SemVer"; exit 1; }
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "repo=$REPO" >> "$GITHUB_OUTPUT"
+      - name: Clone selected mirror and verify canonical file parity
+        id: parity
+        env:
+          SDK: ${{ inputs.sdk }}
+          REPOSITORY: TidelightOrg/${{ steps.version.outputs.repo }}
+        run: |
+          git clone --depth 1 "https://github.com/$REPOSITORY.git" sdk-mirror
+          node scripts/check-mirror-parity.mjs "$SDK" sdk-mirror
+          MIRROR_SHA=$(git -C sdk-mirror rev-parse HEAD)
+          CANONICAL_SHA=$(git rev-parse HEAD)
+          echo "mirror_sha=$MIRROR_SHA" >> "$GITHUB_OUTPUT"
+          echo "canonical_sha=$CANONICAL_SHA" >> "$GITHUB_OUTPUT"
       - name: Create scoped GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v1
@@ -73,7 +85,6 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           REPOSITORY: TidelightOrg/${{ steps.version.outputs.repo }}
         run: |
-          git clone --depth 1 "https://github.com/$REPOSITORY.git" sdk-mirror
           cd sdk-mirror
           if [[ "${{ inputs.sdk }}" == "typescript" ]]; then
             npm install --ignore-scripts --no-audit --no-fund
@@ -92,6 +103,8 @@ jobs:
           fi
           [[ "$MIRROR_VERSION" == "$VERSION" ]] || { echo "Synchronized mirror version $MIRROR_VERSION does not match canonical version $VERSION"; exit 1; }
           TARGET_SHA=$(git rev-parse HEAD)
+          [[ "$TARGET_SHA" == "${{ steps.parity.outputs.mirror_sha }}" ]] || { echo "Mirror changed after parity validation; refusing to tag a different commit"; exit 1; }
           if [[ "${{ inputs.sdk }}" == "mcp" ]]; then PACKAGE="MCP"; else PACKAGE="SDK"; fi
-          gh release create "v$VERSION" --repo "$REPOSITORY" --target "$TARGET_SHA" --title "Tidelight $PACKAGE v$VERSION" --generate-notes
+          NOTES=$(printf 'Mother repository commit: %s\nTested mirror commit: %s\n\nThis release was created from byte-for-byte source verified against the Tidelight mother repository.' "${{ steps.parity.outputs.canonical_sha }}" "$TARGET_SHA")
+          gh release create "v$VERSION" --repo "$REPOSITORY" --target "$TARGET_SHA" --title "Tidelight $PACKAGE v$VERSION" --notes "$NOTES"
 

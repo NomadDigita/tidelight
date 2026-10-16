@@ -36,6 +36,14 @@ function collectManifestTargets(value, targets = []) {
 }
 
 export function validatePackageArchiveListing(manifest, packedFiles, tarEntries) {
+  if (!Array.isArray(manifest.files) || manifest.files.length === 0) fail("package.json must declare an explicit files allowlist.");
+  const allowedEntries = manifest.files.map(entry => {
+    if (typeof entry !== "string" || !entry || entry.includes("*") || entry.includes("[") || entry.includes("\\") || path.posix.isAbsolute(entry)) {
+      fail(`unsupported package files allowlist entry ${JSON.stringify(entry)}.`);
+    }
+    const normalized = normalizeArchivePath(entry.replace(/\/$/, ""));
+    return { path: normalized, directory: entry.endsWith("/") || !path.posix.extname(normalized) };
+  });
   const packedPaths = packedFiles.map(file => normalizeArchivePath(file.path));
   const archivePaths = tarEntries
     .map(entry => {
@@ -61,6 +69,10 @@ export function validatePackageArchiveListing(manifest, packedFiles, tarEntries)
     if (!files.has(normalizeArchivePath(required))) fail(`archive is missing declared package file ${required}.`);
   }
   for (const file of files) {
+    const rootName = path.posix.basename(file).toLowerCase();
+    const npmAlwaysIncluded = file === "package.json" || (!file.includes("/") && /^(?:readme|license|licence|copying|changelog|changes|history|notice)(?:\..*)?$/.test(rootName));
+    const explicitlyAllowed = allowedEntries.some(entry => file === entry.path || (entry.directory && file.startsWith(`${entry.path}/`)));
+    if (!npmAlwaysIncluded && !explicitlyAllowed) fail(`archive includes a file outside package.json files allowlist: ${file}.`);
     if (unsafeName.test(file)) fail(`archive includes a credential or private-key file: ${file}.`);
     if (/(^|\/)node_modules\//i.test(file)) fail(`archive includes nested dependencies: ${file}.`);
   }

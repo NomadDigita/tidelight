@@ -38,7 +38,7 @@ export default function DeveloperPackagesPage() {
       <div className="tic-package-grid">{packages.map((item, index) => <article className={`tic-package-card${item.sourceReady ? " is-source-ready" : " is-planned"}`} key={item.name}>
         <div className="tic-package-card-top"><span className="tic-package-glyph" aria-hidden="true">{item.glyph}</span><span className="tic-package-number">0{index + 1} / {item.type}</span></div>
         <h3>{item.name}</h3><p>{item.summary}</p>
-        <div className="tic-package-card-status"><span className="tic-package-status-mark is-source" aria-hidden="true">S</span><span>{item.state}</span><code>{item.version}</code></div>
+        <div className="tic-package-card-status"><span className="tic-package-status-mark is-source" aria-hidden="true">✓</span><span className="tic-package-source-label">Source · {item.state}</span><code>{item.version}</code></div>
         {item.href ? <Link className="tic-package-card-link" href={item.href}>Explore package <span aria-hidden="true">→</span></Link> : <span className="tic-package-card-link is-disabled" aria-label={`${item.name}: documentation will be added when package source is ready`}>Details will follow source readiness <span aria-hidden="true">→</span></span>}
       </article>)}</div>
     </section>

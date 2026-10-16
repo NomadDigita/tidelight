@@ -24,3 +24,25 @@
 .tic-package-card-status code{white-space:normal;text-align:right;overflow-wrap:anywhere}
 .tic-package-snippet pre:focus-visible{outline:2px solid var(--tic-accent);outline-offset:-3px;border-radius:5px}
 @media(max-width:480px){.tic-package-card-status{align-items:flex-start;flex-wrap:wrap}.tic-package-card-status code{width:calc(100% - 25px);margin:0 0 0 25px;text-align:left;font-size:9px}.tic-package-live-label{white-space:normal;line-height:1.5}}
+
+
+/* Balance the five-card desktop directory; tablet and mobile keep their natural flow. */
+@media(min-width:921px){
+  .tic-package-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .tic-package-card{grid-column:span 2}
+  .tic-package-card:nth-child(4):nth-last-child(2){grid-column:2 / span 2}
+  .tic-package-card:nth-child(5):last-child{grid-column:4 / span 2}
+}
+.tic-package-number{font-size:10px}
+.tic-package-card-status{font-size:11px}
+.tic-package-card-status code{font-size:10px}
+.tic-package-status-mark.is-source{font-size:0}
+.tic-package-status-mark.is-source::after{content:"✓";font-size:10px}
+.tic-package-card-status .tic-package-source-label{color:var(--tic-muted);font-size:10px}
+@media(max-width:700px){
+  .tic-package-detail-nav{position:sticky;top:0;z-index:12;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-inline:contain;padding:12px 12px 13px;margin:0 -20px 30px;border:1px solid var(--tic-line);border-radius:0;background:color-mix(in srgb,var(--tic-panel) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);scrollbar-width:none}
+  .tic-package-detail-nav::-webkit-scrollbar{display:none}
+  .tic-package-detail-nav>span{flex:0 0 auto;margin:0 4px 0 8px}
+  .tic-package-detail-nav a{flex:0 0 auto;min-height:32px;display:inline-flex;align-items:center;padding:0 10px;border:1px solid var(--tic-line);border-radius:6px;background:var(--tic-panel);white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){.tic-package-card{transition:none}}

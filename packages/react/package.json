@@ -1,0 +1,28 @@
+{
+  "name": "@tidelight/react",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Typed React hooks and accessible components for Tidelight research and market integrations.",
+  "keywords": ["tidelight", "react", "market-intelligence", "research", "hooks"],
+  "license": "UNLICENSED",
+  "repository": { "type": "git", "url": "https://github.com/TidelightOrg/tidelight.git", "directory": "packages/react" },
+  "engines": { "node": ">=22" },
+  "sideEffects": ["./tidelight-react.css"],
+  "files": ["dist", "tidelight-react.css", "README.md", "CHANGELOG.md"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./styles.css": "./tidelight-react.css"
+  },
+  "peerDependencies": { "@tidelight/sdk": "^0.1.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" },
+  "devDependencies": {
+    "@testing-library/react": "16.3.0",
+    "@tidelight/sdk": "file:../../sdk/typescript",
+    "@types/react": "19.2.14",
+    "jsdom": "27.0.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "5.9.3"
+  },
+  "scripts": { "build": "tsc -p tsconfig.json", "test": "npm run build && node --import ./tests/setup.mjs --test tests/*.test.mjs", "prepack": "npm run build" }
+}

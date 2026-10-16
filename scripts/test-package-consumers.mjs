@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,12 +21,17 @@ function pack(directory, destination, extra = []) {
 }
 async function consumer(name, packages) {
   const directory = path.join(temporary, name);
-  await import("node:fs/promises").then(({ mkdir }) => mkdir(directory, { recursive: true }));
+  await mkdir(directory, { recursive: true });
   await writeFile(path.join(directory, "package.json"), JSON.stringify({ name: `tidelight-${name}-consumer`, private: true, type: "module" }));
   run("npm", ["install", "--no-audit", "--no-fund", ...packages], directory);
   return directory;
 }
 try {
+  for (const packagePath of ["sdk/typescript", "packages/react", "packages/cli"]) {
+    run("npm", ["ci", "--prefix", packagePath], root);
+    run("npm", ["run", "build", "--prefix", packagePath], root);
+  }
+
   const sdkManifest = JSON.parse(await readFile(path.join(root, "sdk/typescript/package.json"), "utf8"));
   const sdkArchive = pack(path.join(root, "sdk/typescript"), temporary);
   const sdkOnly = await consumer("sdk", [sdkArchive]);

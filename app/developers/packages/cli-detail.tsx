@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PackageLifecycleDemo } from "./package-lifecycle-demo";
+import { PackageSectionNav } from "./package-section-nav";
 import { PackageSourceBadges } from "./package-source-badges";
 
 const snippets = {
@@ -37,7 +38,7 @@ export function CliPackageDetail() {
     </header>
     <PackageLifecycleDemo packageName="cli" />
     <div className="tic-package-detail-layout">
-      <nav className="tic-package-detail-nav" aria-label="Package sections"><span>ON THIS PAGE</span><a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#commands">Commands</a><a href="#security">Security</a><a href="#examples">Examples</a><a href="#releases">Releases</a></nav>
+      <PackageSectionNav sections={[{ id: "overview", label: "Overview" }, { id: "quickstart", label: "Quickstart" }, { id: "commands", label: "Commands" }, { id: "security", label: "Security" }, { id: "examples", label: "Examples" }, { id: "releases", label: "Releases" }]} />
       <article className="tic-package-detail-content">
         <section id="overview"><p className="tic-eyebrow">01 / OVERVIEW</p><h2>Only commands backed by the current API contract.</h2><p>The CLI calls the official TypeScript SDK. It currently supports Reality tokenized-equity spot listings, asynchronous company research jobs, and research-job webhooks. Service-side authorization, tenant ownership, quota checks, and provider terms remain authoritative.</p><p>It does not expose account or key management, strategy or trading operations, generic REST passthrough, or MCP internals.</p></section>
         <section id="quickstart" className="tic-package-code-section"><p className="tic-eyebrow">02 / QUICKSTART</p><h2>Build the source and authenticate.</h2><p>Until an approved npm release exists, clone the mother repository and build the CLI package from source. The local workflow uses the checked-in SDK source and CI validation.</p><div className="tic-package-snippet"><div className="tic-package-snippet-head"><div role="group" aria-label="CLI examples">{(Object.keys(snippets) as Snippet[]).map(key => <button type="button" aria-pressed={selected === key} key={key} onClick={() => { setSelected(key); setCopyStatus(null); }}>{labels[key]}</button>)}</div><button className="tic-package-copy" type="button" onClick={copy} aria-live="polite">{copyStatus === "copied" ? "Copied" : copyStatus === "failed" ? "Copy unavailable" : "Copy"}</button></div><pre tabIndex={0} aria-label={`${labels[selected]} command example`}><code>{snippets[selected]}</code></pre></div><div className="tic-package-callout"><span aria-hidden="true">i</span><p><strong>Credential storage uses the operating-system keychain.</strong> Linux requires Secret Service. If no supported keychain is available, provide <code>TIDELIGHT_API_KEY</code> to the current process; the CLI never saves a plaintext config file.</p></div></section>

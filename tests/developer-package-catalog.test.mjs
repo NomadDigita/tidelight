@@ -107,3 +107,20 @@ test("detail headers share generated source, release, and compatibility metadata
   assert.match(badges, /Source present · unpublished/);
   assert.doesNotMatch(badges, /Source available|source ready/i);
 });
+
+test("package section navigation follows visible sections and exposes the current location", async () => {
+  const routes = ["package-detail.tsx", "mcp-detail.tsx", "python-detail.tsx", "react-detail.tsx", "cli-detail.tsx"];
+  for (const file of routes) {
+    const source = await readFile(new URL(`app/developers/packages/${file}`, root), "utf8");
+    assert.match(source, /<PackageSectionNav sections=\{/);
+    const ids = [...source.matchAll(/\{ id: "([^"]+)", label:/g)].map(match => match[1]);
+    assert.ok(ids.length >= 5, `${file} should expose its package sections`);
+    for (const id of ids) assert.match(source, new RegExp(`<section id=["']${id}["']`), `${file} links to missing #${id}`);
+  }
+  const component = await readFile(new URL("app/developers/packages/package-section-nav.tsx", root), "utf8");
+  assert.match(component, /new IntersectionObserver/);
+  assert.match(component, /aria-current=\{ids\[index\] === activeSection \? "location" : undefined\}/);
+  assert.match(component, /hashchange/);
+  const css = await readFile(new URL("app/developers/packages/packages.css", root), "utf8");
+  assert.match(css, /tic-package-detail-nav>a\[aria-current="location"\]/);
+});

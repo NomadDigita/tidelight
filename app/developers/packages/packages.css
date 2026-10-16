@@ -246,3 +246,9 @@
   .tic-package-lifecycle-controls{padding:11px 15px}
 }
 @media(prefers-reduced-motion:reduce){.tic-package-lifecycle *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+
+/* Current section feedback for the package detail index. */
+.tic-package-detail-nav>a[aria-current="location"]{border-left-color:var(--tic-accent);color:var(--tic-text);background:color-mix(in srgb,var(--tic-accent) 7%,transparent)}
+.tic-package-detail-content section[id]{scroll-margin-top:88px}
+@media(max-width:720px){.tic-package-detail-content section[id]{scroll-margin-top:76px}.tic-package-detail-nav>a[aria-current="location"]{border-color:color-mix(in srgb,var(--tic-accent) 55%,var(--tic-line));background:color-mix(in srgb,var(--tic-accent) 10%,var(--tic-panel))}}

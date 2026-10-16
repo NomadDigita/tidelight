@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PackageLifecycleDemo } from "./package-lifecycle-demo";
+import { PackageSectionNav } from "./package-section-nav";
 import { PackageSourceBadges } from "./package-source-badges";
 
 const snippets = {
@@ -45,7 +46,7 @@ export function PackageDetail() {
     </header>
     <PackageLifecycleDemo packageName="sdk" />
     <div className="tic-package-detail-layout">
-      <nav className="tic-package-detail-nav" aria-label="Package sections"><span>ON THIS PAGE</span><a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#api">API surface</a><a href="#compatibility">Compatibility</a><a href="#security">Security</a><a href="#releases">Releases</a></nav>
+      <PackageSectionNav sections={[{ id: "overview", label: "Overview" }, { id: "quickstart", label: "Quickstart" }, { id: "api", label: "API surface" }, { id: "compatibility", label: "Compatibility" }, { id: "security", label: "Security" }, { id: "releases", label: "Releases" }]} />
       <article className="tic-package-detail-content">
         <section id="overview"><p className="tic-eyebrow">01 / OVERVIEW</p><h2>Designed around the real API contract.</h2><p>The SDK source lives at <code>sdk/typescript</code> in the Tidelight mother repository. It currently supports tokenized equity instrument listing and pagination, company research jobs (start, status, cancellation, bounded polling), and project webhook management and delivery history.</p><p>Use it from trusted server environments that can protect an API key. The API applies the same project authorization, scopes, quotas, and request accounting as direct REST calls.</p></section>
         <section id="quickstart" className="tic-package-code-section"><p className="tic-eyebrow">02 / QUICKSTART</p><h2>Try the source version locally.</h2><p>Until the first npm release is approved and published, clone the mother repository and run the SDK tests. The TypeScript usage example is for the published package after release.</p><div className="tic-package-snippet"><div className="tic-package-snippet-head"><div role="group" aria-label="Quickstart examples">{(Object.keys(snippets) as Snippet[]).map(key => <button type="button" aria-pressed={selected === key} key={key} onClick={() => { setSelected(key); setCopyStatus(null); }}>{labels[key]}</button>)}</div><button className="tic-package-copy" type="button" onClick={copy} aria-live="polite">{copyStatus === "copied" ? "Copied" : copyStatus === "failed" ? "Copy unavailable" : "Copy"}</button></div><pre tabIndex={0} aria-label={`${labels[selected]} code example`}><code>{snippets[selected]}</code></pre></div>

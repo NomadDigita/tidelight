@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PackageLifecycleDemo } from "./package-lifecycle-demo";
+import { PackageSectionNav } from "./package-section-nav";
 import { PackageSourceBadges } from "./package-source-badges";
 
 const snippets = {
@@ -47,7 +48,7 @@ export function ReactPackageDetail() {
     </header>
     <PackageLifecycleDemo packageName="react" />
     <div className="tic-package-detail-layout">
-      <nav className="tic-package-detail-nav" aria-label="Package sections"><span>ON THIS PAGE</span><a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#hooks">Hooks</a><a href="#components">Components</a><a href="#examples">Examples</a><a href="#security">Security</a><a href="#releases">Releases</a></nav>
+      <PackageSectionNav sections={[{ id: "overview", label: "Overview" }, { id: "quickstart", label: "Quickstart" }, { id: "hooks", label: "Hooks" }, { id: "components", label: "Components" }, { id: "examples", label: "Examples" }, { id: "security", label: "Security" }, { id: "releases", label: "Releases" }]} />
       <article className="tic-package-detail-content">
         <section id="overview"><p className="tic-eyebrow">01 / OVERVIEW</p><h2>React interfaces on top of real Tidelight contracts.</h2><p>The package source lives in <code>packages/react</code> in the mother repository. It wraps the existing TypeScript SDK method shapes and adds loading, error, cancellation, and refresh behavior without duplicating API transport or research logic.</p><p>Supply a client that forwards through your authenticated application backend. This keeps project credentials and tenant authorization on your server while your browser receives only responses that your application has authorized.</p></section>
         <section id="quickstart" className="tic-package-code-section"><p className="tic-eyebrow">02 / QUICKSTART</p><h2>Build and use the source today.</h2><p>The package cannot yet be installed from npm. Build the canonical source or copy the hook example into an application with the package linked locally.</p><div className="tic-package-snippet"><div className="tic-package-snippet-head"><div role="group" aria-label="React package examples">{(Object.keys(snippets) as Snippet[]).map(key => <button type="button" aria-pressed={selected === key} key={key} onClick={() => { setSelected(key); setCopyStatus(null); }}>{labels[key]}</button>)}</div><button className="tic-package-copy" type="button" onClick={copy} aria-live="polite">{copyStatus === "copied" ? "Copied" : copyStatus === "failed" ? "Copy unavailable" : "Copy"}</button></div><pre tabIndex={0} aria-label={`${labels[selected]} code example`}><code>{snippets[selected]}</code></pre></div><div className="tic-package-callout"><span aria-hidden="true">i</span><p><strong>Do not place API keys in client-side React code.</strong> The provider takes an interface, not a credential. Put official SDK calls behind your application’s authenticated server route or server action.</p></div></section>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PackageLifecycleDemo } from "./package-lifecycle-demo";
+import { PackageSectionNav } from "./package-section-nav";
 import { PackageSourceBadges } from "./package-source-badges";
 
 const snippets = {
@@ -65,7 +66,7 @@ export function PythonPackageDetail() {
     </header>
     <PackageLifecycleDemo packageName="python" />
     <div className="tic-package-detail-layout">
-      <nav className="tic-package-detail-nav" aria-label="Package sections"><span>ON THIS PAGE</span><a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#api">API surface</a><a href="#compatibility">Compatibility</a><a href="#security">Security</a><a href="#releases">Releases</a></nav>
+      <PackageSectionNav sections={[{ id: "overview", label: "Overview" }, { id: "quickstart", label: "Quickstart" }, { id: "api", label: "API surface" }, { id: "compatibility", label: "Compatibility" }, { id: "security", label: "Security" }, { id: "releases", label: "Releases" }]} />
       <article className="tic-package-detail-content">
         <section id="overview"><p className="tic-eyebrow">01 / OVERVIEW</p><h2>Python access to the supported API surface.</h2><p>The client source lives at <code>sdk/python</code> in the Tidelight mother repository. It supports tokenized-equity instrument listing and pagination, asynchronous company research jobs, and research-job webhook management and delivery history.</p><p>It does not expose strategies, scenarios, trading, account administration, or a generic HTTP passthrough. API authorization and provider availability are enforced by Tidelight services.</p></section>
         <section id="quickstart" className="tic-package-code-section"><p className="tic-eyebrow">02 / QUICKSTART</p><h2>Use the canonical source today.</h2><p>The Python distribution is unpublished. This source setup installs from the mother repository; the market and research examples use the current client methods.</p><div className="tic-package-snippet"><div className="tic-package-snippet-head"><div role="group" aria-label="Python examples">{(Object.keys(snippets) as Snippet[]).map(key => <button type="button" aria-pressed={selected === key} key={key} onClick={() => { setSelected(key); setCopyStatus(null); }}>{labels[key]}</button>)}</div><button className="tic-package-copy" type="button" onClick={copy} aria-live="polite">{copyStatus === "copied" ? "Copied" : copyStatus === "failed" ? "Copy unavailable" : "Copy"}</button></div><pre tabIndex={0} aria-label={`${labels[selected]} Python example`}><code>{snippets[selected]}</code></pre></div><div className="tic-package-callout"><span aria-hidden="true">i</span><p><strong>Keep credentials in a trusted server environment.</strong> Set <code>TIDELIGHT_API_KEY</code> outside source control and never include it in notebooks, public logs, or client-side applications.</p></div></section>

@@ -1,0 +1,115 @@
+name: Build internal package candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact version shared by every package manifest
+        required: true
+        type: string
+      confirmation:
+        description: Type BUILD PACKAGE CANDIDATE to create a nonpublishing artifact
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-candidate-${{ github.ref }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require explicit candidate confirmation and matching versions
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$CONFIRMATION" == "BUILD PACKAGE CANDIDATE" ]] || { echo "Confirmation text did not match."; exit 1; }
+          [[ "$REQUESTED_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]] || { echo "Candidate version must follow SemVer."; exit 1; }
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifests = [
+            ['sdk/typescript/package.json', JSON.parse(fs.readFileSync('sdk/typescript/package.json', 'utf8')).version],
+            ['packages/react/package.json', JSON.parse(fs.readFileSync('packages/react/package.json', 'utf8')).version],
+            ['packages/cli/package.json', JSON.parse(fs.readFileSync('packages/cli/package.json', 'utf8')).version],
+            ['public/components/mcp/server/package.json', JSON.parse(fs.readFileSync('public/components/mcp/server/package.json', 'utf8')).version],
+          ];
+          const pyproject = fs.readFileSync('sdk/python/pyproject.toml', 'utf8');
+          const pythonVersion = pyproject.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
+          manifests.push(['sdk/python/pyproject.toml', pythonVersion]);
+          for (const [file, version] of manifests) {
+            if (version !== process.env.REQUESTED_VERSION) {
+              console.error(`${file} declares ${version ?? 'no version'}; expected ${process.env.REQUESTED_VERSION}`);
+              process.exitCode = 1;
+            }
+          }
+          if (process.exitCode) process.exit(process.exitCode);
+          console.log(`All five package manifests declare ${process.env.REQUESTED_VERSION}.`);
+          NODE
+      - name: Install root checks and verify source boundaries
+        run: |
+          npm ci
+          node scripts/check-public-mirrors.mjs
+      - name: Test and validate TypeScript SDK archive
+        run: |
+          npm ci --prefix sdk/typescript
+          npm test --prefix sdk/typescript
+          node scripts/check-npm-package-archive.mjs sdk/typescript "$RUNNER_TEMP/tidelight-candidate/npm"
+      - name: Test and validate React package archive
+        run: |
+          npm ci --prefix packages/react
+          npm test --prefix packages/react
+          node scripts/check-npm-package-archive.mjs packages/react "$RUNNER_TEMP/tidelight-candidate/npm"
+      - name: Test and validate CLI package archive
+        run: |
+          npm ci --prefix packages/cli
+          npm test --prefix packages/cli
+          node scripts/check-npm-package-archive.mjs packages/cli "$RUNNER_TEMP/tidelight-candidate/npm"
+      - name: Test and validate MCP package archive
+        run: |
+          npm ci --prefix public/components/mcp/server
+          npm test --prefix public/components/mcp/server
+          node scripts/check-npm-package-archive.mjs public/components/mcp/server "$RUNNER_TEMP/tidelight-candidate/npm"
+      - name: Test Python SDK and preserve the validated wheel
+        run: |
+          PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+          python scripts/check-python-package.py sdk/python "$RUNNER_TEMP/tidelight-candidate/python"
+      - name: Create provenance note and checksum manifest
+        env:
+          CANDIDATE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/tidelight-candidate"
+          mkdir -p "$OUT"
+          {
+            printf 'Tidelight internal package candidate %s\n' "$CANDIDATE_VERSION"
+            printf 'Source repository: %s\n' "$GITHUB_REPOSITORY"
+            printf 'Source commit: %s\n' "$GITHUB_SHA"
+            printf 'Git ref: %s\n' "$GITHUB_REF"
+            printf 'Built at UTC: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            printf '\nInternal validation artifact only. No package was published.\n'
+          } > "$OUT/SOURCE.txt"
+          (cd "$OUT" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+      - name: Upload immutable internal candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tidelight-package-candidate-${{ inputs.version }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tidelight-candidate/
+          if-no-files-found: error
+          retention-days: 30

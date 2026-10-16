@@ -27,8 +27,11 @@ created = client.create_webhook(
     url="https://your-service.example/tidelight",
     events=["research.job.completed", "research.job.failed"],
 )
-# Persist this securely; the server only returns a signing secret on create or rotation.
-save_secret(created["signing_secret"])
+signing_secret = created.get("signing_secret")
+if not signing_secret:
+    raise RuntimeError("The create response did not include its one-time signing secret")
+# TODO: Persist signing_secret with your approved secrets manager before
+# finishing setup. Do not print it. It cannot be recovered by listing the endpoint.
 deliveries = client.list_webhook_deliveries()
 ```
 

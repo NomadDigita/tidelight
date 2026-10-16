@@ -24,8 +24,9 @@ const created = await client.createWebhook({
   url: "https://your-service.example/tidelight",
   events: ["research.job.completed", "research.job.failed"],
 });
-// Persist this securely; the server only returns a signing secret on create or rotation.
-await saveSecret(created.signing_secret!);
+if (!created.signing_secret) throw new Error("The create response did not include its one-time signing secret.");
+// TODO: Persist created.signing_secret with your approved secrets manager before
+// finishing setup. Do not print it. It cannot be recovered by listing the endpoint.
 const deliveries = await client.listWebhookDeliveries();
 console.log(deliveries.deliveries);
 ```

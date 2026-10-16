@@ -34,6 +34,7 @@ def project_metadata(pyproject: Path) -> tuple[str, str, str]:
 
 def main() -> None:
     source = Path(sys.argv[1] if len(sys.argv) > 1 else "sdk/python").resolve()
+    output_directory = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else None
     pyproject = source / "pyproject.toml"
     if not pyproject.is_file():
         fail(f"{pyproject} does not exist.")
@@ -92,7 +93,11 @@ def main() -> None:
             check=True,
             env=env,
         )
-        print(f"Validated {wheel.name}: metadata, contents, and isolated imports. Nothing was published.")
+        if output_directory:
+            output_directory.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(wheel, output_directory / wheel.name)
+        suffix = f" Verified wheel saved to {output_directory}." if output_directory else " Nothing was published."
+        print(f"Validated {wheel.name}: metadata, contents, and isolated imports.{suffix}")
 
 
 if __name__ == "__main__":

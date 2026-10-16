@@ -14,6 +14,7 @@ on:
       - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
       - 'scripts/check-python-package.py'
+      - 'scripts/check-npm-package-archive.mjs'
   workflow_dispatch:
 
 permissions:
@@ -45,18 +46,18 @@ jobs:
         run: |
           npm ci --prefix sdk/typescript
           npm test --prefix sdk/typescript
-          (cd sdk/typescript && npm pack --dry-run --json)
+          node scripts/check-npm-package-archive.mjs sdk/typescript
           PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
           python scripts/check-python-package.py sdk/python
           npm ci --prefix packages/react
           npm test --prefix packages/react
-          (cd packages/react && npm pack --dry-run --json)
+          node scripts/check-npm-package-archive.mjs packages/react
           npm ci --prefix packages/cli
           npm test --prefix packages/cli
-          (cd packages/cli && npm pack --dry-run --json)
+          node scripts/check-npm-package-archive.mjs packages/cli
           npm ci --prefix public/components/mcp/server
           npm test --prefix public/components/mcp/server
-          (cd public/components/mcp/server && npm pack --dry-run --json)
+          node scripts/check-npm-package-archive.mjs public/components/mcp/server
           npm ci --prefix public/components/api
           npm test --prefix public/components/api
           npm test --prefix public/components/examples

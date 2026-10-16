@@ -1,9 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import type { Metadata } from "next";
 import DeveloperConsole from "./ui";
 import { ThemeQuickSwitch } from "@/app/ui/theme-provider";
 import "../tidelight-developers.css";
 import "../platform-polish.css";
+
+export const metadata: Metadata = {
+  title: { absolute: "Tidelight Developer Console" },
+  description: "Manage Tidelight developer projects, scoped credentials, API activity, research jobs, and MCP connections.",
+};
 
 export default async function ConsolePage() {
   const supabase = await createClient();

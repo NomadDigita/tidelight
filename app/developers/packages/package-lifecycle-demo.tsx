@@ -91,6 +91,6 @@ export function PackageLifecycleDemo({ packageName }: { packageName: keyof typeo
       <div className="tic-package-lifecycle-controls"><button type="button" onClick={() => setActive(value => Math.max(0, value - 1))} disabled={active === 0}>← Previous</button><span aria-hidden="true">{active + 1} of {flow.steps.length}</span><button type="button" onClick={() => setActive(value => Math.min(flow.steps.length - 1, value + 1))} disabled={active === flow.steps.length - 1}>Next →</button></div>
     </div>
     <p className="tic-package-lifecycle-note"><span aria-hidden="true">i</span>{flow.footnote}</p>
-    <noscript><ol className="tic-package-lifecycle-noscript">{flow.steps.map(item => <li key={item.title}><strong>{item.title}</strong><p>{item.detail}</p><pre>{item.code}</pre></li>)}</ol></noscript>
+    <details className="tic-package-lifecycle-all"><summary>View all steps</summary><ol>{flow.steps.map(item => <li key={item.title}><strong>{item.title}</strong><p>{item.detail}</p><pre tabIndex={0}><code>{item.code}</code></pre></li>)}</ol></details>
   </section>;
 }

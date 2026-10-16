@@ -37,6 +37,17 @@ test("client rejects unsafe URLs and malformed parameters before making calls", 
   const client = new TidelightClient({ apiKey: key, fetch: async () => { throw new Error("should not call"); } });
   await assert.rejects(client.listTokenizedEquities({ limit: 101 }), /limit/);
   await assert.rejects(client.listTokenizedEquities({ cursor: "../../etc" }), /cursor/);
+  await assert.rejects(client.listTokenizedEquities({ underlyingTicker: "AAPL?" }), /underlyingTicker/);
+});
+
+test("client sends a normalized underlying ticker filter", async () => {
+  let requestUrl = "";
+  const client = new TidelightClient({ apiKey: key, fetch: async url => {
+    requestUrl = String(url);
+    return Response.json({ data: [instrument], next_cursor: null, generated_at: 1, request_id: "filter" });
+  } });
+  await client.listTokenizedEquities({ underlyingTicker: "nvda", limit: 1 });
+  assert.match(requestUrl, /underlying_ticker=NVDA/);
 });
 
 test("research client submits an idempotent job and reads its completed snapshot", async () => {

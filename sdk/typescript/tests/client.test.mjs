@@ -5,6 +5,17 @@ import { TidelightApiError, TidelightClient } from "../dist/index.js";
 const key = `tl_test_${"a".repeat(43)}`;
 const jobId = "01234567-89ab-4cde-8fab-0123456789ab";
 
+test("filters market instruments by normalized underlying ticker", async () => {
+  let requestUrl = "";
+  const client = new TidelightClient({ apiKey: key, fetch: async url => {
+    requestUrl = String(url);
+    return Response.json({ data: [], next_cursor: null, generated_at: 1, request_id: "market-filter" });
+  } });
+  await client.listTokenizedEquities({ limit: 1, underlyingTicker: "aapl" });
+  assert.match(requestUrl, /underlying_ticker=AAPL/);
+  await assert.rejects(client.listTokenizedEquities({ underlyingTicker: "AAPL?" }), TypeError);
+});
+
 test("starts, polls, and cancels an asynchronous research job", async () => {
   const calls = [];
   const client = new TidelightClient({ apiKey: key, fetch: async (url, init) => {

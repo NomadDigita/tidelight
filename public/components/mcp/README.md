@@ -15,7 +15,7 @@ The service accepts Tidelight OAuth access tokens and scoped developer API keys.
 
 | Tool | Required scope | Purpose |
 | --- | --- | --- |
-| `tidelight_search_tokenized_equities` | `market:read` | Search supported Reality tokenized-equity spot instruments |
+| `tidelight_search_tokenized_equities` | `market:read` | Search supported Reality tokenized-equity spot instruments, with server-side underlying ticker filtering |
 | `tidelight_get_tokenized_equity` | `market:read` | Filter supported instruments by underlying ticker |
 | `tidelight_start_company_research` | `research:run` | Start a durable research snapshot job |
 | `tidelight_get_research_job` | `research:run` | Read a job status and completed snapshot |

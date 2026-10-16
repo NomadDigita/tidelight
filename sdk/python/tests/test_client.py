@@ -89,6 +89,18 @@ class ClientTests(unittest.TestCase):
             client.list_tokenized_equities(limit=101)
         with self.assertRaises(ValueError):
             client.list_tokenized_equities(cursor="../../etc")
+        with self.assertRaises(ValueError):
+            client.list_tokenized_equities(underlying_ticker="AAPL?")
+
+    def test_underlying_ticker_is_normalized_and_sent_before_pagination(self):
+        calls = []
+
+        def opener(request, timeout):
+            calls.append(parse_qs(urlparse(request.full_url).query))
+            return FakeResponse({"data": [INSTRUMENT], "next_cursor": None, "generated_at": 1, "request_id": "filter"})
+
+        Client(KEY, opener=opener).list_tokenized_equities(limit=1, underlying_ticker="aapl")
+        self.assertEqual(calls[0]["underlying_ticker"], ["AAPL"])
 
     def test_webhook_management_and_delivery_history(self):
         endpoint_id = "01234567-89ab-4cde-8fab-0123456789ab"

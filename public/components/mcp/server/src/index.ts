@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const TIC_MCP_SERVER = { name: "tidelight-intelligence-cloud", version: "1.0.0" } as const;
 export type TicMcpOperation =
-  | { operation: "market.list"; limit: number }
+  | { operation: "market.list"; limit: number; underlyingTicker?: string }
   | { operation: "research.start"; ticker: string; idempotencyKey: string }
   | { operation: "research.get"; jobId: string }
   | { operation: "research.cancel"; jobId: string };
@@ -50,11 +50,7 @@ export function createTidelightMcpServer(scopes: ReadonlySet<string>, invoke: Ti
         limit: z.number().int().min(1).max(100).default(20).describe("Maximum number of instruments to return (1 to 100)."),
       },
     }, async ({ underlying_ticker, limit }) => asToolResult(
-      await invoke({ operation: "market.list", limit }),
-      body => {
-        const instruments = Array.isArray(body.data) ? body.data : [];
-        return { ...body, data: underlying_ticker ? instruments.filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && "underlying_ticker" in item && item.underlying_ticker === underlying_ticker) : instruments };
-      },
+      await invoke({ operation: "market.list", limit, ...(underlying_ticker ? { underlyingTicker: underlying_ticker } : {}) }),
     ));
 
     server.registerTool("tidelight_get_tokenized_equity", {
@@ -62,8 +58,7 @@ export function createTidelightMcpServer(scopes: ReadonlySet<string>, invoke: Ti
       description: "Get currently supported Reality spot instruments mapped to one underlying US stock. An empty list means Tidelight has no matching supported tokenized spot instrument at this time.",
       inputSchema: { ticker: tickerSchema },
     }, async ({ ticker }) => asToolResult(
-      await invoke({ operation: "market.list", limit: 100 }),
-      body => ({ ...body, data: (Array.isArray(body.data) ? body.data : []).filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && "underlying_ticker" in item && item.underlying_ticker === ticker) }),
+      await invoke({ operation: "market.list", limit: 100, underlyingTicker: ticker }),
     ));
   }
 

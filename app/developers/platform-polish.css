@@ -41,3 +41,35 @@
 :root[data-theme="daylight"] .tic-premium-landing .tic-access-visual>span{color:#176b5c}
 
 @media(max-width:620px){.tic-premium-footer .tic-brand span{display:inline}}
+
+/* Signed-out developer console: useful orientation without implying sample account activity. */
+.tic-console-entry .tic-console-header{min-height:74px;padding-inline:clamp(22px,5vw,76px)}
+.tic-console-entry .tic-brand{gap:10px}
+.tic-console-entry .tic-brand img{flex:none;border-radius:8px}
+.tic-console-entry .tic-brand strong{font-size:15px}
+.tic-console-entry .tic-console-header-actions{display:flex;align-items:center;gap:24px}
+.tic-console-entry .tic-console-header-actions>a{color:var(--tic-muted);font-size:12px}
+.tic-console-entry .tic-console-header-actions>a:hover,.tic-signin-doc-link:hover{color:var(--tic-accent)}
+.tic-signin-layout{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(320px,.82fr);align-items:center;gap:clamp(54px,8vw,112px);width:min(100%,1210px);min-height:calc(100vh - 74px);margin:0 auto;padding:clamp(65px,10vh,120px) 32px clamp(80px,12vh,140px)}
+.tic-signin{max-width:640px;margin:0;padding:0}
+.tic-signin h1{max-width:12ch;margin:18px 0 20px;font-size:clamp(44px,5.5vw,74px);font-weight:520;line-height:1.04;letter-spacing:-.065em}
+.tic-signin-description{max-width:510px;color:var(--tic-muted);font-size:16px;line-height:1.75}
+.tic-signin-actions{display:flex;align-items:center;flex-wrap:wrap;gap:23px;margin-top:30px}
+.tic-signin-actions .tic-button{min-height:46px;padding:12px 17px}
+.tic-signin-doc-link{color:var(--tic-text);font-size:12px;font-weight:650}
+.tic-signin-privacy{display:flex;align-items:center;gap:9px;margin:29px 0 0;color:var(--tic-muted);font-size:11px}
+.tic-signin-privacy span{color:var(--tic-accent);font-size:9px}
+.tic-signin-preview{overflow:hidden;border:1px solid var(--tic-line);border-radius:18px;background:radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--tic-accent) 10%,transparent),transparent 54%),color-mix(in srgb,var(--tic-panel) 92%,var(--tic-bg));box-shadow:0 24px 72px color-mix(in srgb,var(--tic-text) 7%,transparent)}
+.tic-signin-preview-heading{padding:29px 30px 23px;border-bottom:1px solid var(--tic-line)}
+.tic-signin-preview-heading .tic-eyebrow{margin:0 0 12px;font-size:9px}
+.tic-signin-preview-heading h2{max-width:18ch;margin:0;font-size:clamp(21px,2.4vw,29px);font-weight:520;line-height:1.17}
+.tic-signin-preview ol{list-style:none;margin:0;padding:0 30px}
+.tic-signin-preview li{display:grid;grid-template-columns:32px minmax(0,1fr) 20px;align-items:start;gap:13px;padding:22px 0;border-bottom:1px solid var(--tic-line)}
+.tic-signin-step{padding-top:2px;color:var(--tic-accent);font:10px var(--mono)}
+.tic-signin-preview li strong{font-size:13px;font-weight:650}
+.tic-signin-preview li p{margin:6px 0 0;color:var(--tic-muted);font-size:11px;line-height:1.6}
+.tic-signin-step-mark{display:grid;place-items:center;width:20px;height:20px;border:1px solid color-mix(in srgb,var(--tic-accent) 35%,var(--tic-line));border-radius:50%;color:var(--tic-accent);font-size:10px}
+.tic-signin-preview-foot{display:flex;flex-wrap:wrap;gap:8px;padding:20px 30px 24px}
+.tic-signin-preview-foot span{padding:7px 9px;border:1px solid var(--tic-line);border-radius:999px;color:var(--tic-muted);font:9px var(--mono)}
+@media(max-width:760px){.tic-signin-layout{grid-template-columns:1fr;gap:43px;min-height:auto;padding:70px 24px 118px}.tic-signin{max-width:600px}.tic-signin h1{max-width:11ch;font-size:clamp(43px,10vw,62px)}.tic-signin-preview{max-width:620px}.tic-console-entry .tic-console-header{padding-inline:20px}.tic-console-entry .tic-console-header-actions{gap:14px}}
+@media(max-width:460px){.tic-console-entry .tic-brand{gap:7px;font-size:13px}.tic-console-entry .tic-brand img{width:25px;height:25px}.tic-console-entry .tic-brand span{font-size:10px}.tic-console-entry .tic-console-header-actions{gap:10px}.tic-console-entry .tic-console-header-actions>a{font-size:10px}.tic-signin-layout{padding-inline:20px}.tic-signin-actions{align-items:flex-start;gap:17px}.tic-signin-actions .tic-button{gap:9px}.tic-signin-preview-heading{padding:24px 21px 19px}.tic-signin-preview ol{padding-inline:21px}.tic-signin-preview li{grid-template-columns:26px minmax(0,1fr) 18px;gap:9px;padding:19px 0}.tic-signin-preview-foot{padding:17px 21px 21px}}

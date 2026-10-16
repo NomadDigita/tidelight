@@ -14,6 +14,7 @@ on:
       - 'scripts/check-public-mirrors.mjs'
       - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
+      - 'scripts/check-python-package.py'
       - 'tests/public-mirrors.test.mjs'
   push:
     branches: [main]
@@ -29,12 +30,31 @@ on:
       - 'scripts/check-public-mirrors.mjs'
       - 'scripts/public-mirror-files.mjs'
       - 'scripts/sync-public-mirrors.mjs'
+      - 'scripts/check-python-package.py'
       - 'tests/public-mirrors.test.mjs'
 
 permissions:
   contents: read
 
 jobs:
+  python-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Test Python SDK source and built wheel
+        run: |
+          PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+          python scripts/check-python-package.py sdk/python
+
   validate:
     runs-on: ubuntu-latest
     steps:
@@ -57,8 +77,10 @@ jobs:
         run: npm ci --prefix packages/react && npm test --prefix packages/react && (cd packages/react && npm pack --dry-run --json)
       - name: Test CLI and validate packed files
         run: npm ci --prefix packages/cli && npm test --prefix packages/cli && (cd packages/cli && npm pack --dry-run --json)
-      - name: Test Python SDK
-        run: PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+      - name: Test Python SDK and validate wheel
+        run: |
+          PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+          python scripts/check-python-package.py sdk/python
       - name: Test MCP package and validate packed files
         run: npm ci --prefix public/components/mcp/server && npm test --prefix public/components/mcp/server && cd public/components/mcp/server && npm pack --dry-run --json
       - name: Test public API contract

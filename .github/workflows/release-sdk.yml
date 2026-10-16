@@ -45,6 +45,7 @@ jobs:
           elif [[ "$SDK" == "python" ]]; then
             VERSION=$(python -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('sdk/python/pyproject.toml').read(), re.M).group(1))")
             PYTHONPATH=sdk/python/src python -m unittest discover -s sdk/python/tests -v
+            python scripts/check-python-package.py sdk/python
             REPO=tidelight-python
           else
             VERSION=$(node -p "require('./public/components/mcp/server/package.json').version")
@@ -81,6 +82,7 @@ jobs:
           elif [[ "${{ inputs.sdk }}" == "python" ]]; then
             MIRROR_VERSION=$(python -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('pyproject.toml').read(), re.M).group(1))")
             PYTHONPATH=src python -m unittest discover -s tests -v
+            python "$GITHUB_WORKSPACE/scripts/check-python-package.py" .
           else
             cd server
             npm ci

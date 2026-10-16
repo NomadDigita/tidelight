@@ -18,6 +18,10 @@ test("the status hostname serves the page and live health check only", () => {
   assert.deepEqual(resolveServiceHostRoute("status.tidelight.app", "/"), { kind: "rewrite", pathname: "/status" });
   assert.deepEqual(resolveServiceHostRoute("status.tidelight.app", "/health"), { kind: "rewrite", pathname: "/api/health" });
   assert.deepEqual(resolveServiceHostRoute("status.tidelight.app", "/admin"), { kind: "not-found" });
+  for (const path of ["/icon.svg", "/tidelight-mark.svg", "/manifest.webmanifest", "/api/privacy/analytics-consent"]) {
+    assert.equal(resolveServiceHostRoute("status.tidelight.app", path), null);
+  }
+  assert.deepEqual(resolveServiceHostRoute("status.tidelight.app", "/other.svg"), { kind: "not-found" });
   assert.equal(resolveServiceHostRoute("tidelight.app", "/developers"), null);
 });
 
@@ -26,5 +30,10 @@ test("the developer docs hostname serves only the existing documentation page", 
   assert.deepEqual(resolveServiceHostRoute("dev.tidelight.app", "/api"), { kind: "rewrite", pathname: "/developers/docs" });
   assert.deepEqual(resolveServiceHostRoute("dev.tidelight.app", "/developers/docs"), { kind: "rewrite", pathname: "/developers/docs" });
   assert.deepEqual(resolveServiceHostRoute("dev.tidelight.app", "/developers/console"), { kind: "not-found" });
+  assert.equal(resolveServiceHostRoute("dev.tidelight.app", "/tic-architecture-visual.svg"), null);
+  for (const path of ["/tic-architecture-visual.svg", "/tic-architecture-mobile.svg", "/icon.svg", "/tidelight-mark.svg", "/manifest.webmanifest", "/api/privacy/analytics-consent"]) {
+    assert.equal(resolveServiceHostRoute("dev.tidelight.app", path), null);
+  }
+  assert.deepEqual(resolveServiceHostRoute("dev.tidelight.app", "/private.svg"), { kind: "not-found" });
   assert.equal(resolveServiceHostRoute("docs.tidelight.app", "/"), null);
 });

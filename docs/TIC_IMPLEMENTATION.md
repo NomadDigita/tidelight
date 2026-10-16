@@ -228,6 +228,48 @@ This is a full verification pass for current merged code, local suites, public p
 7. Resolve the Supabase advisor findings, FK indexing review, and legacy migration source-of-truth discrepancy. Leaked-password protection requires owner/dashboard configuration review.
 8. Commercial billing, package publication, and organization email invitations remain blocked on real pricing, account eligibility/credentials, and verified mail configuration.
 
+## Follow-up verification after PR #176 — 16 October 2026
+
+PR #176 merged as `c81dce5c5ed4fabbec846894f22486fb1b18818d`; Vercel production deployment `dpl_98SkhXN3NHu46kh6FqaDok1e24Ko` is READY and includes the five TIC host aliases. GitHub Application Checks, isolated OAuth DB tests, isolated Nightwatch DB tests, and Vercel deployment passed.
+
+### Accessibility and production UI
+
+The initial axe run found contrast problems on the Daylight palette, an unlabeled footer brand link on mobile, and documentation code/table scroll areas that were not keyboard-focusable. PR #176 corrected these.
+
+After deployment, Chromium and axe-core 4.14 ran WCAG 2.1 A/AA and best-practice rules against the public production portal, docs, signed-out console, and status pages at 1440 px and 390 px. Each reported zero axe violations and no horizontal overflow. The three developer themes were clicked and audited at mobile width. The production docs architecture diagram was inspected directly in its figure; a prior full-page screenshot missed the lazy-loaded below-fold image, but the standalone figure renders correctly. The status page is visually unobscured. This does not cover authenticated console states, screen-reader testing, full keyboard navigation, or a complete manual accessibility audit.
+
+### Sign-in and recovery affordances
+
+Production `/login` renders without page errors at 390 px, exposes the Google button and password recovery affordance, and the recovery route renders the new-password form without an authenticated recovery link. Google OAuth redirects to Google's account sign-in page for Tidelight. This runtime has no saved Google account session; the provider requested an email or phone, so no account was selected, no credentials were entered, and no new Tidelight account was created. No reset email was sent. Password recovery's message request, email delivery, callback exchange, password update, and subsequent sign-in remain untested end to end.
+
+### MCP compatibility and Research → Strategy → Nightwatch
+
+The official Python MCP SDK's Streamable HTTP transport attempted the production `/mcp` endpoint and received HTTP 401 without a token, as expected. The public protected-resource metadata remains reachable. This is an unauthenticated challenge test, not an authenticated third-party integration. No active API-key secret or signed-in browser session was available, so additional authenticated MCP clients could not call tools.
+
+No new Research → Strategy → Nightwatch run was started. Previous real production assessments remained at the evidence gate; manufacturing or bypassing a qualifying result would invalidate the test. The positive handoff and downstream paper-only lineage still require a genuine qualifying research result.
+
+### Nightwatch scheduler and isolated database restore test
+
+Read-only production DB checks found the `nightwatch-custom-schedules` cron active at once per minute with 373 successful poll runs and zero non-successes in the prior 24 hours (as of 07:25 UTC). Three schedules were enabled, none were due then, and no `nightwatch_schedule_executions` row existed. The next due time was 09:00 UTC. Poller health does not prove a normal due run; observe a natural owner schedule and reconcile its execution/ledger afterward. Do not invoke the global worker or manufacture a production schedule.
+
+A local, synthetic Nightwatch PostgreSQL test database was dumped in custom format, restored to a fresh temporary database, and the restore contained nine expected non-system tables. The temporary database and dump were deleted. This tests local `pg_dump`/`pg_restore` mechanics only; it is not a Supabase production-backup restore or disaster-recovery rehearsal. Production restore tools overwrite live data and were not invoked.
+
+### Supabase advisor and migration reconciliation
+
+The security advisor currently reports:
+- `rls_enabled_no_policy` INFO on 21 tables, including 16 TIC/developer tables. Catalog checks confirm those 16 have RLS enabled, no direct SELECT for `anon` or `authenticated`, and service-role SELECT. The tables are intentionally service-only; INFO does not prove public exposure.
+- Two authenticated-callable `SECURITY DEFINER` quota functions. Their live definitions have an empty search path, require `auth.uid()`, and take per-user advisory locks before enforcing per-user hourly caps; `anon` cannot execute them. Authenticated execution is intentional for their guarded reserve operations, although retaining them in exposed `public` keeps the advisor warning and deserves a future least-privilege design review.
+- `pg_net` is installed in `public`.
+- Supabase Auth leaked-password protection remains disabled; no Auth configuration control or Supabase Management API token is available in this runtime to change it.
+
+Performance advisor still reports 41 unindexed foreign keys and unrelated INFO/WARN findings. No indexes were added without workload/plan evidence, because this is a repository-wide finding spanning Tidelight features outside TIC.
+
+The production database lists 59 applied migrations; the repository has 58 source migrations. Normalized names match except applied `bitget_demo_credential_vault`. Searching local git history and the available TidelightOrg GitHub code index did not locate its SQL source. Do not recreate it from inference; recover the exact historical migration from the former authoritative source and reconcile checksums/history.
+
+### Bitget terms review
+
+As of this review, Bitget's published [API Key Terms of Use](https://www.bitget.com/support/articles/12560603797947) describe an individual, limited, non-transferable API license; its [Terms of Use](https://www.bitget.com/support/articles/360014944032-terms-of-use) restrict resale/commercial use absent written agreement and restrict further transmission/dissemination of Bitget IP. The [Reality market-data docs](https://www.bitget.com/docs/catalog/reality/market-data) describe public endpoints, but public endpoint availability alone is not written redistribution permission. These materials do not establish that Tidelight may redistribute Reality data to external API customers. No written Tidelight grant was located or supplied. The API remains enabled under the owner's explicit instruction; do not represent redistribution rights as confirmed or broaden access until written terms are reviewed.
+
 The production host responses, local test results, and visually inspected screenshots are evidence for the bounded scope above; they are not a substitute for the still-open account-specific and operational gates.
 
 

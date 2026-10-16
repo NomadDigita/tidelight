@@ -19,6 +19,9 @@ on:
       - 'scripts/test-package-consumers.mjs'
       - 'tests/npm-package-archive.test.mjs'
       - 'tests/public-mirrors.test.mjs'
+      - 'app/developers/packages/**'
+      - 'scripts/generate-developer-package-catalog.mjs'
+      - 'tests/developer-package-catalog.test.mjs'
   push:
     branches: [main]
     paths:
@@ -38,6 +41,9 @@ on:
       - 'scripts/test-package-consumers.mjs'
       - 'tests/npm-package-archive.test.mjs'
       - 'tests/public-mirrors.test.mjs'
+      - 'app/developers/packages/**'
+      - 'scripts/generate-developer-package-catalog.mjs'
+      - 'tests/developer-package-catalog.test.mjs'
 
 permissions:
   contents: read
@@ -77,6 +83,8 @@ jobs:
       - run: npm ci
       - name: Validate public source boundaries
         run: node scripts/check-public-mirrors.mjs
+      - name: Verify developer package catalog is current
+        run: npm run check:package-catalog
       - name: Test TypeScript SDK archive
         run: npm ci --prefix sdk/typescript && npm test --prefix sdk/typescript && node scripts/check-npm-package-archive.mjs sdk/typescript
       - name: Test React integration and validate packed files

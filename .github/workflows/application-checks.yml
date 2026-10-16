@@ -98,3 +98,13 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261005183731_nightwatch_research_lineage.sql
       - name: Test scheduled opt-in, ownership, pause, and service boundary
         run: psql -v ON_ERROR_STOP=1 -f tests/postgres/nightwatch-scheduled.sql
+
+      - name: Prepare custom schedule database
+        run: |
+          createdb nightwatch_custom_test
+          psql -v ON_ERROR_STOP=1 -d nightwatch_custom_test -f tests/postgres/nightwatch-custom-prerequisites.sql
+          psql -v ON_ERROR_STOP=1 -d nightwatch_custom_test -f supabase/migrations/20261004194506_nightwatch_paper_agent.sql
+          psql -v ON_ERROR_STOP=1 -d nightwatch_custom_test -f supabase/migrations/20261004194718_nightwatch_rpc_hardening.sql
+          psql -v ON_ERROR_STOP=1 -d nightwatch_custom_test -f supabase/migrations/20261015193712_nightwatch_custom_schedules.sql
+      - name: Test custom schedules, RLS, leases, daily budgets, and paper ledger
+        run: psql -v ON_ERROR_STOP=1 -d nightwatch_custom_test -f tests/postgres/nightwatch-custom.sql

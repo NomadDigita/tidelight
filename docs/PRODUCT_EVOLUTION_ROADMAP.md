@@ -4,7 +4,7 @@
 
 **Product thesis:** one decision record follows a market event from sourced evidence, through mapped exposure and explicit scenarios, into reproducible strategy analysis and a guarded paper decision. The human remains accountable for investment decisions. Tidelight does not place live orders.
 
-**Current baseline:** live Bitget spot and Reality market data; source-bounded Qwen research briefs with quote validation and exposure mapping; deterministic SMA backtests with costs, holdout metrics, and archived candles; and manual, user-triggered Nightwatch paper checks with deterministic account controls.
+**Current baseline:** live Bitget spot and Reality market data; source-bounded Qwen research briefs with quote validation and exposure mapping; deterministic SMA backtests with costs, holdout metrics, and archived candles; and manual plus configurable daily Nightwatch paper checks. Production activation of the custom schedule dispatcher is pending the application deployment.
 
 **Security and sign-in:** confirmed complete by the product owner. Treat account isolation, authentication, and passkey checks as accepted release evidence; revisit only if a regression or new feature changes those boundaries.
 
@@ -35,6 +35,12 @@ Research exposure cards will link to the matching Bitget Reality symbol in Strat
 ## Product posture
 
 “Institutional grade” is a target, not a current claim. Tidelight can become a professional research and paper-decision tool with strong provenance and controls while remaining paper-only. Do not claim institutional readiness, audited alpha, autonomous execution, or production trading until the corresponding evidence gates above have passed and the relevant independent reviews are complete.
+
+## Latest delivery status · 2026-10-16
+
+Custom Nightwatch schedules are implemented in the current development branch and their database schema is applied in production. A schedule has an account-owned slot, Reality symbol, strategy playbook, optional owner-linked research run, local wall-clock time (including seconds), timezone, and append-only execution history. Each account may save up to ten. A worker lease, schedule revision, pause check, daily cap, and the existing bounded paper ledger protect each scheduled review. PostgreSQL 17 integration tests cover ownership, limits, DST conversion, retries, idempotence, pause/edit behavior, and unchanged account isolation.
+
+Hosted Supabase Cron runs at minute granularity. Seconds remain part of the configured local time, while execution begins at the first dispatcher poll after the due time; queued schedules may add further delay because the worker handles one claimed execution per poll. Do not advertise second-accurate execution. The dispatcher stays inactive until the Vercel worker deployment is READY and has been verified; then run `ops/activate-nightwatch-schedule-cron.sql` and confirm the authenticated readiness state.
 
 ## Delivery status · 2026-10-05
 

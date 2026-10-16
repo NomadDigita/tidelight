@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import MfaChallenge from "@/app/ui/mfa-challenge";
 import PnlShareCard from "@/app/ui/pnl-share-card";
 import AssetSearchPicker from "@/app/ui/asset-search-picker";
+import NightwatchSchedules from "@/app/ui/nightwatch-schedules";
 import { ALPHA_STRATEGIES, BACKTEST_STRATEGY, type StrategyKey } from "@/lib/backtest";
 
 type Asset = { symbol: string; name: string; ticker: string | null; lastPrice: number; change24h: number | null; logoUrl: string | null };
@@ -71,7 +72,6 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
   const [notice, setNotice] = useState("");
   const [view, setView] = useState<"decisions" | "orders">("decisions");
   const [preferences, setPreferences] = useState<NightwatchPreferences>({ trigger_mode: "manual", monitor_symbol: null, research_run_id: null, alert_on_signal: true, alert_on_fill: true, daily_summary: true, nightwatch_signals: false, nightwatch_fills: false, nightwatch_risks: false, nightwatch_research: false, nightwatch_daily_summary: false, playbook_key: initialPlaybookKey ?? BACKTEST_STRATEGY });
-  const [schedulerAvailable, setSchedulerAvailable] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [alerts, setAlerts] = useState(initialAlerts);
   const [visibleAlerts, setVisibleAlerts] = useState(5);
@@ -102,7 +102,7 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
     return () => { cancelled = true; };
   }, [symbol]);
 
-  useEffect(() => { if (signedIn) void fetch("/api/nightwatch/preferences").then((response) => response.ok ? response.json() : null).then((data: (NightwatchPreferences & { scheduler_available?: boolean }) | null) => { if (data) { const loaded = initialPlaybookKey ? { ...data, playbook_key: initialPlaybookKey } : data; setPreferences(loaded); setSchedulerAvailable(Boolean(data.scheduler_available)); if (initialPlaybookKey && data.playbook_key !== initialPlaybookKey) void fetch("/api/nightwatch/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(loaded) }); } }).catch(() => undefined); }, [signedIn, initialPlaybookKey]);
+  useEffect(() => { if (signedIn) void fetch("/api/nightwatch/preferences").then((response) => response.ok ? response.json() : null).then((data: (NightwatchPreferences & { scheduler_available?: boolean }) | null) => { if (data) { const loaded = initialPlaybookKey ? { ...data, playbook_key: initialPlaybookKey } : data; setPreferences(loaded); if (initialPlaybookKey && data.playbook_key !== initialPlaybookKey) void fetch("/api/nightwatch/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(loaded) }); } }).catch(() => undefined); }, [signedIn, initialPlaybookKey]);
 
   async function savePreferences(next: Partial<NightwatchPreferences>) {
     if (!signedIn) { router.push("/login"); return; }
@@ -187,28 +187,24 @@ export default function NightwatchDesk({ signedIn, assets, initialRuns, initialO
       <div className="nw-preferences-intro">
         <span className="eyebrow small-eyebrow">CONTROL SURFACE</span>
         <h2>Choose how Nightwatch speaks.</h2>
-        <p>Run checks manually or opt in to one scheduled daily Reality market check. Pausing the paper agent skips scheduled checks; every fill remains simulated and guardrail-bound.</p>
+        <p>Choose a playbook for manual checks and manage delivery preferences. Daily reviews below can use their own markets, times, and playbooks.</p>
       </div>
       <div className="nw-preference-controls">
         <div className="nw-preference-plan">
-          <div className="nw-cadence-note"><span>CHECK CADENCE</span><b>{preferences.trigger_mode === "every_check" ? `Scheduled · ${preferences.monitor_symbol}` : "Manual · completed 4H candle"}</b></div>
+          <div className="nw-cadence-note"><span>CHECK CADENCE</span><b>Manual · completed 4H candle</b></div>
           <label className="nw-monitor-select">ALPHA FACTORY PLAYBOOK
             <select value={preferences.playbook_key} onChange={(event) => void savePreferences({ playbook_key: event.target.value as StrategyKey })} disabled={!signedIn || savingPreferences}>
               {Object.entries(ALPHA_STRATEGIES).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
             </select>
             <small>{ALPHA_STRATEGIES[preferences.playbook_key].description} Nightwatch weighs this rule with research and account risk before choosing an action.</small>
           </label>
-          <label className="nw-schedule-control"><input type="checkbox" checked={preferences.trigger_mode === "every_check"} onChange={(event) => void savePreferences({ trigger_mode: event.target.checked ? "every_check" : "manual", monitor_symbol: event.target.checked ? (preferences.monitor_symbol ?? symbol) : preferences.monitor_symbol, research_run_id: event.target.checked ? researchRunId : preferences.research_run_id })} disabled={!signedIn || savingPreferences || !schedulerAvailable}/> Schedule one daily check</label>
-          <div className="nw-monitor-select"><AssetSearchPicker label="SCHEDULED REALITY MARKET" assets={assets} value={preferences.monitor_symbol ?? symbol} onChange={(nextSymbol) => void savePreferences({ monitor_symbol: nextSymbol, trigger_mode: preferences.trigger_mode })} disabled={!signedIn || savingPreferences || !schedulerAvailable}/></div>
-        </div>
-        <div className="nw-scheduler-notes">
-          {!schedulerAvailable ? <small>Scheduler setup required on this deployment. Manual checks and daily summaries remain available.</small> : <small>Scheduled for 09:00 UTC daily; Hobby may start it any time during that hour. One market per account. Uses completed candles, skips while paused, and never sends exchange orders.</small>}
-          {preferences.research_run_id ? <small>Linked research note {preferences.research_run_id.slice(0, 8).toUpperCase()} follows this schedule.</small> : null}
         </div>
         <div className="nw-workspace-alerts"><span>NOTIFICATION PREFERENCES</span><p>Choose in-app and email delivery from your notification center.</p><Link href="/notifications?view=settings" className="nw-inline-link">Manage notification settings ↗</Link></div>
         <button type="button" className="nw-summary-button" onClick={() => void generateSummary()} disabled={!signedIn || summaryBusy}>{summaryBusy ? "Building summary…" : "Generate today's summary"}</button>
       </div>
     </section>
+
+    <NightwatchSchedules signedIn={signedIn} assets={assets} symbol={symbol} playbookKey={preferences.playbook_key} researchRunId={researchRunId}/>
 
     {error ? <div className="strategy-error" role="alert">{error}</div> : null}{notice ? <div className="nw-notice" role="status"><span>✓</span>{notice}</div> : null}
 

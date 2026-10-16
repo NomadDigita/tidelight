@@ -26,7 +26,7 @@ curl --fail-with-body \
   'https://api.tidelight.app/v1/market/instruments?kind=rtoken&underlying_ticker=AAPL&limit=10'
 ```
 
-Responses include a request ID and market provenance, including the provider source and timestamp. rToken spot instruments are tokenized products; they are not underlying shares or stock perpetual contracts. An unavailable provider returns a safe service error instead of fabricated values. Async research responses include a job ID; reuse the same `Idempotency-Key` when retrying a start request.
+Responses include a request ID and market provenance, including the provider source and timestamp. rToken spot instruments are tokenized products; they are not underlying shares or stock perpetual contracts. An unavailable provider returns a safe service error instead of fabricated values. Bitget-backed market responses fail closed with `503 provider_terms_unconfirmed` until written redistribution permission is confirmed and configured. Async research responses include a job ID; reuse the same `Idempotency-Key` when retrying a start request.
 
 Errors use a stable code, safe message, and request ID. Respect `429` quotas and only retry safe operations or idempotent requests. All request and response schemas, status codes, limits, and OAuth-free API-key requirements are defined by the OpenAPI contract.
 

@@ -1,10 +1,12 @@
 import "server-only";
 import { getBitgetMarketUniverse } from "@/lib/bitget-market";
 import { filterAndPageTokenizedEquities, type InstrumentFilter } from "@/lib/tic/market-query";
+import { requireBitgetMarketRedistributionAllowed } from "@/lib/tic/market-terms";
 
 export { validateInstrumentQuery } from "@/lib/tic/market-query";
 
 export async function listTokenizedEquityInstruments(limit: number, cursor: string | null, underlyingTicker: string | null = null) {
+  requireBitgetMarketRedistributionAllowed(process.env.TIC_BITGET_MARKET_DATA_REDISTRIBUTION_ALLOWED);
   const market = await getBitgetMarketUniverse();
   const filter: InstrumentFilter = { limit, cursor, underlyingTicker };
   const { assets, hasMore } = filterAndPageTokenizedEquities(market.assets, filter);

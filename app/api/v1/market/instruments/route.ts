@@ -1,5 +1,6 @@
 import { listTokenizedEquityInstruments, validateInstrumentQuery } from "@/lib/tic/market";
 import { apiError, authorizeMarketRequest, finishUsage } from "@/lib/tic/credentials";
+import { MarketRedistributionNotAuthorizedError } from "@/lib/tic/market-terms";
 
 export async function GET(request: Request) {
   const started = performance.now();
@@ -20,8 +21,11 @@ export async function GET(request: Request) {
     const result = await listTokenizedEquityInstruments(query.limit, query.cursor, query.underlyingTicker);
     await finishUsage(admin, usageId, 200, started);
     return Response.json({ ...result, request_id: requestId }, { headers: { "Cache-Control": "private, no-store", "X-Request-Id": requestId } });
-  } catch {
+  } catch (error) {
     await finishUsage(admin, usageId, 503, started);
+    if (error instanceof MarketRedistributionNotAuthorizedError) {
+      return apiError(503, "provider_terms_unconfirmed", "Redistribution permission for the upstream market data has not been confirmed.", requestId);
+    }
     return apiError(503, "provider_unavailable", "Verified tokenized equity data is temporarily unavailable.", requestId);
   }
 }

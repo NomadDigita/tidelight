@@ -4,12 +4,17 @@ import json
 import os
 import sys
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+
+try:
+    from ._http import open_api_url
+except ImportError:  # Also support `python rest/market.py` from the examples directory.
+    from _http import open_api_url
 
 API_ROOT = "https://api.tidelight.app/v1"
 
 
-def list_tokenized_equities(api_key, open_url=urlopen):
+def list_tokenized_equities(api_key, open_url=None):
     if not api_key:
         raise ValueError("Set TIDELIGHT_API_KEY in your environment.")
     request = Request(
@@ -17,7 +22,7 @@ def list_tokenized_equities(api_key, open_url=urlopen):
         headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
     )
     try:
-        with open_url(request, timeout=15) as response:
+        with (open_url or open_api_url)(request, timeout=15) as response:
             body = json.loads(response.read())
     except HTTPError as error:
         try:

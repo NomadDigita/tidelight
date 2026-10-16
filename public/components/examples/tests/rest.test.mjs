@@ -37,3 +37,25 @@ test("research rejects malformed tickers before making a request", async () => {
   await assert.rejects(runCompanyResearch("tl_test_example", "NVDA;DROP", { fetchImpl: async () => { called = true; } }), /supported stock ticker/);
   assert.equal(called, false);
 });
+
+test("research rejects an invalid polling bound before making a request", async () => {
+  let called = false;
+  await assert.rejects(
+    runCompanyResearch("tl_test_example", "NVDA", { maxPolls: 0, fetchImpl: async () => { called = true; } }),
+    /maxPolls must be an integer from 1 to 300/,
+  );
+  assert.equal(called, false);
+});
+
+test("bounded research polling does not sleep after its final status check", async () => {
+  let pauses = 0;
+  await assert.rejects(
+    runCompanyResearch("tl_test_example", "NVDA", {
+      maxPolls: 1,
+      fetchImpl: async () => Response.json({ job_id: "3d7fbd5c-a03c-4ba1-ae77-8ecf44dbdb5e", status: "running" }),
+      pause: async () => { pauses++; },
+    }),
+    /bounded polling/,
+  );
+  assert.equal(pauses, 0);
+});

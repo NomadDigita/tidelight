@@ -5,7 +5,7 @@ info:
   license:
     name: Proprietary
     url: https://tidelight.app/terms
-  description: The versioned developer API exposes read only market data and permission scoped asynchronous research jobs. Tokenized equity spot data is distinct from underlying US stock and perpetual contract data.
+  description: The versioned developer API exposes permission scoped asynchronous research jobs and market data only where the provider's redistribution terms permit it. Tokenized equity spot data is distinct from underlying US stock and perpetual contract data. Bitget-backed market data returns 503 with provider_terms_unconfirmed until written redistribution authorization is configured.
 servers:
   - url: https://api.tidelight.app/v1
 security:
@@ -31,7 +31,7 @@ paths:
           schema: { type: string, pattern: '^[A-Z0-9]{2,32}$' }
       responses:
         '200':
-          description: A page of instruments from Bitget Reality spot
+          description: A page of instruments from Bitget Reality spot, only when redistribution is authorized
           headers:
             X-Request-Id: { schema: { type: string, format: uuid } }
           content:
@@ -48,7 +48,21 @@ paths:
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '429': { $ref: '#/components/responses/Error' }
-        '503': { $ref: '#/components/responses/Error' }
+        '503':
+          description: Upstream is unavailable or provider redistribution authorization is not configured (provider_terms_unconfirmed).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: object
+                    required: [code, message, request_id]
+                    properties:
+                      code: { type: string, enum: [provider_unavailable, provider_terms_unconfirmed] }
+                      message: { type: string }
+                      request_id: { type: string, format: uuid }
   /research/jobs:
     post:
       operationId: startCompanySnapshot

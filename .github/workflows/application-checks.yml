@@ -108,3 +108,35 @@ jobs:
           psql -v ON_ERROR_STOP=1 -d nightwatch_custom_test -f supabase/migrations/20261015193712_nightwatch_custom_schedules.sql
       - name: Test custom schedules, RLS, leases, daily budgets, and paper ledger
         run: psql -v ON_ERROR_STOP=1 -d nightwatch_custom_test -f tests/postgres/nightwatch-custom.sql
+
+  advisor-remediation-database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tidelight_advisor_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tidelight_advisor_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: tidelight_advisor_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare isolated advisor schema
+        run: psql -v ON_ERROR_STOP=1 -f tests/postgres/advisor-remediation-prerequisites.sql
+      - name: Apply advisor remediation migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261016091317_advisor_policy_and_index_fixes.sql
+      - name: Verify policy boundaries, privileged RPCs, and foreign-key indexes
+        run: psql -v ON_ERROR_STOP=1 -f tests/postgres/advisor-remediation.sql

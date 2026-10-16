@@ -1,0 +1,26 @@
+{
+  "name": "@tidelight/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Official Tidelight Intelligence Cloud command-line client.",
+  "keywords": ["tidelight", "cli", "market-intelligence", "research", "webhooks"],
+  "license": "UNLICENSED",
+  "repository": { "type": "git", "url": "https://github.com/TidelightOrg/tidelight.git", "directory": "packages/cli" },
+  "engines": { "node": ">=22" },
+  "bin": { "tidelight": "./dist/bin.js" },
+  "files": ["dist", "README.md", "CHANGELOG.md"],
+  "dependencies": {
+    "@napi-rs/keyring": "2.1.1",
+    "@tidelight/sdk": "file:../../sdk/typescript"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.4",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "prepack": "npm run build"
+  }
+}

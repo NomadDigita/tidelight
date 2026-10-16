@@ -7,13 +7,18 @@ import sys
 import time
 import uuid
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+
+try:
+    from ._http import open_api_url
+except ImportError:  # Also support `python rest/research.py` from the examples directory.
+    from _http import open_api_url
 
 API_ROOT = "https://api.tidelight.app/v1"
 TERMINAL = {"complete", "failed", "cancelled"}
 
 
-def request_json(api_key, path, method="GET", body=None, idempotency_key=None, open_url=urlopen):
+def request_json(api_key, path, method="GET", body=None, idempotency_key=None, open_url=None):
     headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
     data = None
     if body is not None:
@@ -23,7 +28,7 @@ def request_json(api_key, path, method="GET", body=None, idempotency_key=None, o
         headers["Idempotency-Key"] = idempotency_key
     request = Request(f"{API_ROOT}{path}", data=data, headers=headers, method=method)
     try:
-        with open_url(request, timeout=15) as response:
+        with (open_url or open_api_url)(request, timeout=15) as response:
             return json.loads(response.read())
     except HTTPError as error:
         try:
@@ -39,11 +44,13 @@ def request_json(api_key, path, method="GET", body=None, idempotency_key=None, o
         raise RuntimeError(f"Tidelight API is unreachable: {type(error).__name__}") from None
 
 
-def run_company_research(api_key, ticker, poll_limit=60, pause=time.sleep, open_url=urlopen):
+def run_company_research(api_key, ticker, poll_limit=60, pause=time.sleep, open_url=None):
     if not api_key:
         raise ValueError("Set TIDELIGHT_API_KEY in your environment.")
     if not re.fullmatch(r"[A-Za-z][A-Za-z0-9.]{0,9}", ticker):
         raise ValueError("Provide a supported stock ticker.")
+    if type(poll_limit) is not int or not 1 <= poll_limit <= 300:
+        raise ValueError("poll_limit must be an integer from 1 to 300.")
     started = request_json(
         api_key,
         "/research/jobs",

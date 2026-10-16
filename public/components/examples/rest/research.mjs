@@ -21,6 +21,7 @@ async function request(apiKey, path, init = {}, fetchImpl = fetch) {
 export async function runCompanyResearch(apiKey, ticker, { fetchImpl = fetch, pause = ms => new Promise(resolve => setTimeout(resolve, ms)), maxPolls = 60 } = {}) {
   if (!apiKey) throw new Error("Set TIDELIGHT_API_KEY in your environment.");
   if (!/^[A-Za-z][A-Za-z0-9.]{0,9}$/.test(ticker)) throw new Error("Provide a supported stock ticker.");
+  if (!Number.isInteger(maxPolls) || maxPolls < 1 || maxPolls > 300) throw new RangeError("maxPolls must be an integer from 1 to 300.");
   const started = await request(apiKey, "/research/jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Idempotency-Key": `example-${crypto.randomUUID()}` },
@@ -29,7 +30,7 @@ export async function runCompanyResearch(apiKey, ticker, { fetchImpl = fetch, pa
   for (let attempt = 0; attempt < maxPolls; attempt++) {
     const job = await request(apiKey, `/research/jobs/${encodeURIComponent(started.job_id)}`, {}, fetchImpl);
     if (TERMINAL.has(job.status)) return job;
-    await pause(2_000);
+    if (attempt + 1 < maxPolls) await pause(2_000);
   }
   throw new Error(`Research is still running after bounded polling; job ${started.job_id} remains available in the developer console.`);
 }

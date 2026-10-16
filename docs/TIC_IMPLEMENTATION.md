@@ -181,6 +181,56 @@ A fresh signed-in AAPL Research assessment was visually inspected at the product
 
 The AAPL run exposed the product workflow and the hold boundary without recording its private run ID, source headlines, or private report text in this repository. The signed-in browser profile was reused and retained; no new sign-in code was requested. Continue with a genuine qualifying run only when source quality and directional evidence satisfy the existing gate. After that, verify the originating research run and Reality symbol in Strategy Lab and Nightwatch, and use only the normal owner-scoped Nightwatch schedule to verify paper lineage and ledger invariants. The global scheduler must not be invoked solely to force an account test.
 
+## Full verification and PR #174 production rollout — 16 October 2026
+
+PR #174 merged to `main` as `edefbe2473bdef8eb0d9177d7f74a9034a824ffa`. Vercel deployment `dpl_CPvfjZ8UM4YdXU4iGwn3nTqGrHU5` is `READY`, target `production`, with the exact merged SHA. Its aliases include all five requested service destinations: `tidelight.app`, `api.tidelight.app`, `mcp.tidelight.app`, `dev.tidelight.app`, and `status.tidelight.app`. GitHub combined status reports Vercel success.
+
+PR #174 fixes two issues found during production visual/network inspection. The developer docs/status routing now permits only the needed shared brand/icon/manifest/consent resources, with architecture diagrams allowed on the docs host; unrelated paths remain denied. The status page hides global guide/quick-action widgets that previously overlapped its header. Targeted routing tests cover allowed resources and blocked private assets.
+
+### Code and package verification
+
+Latest full local verification on the merged source:
+- `npm test`: 156 passed, 0 failed.
+- `npm run typecheck`, `npm run lint`, `npm run build`: passed; production build generated 63 app routes.
+- `npm run test:public-mirrors`: passed mirror validation, API contract tests, MCP build/tests, and JavaScript/Python examples.
+- TypeScript SDK: 7 passed. Python SDK: 9 passed using the package source path.
+- Targeted service-host routing test: 4 passed. `git diff --check`: passed.
+- Existing Node module-type performance warnings were emitted; they did not fail checks.
+
+### Live production smoke results
+
+Requests were made after the READY deployment was confirmed:
+- Portal and signed-out console: HTTP 200.
+- API service index: HTTP 200; unauthenticated market API: HTTP 401.
+- MCP protected-resource metadata: HTTP 200; unauthenticated Streamable HTTP endpoint: HTTP 401.
+- Developer docs root and docs page: HTTP 200.
+- Desktop/mobile architecture SVGs, icon, brand mark, and web manifest: HTTP 200.
+- Anonymous analytics-consent endpoint: HTTP 401, expected for its auth boundary.
+- Unsupported docs-host asset and console route: HTTP 404, as intended.
+- Status page and health endpoint: HTTP 200.
+- All five production aliases are attached to the exact READY deployment.
+
+### Visual and database/security inspection
+
+The source fix was visually inspected in the local production build at 1440 px and 390 px. Both docs diagrams render, the mobile diagram uses its stacked layout, the three theme controls select Daylight/Night Tide/Blue Hour correctly, and neither docs nor status has horizontal overflow. The status header is no longer obscured by global widgets. Production visual browser runs from before the repair directly observed the broken assets/overlap; the repaired rendering was inspected in the local production build because Vercel's preview protection page blocks direct browser inspection. Live production HTTP checks confirmed the corrected asset paths and response codes after deployment. No user-facing private console data was accessed in this pass.
+
+Supabase catalog checks confirmed TIC tables have RLS enabled and no direct `anon`/`authenticated` SELECT grants; service-role access is present. The security advisor still reports `pg_net` in public, two authenticated SECURITY DEFINER quota functions (whose definitions were inspected for `auth.uid()` checks, per-user advisory locks, and revoked PUBLIC/anon execution), and disabled leaked-password protection. Performance advisor reports 41 unindexed foreign-key findings, including some developer tables. The repository has 58 migration files matching 58 of 59 applied database migration entries; the unmatched applied legacy entry is `bitget_demo_credential_vault`, whose migration source is absent from the mother repository. These are recorded findings, not claimed as fixed. Do not fabricate the missing migration; reconcile it against the responsible historical source.
+
+### Remaining verification gates
+
+This is a full verification pass for current merged code, local suites, public production routes, relevant visual changes, and TIC catalog grants. It does not mean the entire product is 100% verified. The following require future evidence:
+1. Authenticated production console and MCP journeys are not available in this browser session; do not request another OTP solely to close this report. Reuse an authorized retained session when available.
+2. No qualifying evidence-cleared Research → Strategy → Nightwatch positive handoff has occurred. Prior genuine runs correctly stopped at the evidence gate; do not bypass it.
+3. Observe the next normal owner-scoped Nightwatch due execution and reconcile its paper ledger; do not force the global worker.
+4. Authenticated interoperability with FastMCP and other named clients remains uncertified beyond the previously recorded MCP Inspector/API-key tests.
+5. Complete accessibility, account recovery, backup-restore rehearsal, and remaining abuse/reliability tests in isolated/authorized environments.
+6. Resolve Bitget Reality redistribution terms before expanding claims or access; the currently public read-only route remains enabled at the owner's explicit direction.
+7. Resolve the Supabase advisor findings, FK indexing review, and legacy migration source-of-truth discrepancy. Leaked-password protection requires owner/dashboard configuration review.
+8. Commercial billing, package publication, and organization email invitations remain blocked on real pricing, account eligibility/credentials, and verified mail configuration.
+
+The production host responses, local test results, and visually inspected screenshots are evidence for the bounded scope above; they are not a substitute for the still-open account-specific and operational gates.
+
+
 ## Developer visual polish — PR #168 production verified, 16 October 2026
 
 The developer portal received an original branded landing composition with real service host links, a clearly labeled API response contract illustration, an original architecture diagram, and a custom translucent intelligence-core render. The animated workflow graphic has a separate stacked 420 px mobile SVG; reduced-motion behavior was inspected. The docs page exposes the architecture graphic and accurate MCP client verification boundaries. The shared Daylight, Night Tide, and Blue Hour controls were added to the portal, docs, signed-out console state, and authenticated console header. A shared language effect was adjusted so theme/language interactions preserve route-specific title and description metadata.

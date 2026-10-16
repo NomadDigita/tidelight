@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/tidelight-mirrors.json'
+      - '.github/workflows/sync-public-mirrors.yml'
       - 'public/components/**'
       - 'docs/tic-openapi.yaml'
       - 'sdk/typescript/**'

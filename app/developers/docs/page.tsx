@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import "../tidelight-developers.css";
 import "../platform-polish.css";
 import { ThemeQuickSwitch } from "@/app/ui/theme-provider";

@@ -2,7 +2,7 @@
 
 **Prepared:** 16 October 2026
 **Repository:** [`TidelightOrg/tidelight`](https://github.com/TidelightOrg/tidelight)
-**Verified baseline:** `main` at `8b8e01c`, merged PR #165; production application deployment `dpl_4QhFXLqJ3nfLaVapuUgrwKtBmPSy` is READY
+**Verified application baseline:** PR #165 commit `8b8e01c2fc176b8c362acfc351502478f5d28d06`; production application deployment `dpl_4QhFXLqJ3nfLaVapuUgrwKtBmPSy` is READY. Documentation-only PR #166 was merged afterward and its production deployment is READY.
 **Purpose:** let a fresh Codex session continue from verified state without redoing completed work.
 
 This is the short operational index for the project. The detailed implementation evidence remains in [`TIC_IMPLEMENTATION.md`](TIC_IMPLEMENTATION.md); the product roadmap is [`PRODUCT_EVOLUTION_ROADMAP.md`](PRODUCT_EVOLUTION_ROADMAP.md); operating procedures are in [`OPERATIONS_RUNBOOK.md`](OPERATIONS_RUNBOOK.md). Read those source documents when working in their area. Update this handoff when milestones, production configuration, or the next action changes.
